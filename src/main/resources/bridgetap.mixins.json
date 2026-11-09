@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "package": "com.bridger.momentum.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "MinecraftMixin",
+    "EntityLivingBaseMixin",
+    "GuiIngameMixin",
+    "EntityPlayerSPMixin",
+    "PlayerControllerMPMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

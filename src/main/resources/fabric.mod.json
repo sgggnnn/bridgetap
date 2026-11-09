@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "bridgetap",
+  "version": "1.0.0",
+  "name": "BridgeTap",
+  "description": "Bridge momentum and tap speed tracking HUD for Minecraft speed telly bridging.",
+  "authors": [
+    "Bridger"
+  ],
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.bridger.momentum.BridgeTapMod"
+    ],
+    "main": [
+      "com.bridger.momentum.BridgeTapMod"
+    ]
+  },
+  "mixins": [
+    "bridgetap.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": "1.8.9"
+  }
+}
