@@ -22,8 +22,6 @@ public class BridgeHUD {
 
         if (!keyBindingRegistered) {
             settingsKey = new C_23708450("key.bridgetap.openSettings", 48, "key.categories.bridgetap");
-            mc.f_58088711.f_81621289 = Arrays.copyOf(mc.f_58088711.f_81621289, mc.f_58088711.f_81621289.length + 1);
-            mc.f_58088711.f_81621289[mc.f_58088711.f_81621289.length - 1] = settingsKey;
             mc.f_58088711.f_41636781 = Arrays.copyOf(mc.f_58088711.f_41636781, mc.f_58088711.f_41636781.length + 1);
             mc.f_58088711.f_41636781[mc.f_58088711.f_41636781.length - 1] = settingsKey;
             C_23708450.m_72397208();
@@ -37,10 +35,11 @@ public class BridgeHUD {
 
     public static void openSettings() {
         Minecraft mc = Minecraft.m_20213497();
-        if (mc != null) mc.m_52715402(new BridgeHistoryScreen());
+        if (mc != null && mc.f_28396371 != null) { ReplaySession.stop(); mc.m_52715402(new BridgeHistoryScreen()); }
     }
 
     public static void render(C_97866173 gui) {
+        if (ReplaySession.active()) { ReplaySession.renderHud(); return; }
         Minecraft mc = Minecraft.m_20213497();
         if (mc == null || mc.f_28396371 == null || mc.f_26407825 == null) return;
         if (BridgeConfig.chatOutput) return;

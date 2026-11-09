@@ -291,6 +291,7 @@ public class BridgeTracker {
     }
 
     public static synchronized void onTick(Minecraft mc) {
+        if (ReplaySession.active()) return;
         if (mc == null || mc.f_28396371 == null || mc.f_26407825 == null) {
             if (isBridging) { isBridging=false; status=RunStatus.FAILED; }
             pendingPlateSample=false;pendingJumps.clear();captureFinishedRun();

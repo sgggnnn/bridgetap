@@ -4,7 +4,7 @@ from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
 root = Path(__file__).resolve().parent
 deps = os.environ.get('BRIDGETAP_CLASSPATH')
-if not deps: raise SystemExit('Set BRIDGETAP_CLASSPATH to the intermediary Minecraft, Fabric Loader, Sponge Mixin and LWJGL JARs, separated by ' + os.pathsep)
+if not deps: raise SystemExit('Set BRIDGETAP_CLASSPATH to Minecraft intermediary, Fabric Loader, Mixin, LWJGL 2, Authlib and Guava JARs, separated by ' + os.pathsep)
 out = root / 'BridgeTap-source-built.jar'
 if out.exists(): raise SystemExit('Output already exists; refusing to overwrite')
 with tempfile.TemporaryDirectory() as tmp:

@@ -1,10 +1,10 @@
 param(
     [string]$JavaHome = $env:JAVA_HOME,
     [string]$Classpath = $env:BRIDGETAP_CLASSPATH,
-    [string]$Output = 'BridgeTap-1.1.0.jar'
+    [string]$Output = 'BridgeTap-1.2.2.jar'
 )
 $ErrorActionPreference = 'Stop'
-if (-not $Classpath) { throw 'Set BRIDGETAP_CLASSPATH to the intermediary Minecraft, Fabric Loader, Mixin and LWJGL JARs (semicolon-separated on Windows).' }
+if (-not $Classpath) { throw 'Set BRIDGETAP_CLASSPATH to Minecraft intermediary, Fabric Loader, Mixin, LWJGL 2, Authlib and Guava JARs (semicolon-separated on Windows).' }
 $compiler = if ($JavaHome) { Join-Path $JavaHome 'bin/javac.exe' } else { 'javac' }
 $archiver = if ($JavaHome) { Join-Path $JavaHome 'bin/jar.exe' } else { 'jar' }
 $classes = Join-Path $PSScriptRoot ('build/classes-' + [guid]::NewGuid().ToString('N'))

@@ -13,6 +13,11 @@ public class RunHistory {
   public final long created;
   public final List<String> details;
   public final ReplayData replay;
+  public String replayId() {
+   String value=new java.math.BigInteger(id.replace("-",""),16).toString(36);
+   while(value.length()<25)value="0"+value;
+   return value.substring(0,5)+"-"+value.substring(5,10)+"-"+value.substring(10);
+  }
   private Run(String id,String status,double time,int jumps,String axis,long created,List<String> details) {
    this(id,status,time,jumps,axis,created,details,null);
   }
@@ -24,6 +29,7 @@ public class RunHistory {
  }
  private final Path folder;
  private final List<Run> recent=new ArrayList<>();
+ private Set<String> favorites;
  public RunHistory(Path folder) {this.folder=folder;}
  public void add(String status,double time,int jumps,String axis,List<String> details) {
   add(status,time,jumps,axis,details,null);
@@ -74,5 +80,30 @@ public class RunHistory {
  public boolean hasReplay(Run run){
   try{UUID.fromString(run.id);return run.replay!=null||Files.isRegularFile(folder.resolve(run.id+".btr"));}
   catch(IllegalArgumentException ex){return false;}
+ }
+ private Set<String> favoriteIds() throws IOException {
+  if(favorites==null){
+   Set<String> loaded=new HashSet<>();Path file=folder.resolve("favorites.prefs");
+   if(Files.exists(file))for(String id:Files.readAllLines(file,java.nio.charset.StandardCharsets.UTF_8)){
+    try{UUID.fromString(id);loaded.add(id);}catch(IllegalArgumentException ignored){}
+   }
+   favorites=loaded;
+  }
+  return favorites;
+ }
+ public boolean isFavorite(Run run)throws IOException{return favoriteIds().contains(run.id);}
+ public List<Run> favorites()throws IOException {
+  List<Run> result=new ArrayList<>();for(Run run:saved())if(isFavorite(run))result.add(run);return result;
+ }
+ public boolean toggleFavorite(Run run)throws IOException {
+  Set<String> updated=new HashSet<>(favoriteIds());boolean added=updated.add(run.id);if(!added)updated.remove(run.id);
+  if(added)save(run);Files.createDirectories(folder);
+  Path temp=Files.createTempFile(folder,"favorites-",".tmp");
+  try{
+   Files.write(temp,updated,java.nio.charset.StandardCharsets.UTF_8);
+   try{Files.move(temp,folder.resolve("favorites.prefs"),StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.ATOMIC_MOVE);}
+   catch(AtomicMoveNotSupportedException ex){Files.move(temp,folder.resolve("favorites.prefs"),StandardCopyOption.REPLACE_EXISTING);}
+   favorites=updated;return added;
+  }finally{Files.deleteIfExists(temp);}
  }
 }

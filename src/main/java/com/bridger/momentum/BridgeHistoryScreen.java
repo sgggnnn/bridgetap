@@ -8,7 +8,7 @@ import net.minecraft.unmapped.*;
 
 /** Replay gallery and compatible browser for older summary-only saves. */
 public class BridgeHistoryScreen extends C_85740840 {
- private boolean saved,searching,successOnly;
+ private boolean saved,searching,successOnly,favoritesOnly;
  private int selected,page,detailOffset;
  private String message="",query="";
  private List<RunHistory.Run> all=Collections.emptyList(),rows=Collections.emptyList();
@@ -22,36 +22,39 @@ public class BridgeHistoryScreen extends C_85740840 {
  private void clipped(String s,int x,int y,int w,int c){if(w>0)text(f_11884601.m_62332220(s,w),x,y,c);}
  private void button(String s,int x,int y,int w,boolean active){box(x,y,w,16,active?0xFF315A7B:0xE02A3443);clipped(s,x+4,y+4,w-8,0xFFE1E6EB);}
  private void refresh(){
-  try{all=saved?BridgeTracker.history().saved():BridgeTracker.history().recent();message="";}
+  try{all=favoritesOnly?BridgeTracker.history().favorites():saved?BridgeTracker.history().saved():BridgeTracker.history().recent();message="";}
   catch(IOException e){all=Collections.emptyList();message="Could not read saved runs";System.err.println("[BridgeTap] "+e);}
   filter();
  }
  private void filter(){
   rows=new ArrayList<>();
   for(RunHistory.Run r:all){
-   String searchable=r.id+" "+r.status+" "+r.axis+" "+String.join(" ",r.details);
+   String searchable=r.id+" "+r.replayId()+" "+r.status+" "+r.axis+" "+String.join(" ",r.details);
    if((!successOnly||"SUCCESS".equals(r.status))&&searchable.toLowerCase(Locale.US).contains(query.toLowerCase(Locale.US)))rows.add(r);
   }
   selected=page=detailOffset=0;
  }
- private void switchView(boolean value){saved=value;refresh();}
+ private void switchView(boolean value){saved=value;favoritesOnly=false;refresh();}
  public BridgeHistoryScreen(){refresh();}
+ private boolean favorite(RunHistory.Run run){try{return BridgeTracker.history().isFavorite(run);}catch(IOException ex){return false;}}
  private void play(int index){
   if(index<0||index>=rows.size())return;
   selected=index;
   try{
    ReplayData data=BridgeTracker.history().replay(rows.get(index));
    if(data==null){message="Old save: statistics only, no replay";return;}
-   Minecraft.m_20213497().m_52715402(new BridgeReplayScreen(this,data));
+   if(BridgeTracker.isBridging()){message="Finish the current attempt or /bt reset first";return;}
+   ReplaySession.start(rows.get(index),data);
   }catch(IOException|IllegalArgumentException ex){message="Replay unreadable";System.err.println("[BridgeTap] "+ex);}
  }
  @Override public void m_93956703(int mx,int my,float partial){
   super.m_93956703(mx,my,partial);
   int w=f_05230747,h=f_07021018,split=split(),cols=columns(),cw=cardWidth(),n=pageSize();
   box(0,0,w,h,0xE0101723);text("BridgeTap Replays",8,7,0xFF55DDEE);
-  button("Recent",8,21,54,!saved);button("Saved",66,21,48,saved);
+  button("Recent",8,21,54,!saved&&!favoritesOnly);button("Saved",66,21,48,saved&&!favoritesOnly);
   button("+ Save",118,21,52,false);button("Settings",174,21,60,false);
   button("Play >",238,21,50,false);
+  button("Favourites",w-132,2,60,favoritesOnly);
   button(successOnly?"Success":"All runs",w-68,2,60,successOnly);
   box(8,42,Math.max(1,w-16),17,searching?0xFF344D63:0xFF202C3B);
   clipped(query.isEmpty()?"Search replay ID, axis or jump...":query+(searching?"_":""),12,47,w-24,0xFFC9D6E3);
@@ -60,7 +63,7 @@ public class BridgeHistoryScreen extends C_85740840 {
    int slot=index-page*n,x=8+(slot%cols)*cw,y=78+(slot/cols)*47;
    RunHistory.Run r=rows.get(index);boolean ok="SUCCESS".equals(r.status),replay=BridgeTracker.history().hasReplay(r);
    box(x,y,cw-5,42,index==selected?0xFF30465E:0xEA202B3B);box(x,y,2,42,ok?0xFF55DDA0:0xFFEA6875);
-   clipped("#"+r.id.substring(0,Math.min(8,r.id.length())),x+6,y+4,cw-30,0xFF91A2B6);
+   clipped((favorite(r)?"\u00a7e* ":"#")+r.id.substring(0,Math.min(8,r.id.length())),x+6,y+4,cw-30,0xFF91A2B6);
    clipped(replay?"Bridge replay":"Saved summary",x+6,y+15,cw-13,0xFFE7EDF4);
    clipped(String.format(Locale.US,"%s  %.2fs",ok?"Success":"Fail",r.time),x+6,y+30,cw-13,ok?0xFF91DEB0:0xFFFF999E);
    if(replay)button(">",x+cw-24,y+3,16,false);
@@ -80,6 +83,20 @@ public class BridgeHistoryScreen extends C_85740840 {
   text((page+1)+" / "+Math.max(1,(rows.size()+n-1)/n),120,h-13,0xFFAEB9C4);
  }
  @Override protected void m_23755539(int mx,int my,int button){
+  if(button==1){
+   if(mx>=8&&mx<split()-4&&my>=78&&my<f_07021018-20){
+    int col=(mx-8)/cardWidth(),row=(my-78)/47,index=page*pageSize()+row*columns()+col;
+    if(col<columns()&&index<rows.size()&&index<(page+1)*pageSize()){
+     selected=index;
+     try{
+      message=BridgeTracker.history().toggleFavorite(rows.get(index))?"Added to favourites and saved":"Removed from favourites";
+      if(favoritesOnly){all=BridgeTracker.history().favorites();filter();}
+     }
+     catch(IOException ex){message="Could not update favourite";}
+    }
+   }
+   return;
+  }
   if(button!=0)return;
   searching=hit(mx,my,8,42,f_05230747-16,17);if(searching)return;
   if(hit(mx,my,8,21,54,16)){switchView(false);return;}
@@ -90,6 +107,7 @@ public class BridgeHistoryScreen extends C_85740840 {
   }
   if(hit(mx,my,174,21,60,16)){Minecraft.m_20213497().m_52715402(new BridgeSettingsScreen());return;}
   if(hit(mx,my,238,21,50,16)){play(selected);return;}
+  if(hit(mx,my,f_05230747-132,2,60,16)){favoritesOnly=!favoritesOnly;refresh();return;}
   if(hit(mx,my,f_05230747-68,2,60,16)){successOnly=!successOnly;filter();return;}
   if(hit(mx,my,8,f_07021018-18,50,16)){page=Math.max(0,page-1);return;}
   if(hit(mx,my,62,f_07021018-18,50,16)){if((page+1)*pageSize()<rows.size())page++;return;}

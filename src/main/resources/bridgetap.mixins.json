@@ -7,7 +7,15 @@
     "EntityLivingBaseMixin",
     "GuiIngameMixin",
     "EntityPlayerSPMixin",
-    "PlayerControllerMPMixin"
+    "PlayerControllerMPMixin",
+    "KeyboardInputMixin",
+    "PlayerInventoryMixin",
+    "PlayerDropMixin",
+    "ItemInHandAccessor",
+    "ReplayContextAccessor",
+    "ReplayControllerAccessor",
+    "ReplayRendererAccessor",
+    "ReplayGhostRenderMixin"
   ],
   "injectors": {
     "defaultRequire": 1

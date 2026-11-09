@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "id": "bridgetap",
-  "version": "1.1.0",
+  "version": "1.2.2",
   "name": "BridgeTap",
-  "description": "Bridge tracking, saved 3D replays, chat coordinates and customizable HUD for Minecraft 1.8.9.",
+  "description": "Native Minecraft bridge replays with free flight, a skinned ghost, hotbar time controls and favourites.",
   "authors": [
     "Bridger"
   ],
