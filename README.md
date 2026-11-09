@@ -1,11 +1,23 @@
 pavelpuchika helped
 
-# BridgeTap — redesigned history test build
+# BridgeTap 1.1.0 — saved 3D replays
 
-For Minecraft 1.8.9 with Legacy Fabric. Put BridgeTap.jar in the instance's mods folder and keep only one BridgeTap version there. B opens the run browser (change the binding in Options > Controls > BridgeTap). Use Recent and Saved to switch lists; select a row for details; + Save keeps the selected recent summary in config/bridgetap/saved; Settings opens HUD controls, including HUD visibility and Hide F3. Use < and > for pages and the Up/Down keys to scroll long details.
+Minecraft 1.8.9 / Legacy Fabric (Ornithe intermediary). Install BridgeTap-1.1.0.jar in the instance's mods folder, replacing the previous BridgeTap JAR. Keep one version installed.
 
-Only the last ten unsaved summaries are kept in memory. Saved summaries survive restart. This records statistics and displayed entries, not player movements, video or replay data. The HUD toggle hides the display but does not stop tracking. The Fall timer uses an empirical two-tick correction; Head hitter and the game UI have not been tested in a running game. No independent security audit or project open-source license is provided.
+Press B (configurable under Controls > BridgeTap) to open the replay gallery. Recent contains the last ten attempts. Select a card and use Play >, or its small > button. + Save persists the summary and replay together in config/bridgetap/saved; Saved lists recordings from earlier sessions. Search matches IDs, status, axis and jump descriptions. The All runs / Success button filters results.
 
-## Source and build
+New attempts record player positions at 20 Hz and blocks near the bridge, including placement timing. Playback provides pause/play, restart, a draggable timeline, 0.25x–4x speeds, an overview/follow camera, mouse drag to orbit, +/- zoom, left/right arrows to seek and Space to pause. Esc returns to the gallery. The viewport uses simplified colored cubes and a player marker, rather than Minecraft textures, skins, the complete map, or server replay functionality. Playback never changes the live world. Up to ten minutes and 24,000 block events are captured per attempt; partial recordings are marked. Old summary-only saves remain readable, but cannot be converted into replays.
 
-All mod classes in BridgeTap.jar are compiled from src/main/java and src/main/resources. To rebuild with JDK 9+, set BRIDGETAP_CLASSPATH to colon-separated paths for the Minecraft 1.8.9 intermediary client JAR, Fabric Loader 0.20.1, Sponge Mixin 0.17.5+mixin.0.8.7 and LWJGL 2.9.4+legacyfabric.15; these dependencies are not included. Run python3 build-source.py to create BridgeTap-source-built.jar; it refuses to overwrite an existing file. The build targets Java 8 bytecode. tests/ contains the standalone persistence and settings tests.
+Settings > Coordinates output switches between the overlay and local chat. Chat prints the complete coordinate list at the end of each attempt and hides the overlay. Messages are local to the client. The HUD visibility toggle still only controls the overlay, not tracking. Gain type consistently controls the Gain / No Gain label in every coordinate mode. Overlay colors opens independent choices for labels, coordinates, positive/negative deltas, ticks, Gain, No Gain, header, background and border. Colors use the sixteen Minecraft text colors. All settings persist in config/bridgetap.properties.
+
+## Build
+
+JDK 9+ is required for compilation; output targets Java 8. Set BRIDGETAP_CLASSPATH to the Minecraft 1.8.9 intermediary client, Fabric Loader, Sponge Mixin and LWJGL 2 JARs, separated by the platform classpath separator (semicolon on Windows). Dependencies are not bundled.
+
+On Windows, run ./build.ps1 -JavaHome <JDK path>; it creates BridgeTap-1.1.0.jar and refuses to overwrite an existing output. Alternatively use python build-source.py to create BridgeTap-source-built.jar.
+
+## Validation
+
+ConfigRegression, HistoryRegression, ReplayRegression and DisplayRegression cover settings persistence, history, replay round trips, block timing, old saves, malformed replay input, gain spelling/visibility and independent colors. Run tests from a temporary working directory because settings tests write a test config. ReplayRenderSmoke is an optional offscreen OpenGL test and needs Minecraft dependencies plus the LWJGL native library.
+
+The release compiles successfully and all four logic/persistence tests pass on Java 8. The graphical smoke test could not execute because Windows Application Control rejected the LWJGL DLL in this environment. This build has not been validated in a running Minecraft client.

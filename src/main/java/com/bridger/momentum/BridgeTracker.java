@@ -34,10 +34,14 @@ public class BridgeTracker {
     private static boolean historyCaptured = true;
     public static RunHistory history() { return HISTORY; }
     private static void captureFinishedRun() {
-        if (historyCaptured || isBridging || pendingPlateSample || (status != RunStatus.SUCCESS && status != RunStatus.FAILED)) return;
+        if (historyCaptured || isBridging || pendingPlateSample || !pendingJumps.isEmpty() || (status != RunStatus.SUCCESS && status != RunStatus.FAILED)) return;
         java.util.List<String> lines = new java.util.ArrayList<>();
         for (JumpEntry entry : entries) lines.add(entry.getFormattedLine());
-        HISTORY.add(status.name(), currentBridgeTime, getJumpCount(), currentAxis, lines);
+        HISTORY.add(status.name(), currentBridgeTime, getJumpCount(), currentAxis, lines, ReplayRecorder.snapshot());
+        if (BridgeConfig.chatOutput) for (JumpEntry entry : entries) {
+            String line=EntryFormatter.format(entry);
+            if(!line.isEmpty())sendMessage("\u00a7b[BridgeTap] " + line);
+        }
         historyCaptured = true;
     }
 
@@ -132,6 +136,7 @@ public class BridgeTracker {
     public static int bridgetap$getTick() { return currentTick; }
 
     public static synchronized void reset() {
+        ReplayRecorder.reset();
         PlacementEvidence.reset();
         status = RunStatus.IDLE;
         isBridging = false;
@@ -282,10 +287,13 @@ public class BridgeTracker {
         currentBridgeTime = 0.0;
         status = RunStatus.BRIDGING;
         isBridging = true;
+        ReplayRecorder.start();
     }
 
     public static synchronized void onTick(Minecraft mc) {
         if (mc == null || mc.f_28396371 == null || mc.f_26407825 == null) {
+            if (isBridging) { isBridging=false; status=RunStatus.FAILED; }
+            pendingPlateSample=false;pendingJumps.clear();captureFinishedRun();
             return;
         }
 
@@ -300,6 +308,7 @@ public class BridgeTracker {
             previousVelocityY = player.f_35148123;
             return;
         }
+        if (isBridging) ReplayRecorder.sample();
         if (isBridging && !player.f_47825615 && player.f_09676126 && (previousVelocityY > 0 || (long) currentTick - lastJumpSignalTick == 1) && !entries.isEmpty()) {
             double c = currentAxis.equals("X") ? player.f_78826675 : player.f_97691941;
             double d = Math.abs(c) - Math.floor(Math.abs(c));

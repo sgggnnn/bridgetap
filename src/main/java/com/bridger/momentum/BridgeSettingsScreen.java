@@ -11,7 +11,7 @@ import org.lwjgl.opengl.GL11;
 /** Modal native Minecraft screen for editing BridgeTap HUD settings. */
 public class BridgeSettingsScreen extends C_85740840 {
     private static final int PANEL_WIDTH = 360;
-    private static final int PANEL_HEIGHT = 333;
+    private static final int PANEL_HEIGHT = 381;
 
     @Override
     public void m_93956703(int mouseX, int mouseY, float partialTicks) {
@@ -41,7 +41,9 @@ public class BridgeSettingsScreen extends C_85740840 {
         drawAdjustRow(x, y + 216, "Plate offset", signed(BridgeConfig.plateTickOffset));
         drawButton(x + 10, y + 240, PANEL_WIDTH - 20, 20, "Turn detection: " + BridgeConfig.turnTicks + " ticks");
         drawButton(x + 10, y + 264, PANEL_WIDTH - 20, 20, "Gain type: " + onOff(BridgeConfig.showGainType));
-        drawButton(x + 130, y + 303, 100, 20, "Done (Esc)");
+        drawButton(x + 10, y + 288, PANEL_WIDTH - 20, 20, "Coordinates output: " + (BridgeConfig.chatOutput ? "CHAT (end of run)" : "OVERLAY"));
+        drawButton(x + 10, y + 312, PANEL_WIDTH - 20, 20, "Overlay colors...");
+        drawButton(x + 130, y + 351, 100, 20, "Done (Esc)");
         GL11.glPopMatrix();
         C_37925375.m_23590488();
     }
@@ -91,7 +93,12 @@ public class BridgeSettingsScreen extends C_85740840 {
             BridgeConfig.turnTicks = BridgeConfig.turnTicks == 15 ? 12 : 15;
         } else if (inside(mouseX, mouseY, x + 10, y + 264, PANEL_WIDTH - 20, 20)) {
             BridgeConfig.showGainType = !BridgeConfig.showGainType;
-        } else if (inside(mouseX, mouseY, x + 130, y + 303, 100, 20)) {
+        } else if (inside(mouseX, mouseY, x + 10, y + 288, PANEL_WIDTH - 20, 20)) {
+            BridgeConfig.chatOutput = !BridgeConfig.chatOutput;
+        } else if (inside(mouseX, mouseY, x + 10, y + 312, PANEL_WIDTH - 20, 20)) {
+            Minecraft.m_20213497().m_52715402(new BridgeColorsScreen());
+            return;
+        } else if (inside(mouseX, mouseY, x + 130, y + 351, 100, 20)) {
             close();
             return;
         } else {

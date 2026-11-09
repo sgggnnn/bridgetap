@@ -121,7 +121,6 @@ public class JumpEntry {
                 break;
         }
 
-        if (gainType != null) sb.append(" §7").append(gainType);
         return sb.toString();
     }
 

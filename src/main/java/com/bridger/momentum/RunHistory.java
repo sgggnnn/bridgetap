@@ -12,16 +12,24 @@ public class RunHistory {
   public final int jumps;
   public final long created;
   public final List<String> details;
+  public final ReplayData replay;
   private Run(String id,String status,double time,int jumps,String axis,long created,List<String> details) {
+   this(id,status,time,jumps,axis,created,details,null);
+  }
+  private Run(String id,String status,double time,int jumps,String axis,long created,List<String> details,ReplayData replay) {
    this.id=id; this.status=status; this.time=time; this.jumps=jumps; this.axis=axis; this.created=created;
    this.details=Collections.unmodifiableList(new ArrayList<>(details));
+   this.replay=replay;
   }
  }
  private final Path folder;
  private final List<Run> recent=new ArrayList<>();
  public RunHistory(Path folder) {this.folder=folder;}
  public void add(String status,double time,int jumps,String axis,List<String> details) {
-  recent.add(0,new Run(UUID.randomUUID().toString(),status,time,jumps,axis,System.currentTimeMillis(),details));
+  add(status,time,jumps,axis,details,null);
+ }
+ public void add(String status,double time,int jumps,String axis,List<String> details,ReplayData replay) {
+  recent.add(0,new Run(UUID.randomUUID().toString(),status,time,jumps,axis,System.currentTimeMillis(),details,replay));
   if(recent.size()>10) recent.remove(10);
  }
  public List<Run> recent(){return Collections.unmodifiableList(new ArrayList<>(recent));}
@@ -33,10 +41,11 @@ public class RunHistory {
     if(Files.size(file)>1024*1024) continue;
     try(InputStream in=Files.newInputStream(file)) {
      Properties p=new Properties();p.load(in);
+     UUID.fromString(p.getProperty("id"));
      int count=Integer.parseInt(p.getProperty("count","0"));
      if(count<0 || count>2000) continue;
      List<String> details=new ArrayList<>();
-     for(int i=0;i<count;i++) details.add(p.getProperty("line."+i,""));
+     for(int i=0;i<count;i++) details.add(p.getProperty("line."+i,"").replace("No Gay","No Gain"));
      runs.add(new Run(p.getProperty("id"),p.getProperty("status"),Double.parseDouble(p.getProperty("time")),Integer.parseInt(p.getProperty("jumps")),p.getProperty("axis"),Long.parseLong(p.getProperty("created")),details));
     } catch(IllegalArgumentException | NullPointerException ex) {System.err.println("[BridgeTap] Invalid saved run: "+file);}
    }
@@ -44,10 +53,26 @@ public class RunHistory {
   runs.sort((a,b)->Long.compare(b.created,a.created));return runs;
  }
  public void save(Run run) throws IOException {
+  UUID.fromString(run.id);
   Files.createDirectories(folder);Path dest=folder.resolve(run.id+".properties");
   if(Files.exists(dest))return;
   Properties p=new Properties();p.setProperty("id",run.id);p.setProperty("status",run.status);p.setProperty("time",String.valueOf(run.time));p.setProperty("jumps",String.valueOf(run.jumps));p.setProperty("axis",run.axis);p.setProperty("created",String.valueOf(run.created));p.setProperty("count",String.valueOf(run.details.size()));
   for(int i=0;i<run.details.size();i++)p.setProperty("line."+i,run.details.get(i));
-  try(OutputStream out=Files.newOutputStream(dest,StandardOpenOption.CREATE_NEW,StandardOpenOption.WRITE)){p.store(out,"BridgeTap run summary");}
+  Path replayFile=folder.resolve(run.id+".btr");
+  if(run.replay!=null){
+   Files.deleteIfExists(replayFile);
+   run.replay.write(replayFile);
+  }
+  try(OutputStream out=Files.newOutputStream(dest,StandardOpenOption.CREATE_NEW,StandardOpenOption.WRITE)){p.store(out,"BridgeTap run summary and replay");}
+ }
+ public ReplayData replay(Run run)throws IOException {
+  if(run.replay!=null)return run.replay;
+  UUID.fromString(run.id);
+  Path file=folder.resolve(run.id+".btr");
+  return Files.exists(file)?ReplayData.read(file):null;
+ }
+ public boolean hasReplay(Run run){
+  try{UUID.fromString(run.id);return run.replay!=null||Files.isRegularFile(folder.resolve(run.id+".btr"));}
+  catch(IllegalArgumentException ex){return false;}
  }
 }

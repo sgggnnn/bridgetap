@@ -4,102 +4,111 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import net.minecraft.client.Minecraft;
-import net.minecraft.unmapped.C_29058632;
-import net.minecraft.unmapped.C_85740840;
+import net.minecraft.unmapped.*;
 
-/** Compact run-summary browser. It does not record or play back movements. */
+/** Replay gallery and compatible browser for older summary-only saves. */
 public class BridgeHistoryScreen extends C_85740840 {
- private boolean saved;
- private int selected, page, detailOffset;
- private String message="";
- private List<RunHistory.Run> rows=Collections.emptyList();
- private static final int TOP=39, ROW=13, FOOT=20;
- private int side(){return Math.max(72,Math.min(150,f_05230747/6));}
- private int divider(){return Math.max(side()+116, Math.min(f_05230747-120, f_05230747*56/100));}
- private int listWidth(){return divider()-side()-3;}
- private int pageSize(){return Math.max(1,(f_07021018-TOP-FOOT)/ROW);}
+ private boolean saved,searching,successOnly;
+ private int selected,page,detailOffset;
+ private String message="",query="";
+ private List<RunHistory.Run> all=Collections.emptyList(),rows=Collections.emptyList();
+ private int split(){return f_05230747*72/100;}
+ private int columns(){return split()>=500?3:split()>=300?2:1;}
+ private int cardWidth(){return (split()-12)/columns();}
+ private int pageSize(){return columns()*Math.max(1,(f_07021018-98)/47);}
  private boolean hit(int mx,int my,int x,int y,int w,int h){return mx>=x&&mx<x+w&&my>=y&&my<y+h;}
- private void box(int x,int y,int w,int h,int color){if(w>0&&h>0)C_29058632.m_57734177(x,y,x+w,y+h,color);}
+ private void box(int x,int y,int w,int h,int c){if(w>0&&h>0)C_29058632.m_57734177(x,y,x+w,y+h,c);}
  private void text(String s,int x,int y,int c){f_11884601.m_11445413(s,x,y,c,BridgeConfig.textShadow);}
- private void clipped(String s,int x,int y,int w,int color){if(w>0)text(f_11884601.m_62332220(s,w),x,y,color);}
- private void button(String s,int x,int y,int w,boolean active){
-  box(x,y,w,14,active?0xFF315A7B:0xD92A2E36);
-  box(x,y,w,1,active?0xFF83B6D6:0xFF454C56);clipped(s,x+4,y+3,w-8,0xFFE1E6EB);
- }
+ private void clipped(String s,int x,int y,int w,int c){if(w>0)text(f_11884601.m_62332220(s,w),x,y,c);}
+ private void button(String s,int x,int y,int w,boolean active){box(x,y,w,16,active?0xFF315A7B:0xE02A3443);clipped(s,x+4,y+4,w-8,0xFFE1E6EB);}
  private void refresh(){
-  try{rows=saved?BridgeTracker.history().saved():BridgeTracker.history().recent();message="";}
-  catch(IOException e){rows=Collections.emptyList();message="Could not read saved runs";System.err.println("[BridgeTap] "+e);}
-  if(selected>=rows.size())selected=Math.max(0,rows.size()-1);
+  try{all=saved?BridgeTracker.history().saved():BridgeTracker.history().recent();message="";}
+  catch(IOException e){all=Collections.emptyList();message="Could not read saved runs";System.err.println("[BridgeTap] "+e);}
+  filter();
  }
- private void switchView(boolean value){saved=value;selected=page=detailOffset=0;refresh();}
+ private void filter(){
+  rows=new ArrayList<>();
+  for(RunHistory.Run r:all){
+   String searchable=r.id+" "+r.status+" "+r.axis+" "+String.join(" ",r.details);
+   if((!successOnly||"SUCCESS".equals(r.status))&&searchable.toLowerCase(Locale.US).contains(query.toLowerCase(Locale.US)))rows.add(r);
+  }
+  selected=page=detailOffset=0;
+ }
+ private void switchView(boolean value){saved=value;refresh();}
  public BridgeHistoryScreen(){refresh();}
+ private void play(int index){
+  if(index<0||index>=rows.size())return;
+  selected=index;
+  try{
+   ReplayData data=BridgeTracker.history().replay(rows.get(index));
+   if(data==null){message="Old save: statistics only, no replay";return;}
+   Minecraft.m_20213497().m_52715402(new BridgeReplayScreen(this,data));
+  }catch(IOException|IllegalArgumentException ex){message="Replay unreadable";System.err.println("[BridgeTap] "+ex);}
+ }
  @Override public void m_93956703(int mx,int my,float partial){
   super.m_93956703(mx,my,partial);
-  final int w=f_05230747,h=f_07021018,s=side(),split=divider(),n=pageSize();
-  box(0,0,w,h,0xC80B0D12);
-  box(0,0,w,16,0xEF111318);
-  button("Recent",3,1,57,!saved);button("Saved",62,1,54,saved);
-  clipped(saved?"Saved bridges":"Recent bridges (last 10)",122,4,w-125,0xFFC5CFD9);
-  box(0,16,w,18,0xE71B1E24);
-  button("+ Save",4,18,58,false);button("Settings",65,18,66,false);
-  if(!message.isEmpty())clipped(message,139,21,Math.max(0,w-145),0xFFFFD07B);
-  box(s+1,35,w-s-1,h-35,0xAA101319);
-  box(0,35,s,h-35,0xD91B1C21);box(s,35,1,h-35,0xFF454A53);
-  text("BRIDGES",6,42,0xFF89919A);
-  box(3,saved?69:55,s-7,13,0xFF315C80);
-  clipped("> Recent",7,57,s-12,0xFFE2EAF2);clipped("> Saved",7,71,s-12,0xFFE2EAF2);
-  text("VIEW",6,98,0xFF89919A);clipped("* Settings",7,113,s-12,0xFFCCD3DA);
-  box(s+1,35,split-s-2,14,0xE91F2229);
-  int resultX=s+6,timeX=s+Math.max(58,listWidth()*48/100),jumpX=s+Math.max(98,listWidth()*77/100);
-  text("Result",resultX,38,0xFF9EA7B0);
-  if(timeX<split-35)text("Time",timeX,38,0xFF9EA7B0);
-  if(jumpX<split-28)text("Jumps",jumpX,38,0xFF9EA7B0);
-  box(split,35,1,h-35,0xFF454A53);
-  for(int i=page*n;i<Math.min(rows.size(),(page+1)*n);i++){
-   int y=50+(i-page*n)*ROW;RunHistory.Run r=rows.get(i);boolean ok="SUCCESS".equals(r.status);
-   if(i==selected)box(s+2,y-2,split-s-3,ROW,0xB63D7097);
-   else if((i&1)==1)box(s+2,y-2,split-s-3,ROW,0x211F2630);
-   clipped(ok?"Success":"Fail",resultX,y,Math.max(0,timeX-resultX-3),ok?0xFF81E5A3:0xFFFF777B);
-   if(timeX<split-35)clipped(String.format(Locale.US,"%.2fs",r.time),timeX,y,Math.max(0,jumpX-timeX-3),0xFFE4E7EB);
-   if(jumpX<split-28)clipped(String.valueOf(r.jumps),jumpX+4,y,split-jumpX-6,0xFFD9E0E7);
+  int w=f_05230747,h=f_07021018,split=split(),cols=columns(),cw=cardWidth(),n=pageSize();
+  box(0,0,w,h,0xE0101723);text("BridgeTap Replays",8,7,0xFF55DDEE);
+  button("Recent",8,21,54,!saved);button("Saved",66,21,48,saved);
+  button("+ Save",118,21,52,false);button("Settings",174,21,60,false);
+  button("Play >",238,21,50,false);
+  button(successOnly?"Success":"All runs",w-68,2,60,successOnly);
+  box(8,42,Math.max(1,w-16),17,searching?0xFF344D63:0xFF202C3B);
+  clipped(query.isEmpty()?"Search replay ID, axis or jump...":query+(searching?"_":""),12,47,w-24,0xFFC9D6E3);
+  clipped(message,8,63,w-16,0xFFFFCE73);
+  for(int index=page*n;index<Math.min(rows.size(),(page+1)*n);index++){
+   int slot=index-page*n,x=8+(slot%cols)*cw,y=78+(slot/cols)*47;
+   RunHistory.Run r=rows.get(index);boolean ok="SUCCESS".equals(r.status),replay=BridgeTracker.history().hasReplay(r);
+   box(x,y,cw-5,42,index==selected?0xFF30465E:0xEA202B3B);box(x,y,2,42,ok?0xFF55DDA0:0xFFEA6875);
+   clipped("#"+r.id.substring(0,Math.min(8,r.id.length())),x+6,y+4,cw-30,0xFF91A2B6);
+   clipped(replay?"Bridge replay":"Saved summary",x+6,y+15,cw-13,0xFFE7EDF4);
+   clipped(String.format(Locale.US,"%s  %.2fs",ok?"Success":"Fail",r.time),x+6,y+30,cw-13,ok?0xFF91DEB0:0xFFFF999E);
+   if(replay)button(">",x+cw-24,y+3,16,false);
   }
-  if(rows.isEmpty())clipped(message.isEmpty()?"No saved runs yet":"Unable to load runs",s+6,53,listWidth()-12,0xFF9EA7B0);
-  int dx=split+7,dw=w-dx-5;
-  if(!rows.isEmpty()&&selected<rows.size()){
-   RunHistory.Run r=rows.get(selected);boolean ok="SUCCESS".equals(r.status);
-   clipped(String.format(Locale.US,"%.2fs  %s",r.time,ok?"Success":"Fail"),dx,40,dw,ok?0xFF82E5A2:0xFFFF777B);
-   clipped(r.jumps+" jumps  \u00b7  axis "+r.axis,dx,52,dw,0xFFBEC8D2);
-   clipped(new SimpleDateFormat("yyyy-MM-dd HH:mm",Locale.US).format(new Date(r.created)),dx,64,dw,0xFF8E99A5);
-   box(dx,79,dw,1,0xFF3D4651);text("RUN DETAILS",dx,85,0xFF9AAAB8);
-   int y=100;for(int i=detailOffset;i<r.details.size()&&y<h-FOOT;i++,y+=12)clipped(r.details.get(i),dx,y,dw,0xFFE8EDF2);
-   if(r.details.size()>Math.max(0,(h-FOOT-100)/12))clipped("\u2191 / \u2193 Details",dx,h-14,dw,0xFF899AA9);
-  }else clipped("Select a run",dx,41,dw,0xFF899AA9);
-  box(s+1,h-FOOT,split-s-2,FOOT,0xE91B1E24);
-  button("<",s+5,h-18,22,false);button(">",s+30,h-18,22,false);
-  clipped((page+1)+" / "+Math.max(1,(rows.size()+n-1)/n),s+57,h-14,split-s-62,0xFFAEB9C4);
+  int dx=split+5,dw=w-dx-7;box(dx-3,78,dw+6,h-84,0xD81D2735);
+  if(rows.isEmpty())clipped("No matching runs",12,84,split-20,0xFF9DADBF);
+  if(selected<rows.size()){
+   RunHistory.Run r=rows.get(selected);
+   clipped("REPLAY DETAILS",dx,84,dw,0xFF9DAEC0);
+   clipped(String.format(Locale.US,"%.2fs / %d jumps",r.time,r.jumps),dx,99,dw,0xFFE4EDF5);
+   clipped("Axis: "+r.axis,dx,111,dw,0xFFC3D2DF);
+   clipped(new SimpleDateFormat("dd.MM.yy HH:mm",Locale.US).format(new Date(r.created)),dx,123,dw,0xFF8E9DAF);
+   clipped(BridgeTracker.history().hasReplay(r)?"Play > to watch":"Statistics only",dx,139,dw,0xFF75D6DF);
+   int y=157;for(int i=detailOffset;i<r.details.size()&&y<h-20;i++,y+=12)clipped(r.details.get(i),dx,y,dw,0xFFE8EDF2);
+  }
+  button("< Prev",8,h-18,50,false);button("Next >",62,h-18,50,false);
+  text((page+1)+" / "+Math.max(1,(rows.size()+n-1)/n),120,h-13,0xFFAEB9C4);
  }
  @Override protected void m_23755539(int mx,int my,int button){
   if(button!=0)return;
-  int s=side(),split=divider();
-  if(hit(mx,my,3,1,57,14)){switchView(false);return;}
-  if(hit(mx,my,62,1,54,14)){switchView(true);return;}
-  if(hit(mx,my,4,18,58,14)){
-   if(saved||rows.isEmpty()||selected>=rows.size()){message=saved?"Already saved":"No run selected";return;}
-   try{BridgeTracker.history().save(rows.get(selected));message="Saved";}catch(IOException e){message="Save failed";System.err.println("[BridgeTap] "+e);}return;
+  searching=hit(mx,my,8,42,f_05230747-16,17);if(searching)return;
+  if(hit(mx,my,8,21,54,16)){switchView(false);return;}
+  if(hit(mx,my,66,21,48,16)){switchView(true);return;}
+  if(hit(mx,my,118,21,52,16)){
+   if(saved||rows.isEmpty()){message=saved?"Already saved":"No run selected";return;}
+   try{RunHistory.Run run=rows.get(selected);BridgeTracker.history().save(run);message=BridgeTracker.history().hasReplay(run)?"Saved with replay":"Summary saved";}catch(IOException e){message="Save failed";System.err.println("[BridgeTap] "+e);}return;
   }
-  if(hit(mx,my,65,18,66,14)||hit(mx,my,3,110,s-7,14)){Minecraft.m_20213497().m_52715402(new BridgeSettingsScreen());return;}
-  if(hit(mx,my,3,55,s-7,14)){switchView(false);return;}
-  if(hit(mx,my,3,69,s-7,14)){switchView(true);return;}
-  if(hit(mx,my,s+5,f_07021018-18,22,14)){page=Math.max(0,page-1);return;}
-  if(hit(mx,my,s+30,f_07021018-18,22,14)){if((page+1)*pageSize()<rows.size())page++;return;}
-  if(hit(mx,my,s+2,48,split-s-3,Math.max(0,f_07021018-FOOT-48))){
-   int index=page*pageSize()+(my-48)/ROW;if(index<rows.size()){selected=index;detailOffset=0;}
+  if(hit(mx,my,174,21,60,16)){Minecraft.m_20213497().m_52715402(new BridgeSettingsScreen());return;}
+  if(hit(mx,my,238,21,50,16)){play(selected);return;}
+  if(hit(mx,my,f_05230747-68,2,60,16)){successOnly=!successOnly;filter();return;}
+  if(hit(mx,my,8,f_07021018-18,50,16)){page=Math.max(0,page-1);return;}
+  if(hit(mx,my,62,f_07021018-18,50,16)){if((page+1)*pageSize()<rows.size())page++;return;}
+  if(mx>=8&&mx<split()-4&&my>=78&&my<f_07021018-20){
+   int col=(mx-8)/cardWidth(),row=(my-78)/47,index=page*pageSize()+row*columns()+col;
+   if(col<columns()&&index<rows.size()&&index<(page+1)*pageSize()){
+    selected=index;detailOffset=0;
+    if((mx-8)%cardWidth()>=cardWidth()-24&&(my-78)%47<20)play(index);
+   }
   }
  }
  @Override protected void m_29116903(char c,int key){
-  if(key==1){Minecraft.m_20213497().m_52715402(null);return;}
-  if(key==200){detailOffset=Math.max(0,detailOffset-1);return;}
-  if(key==208&&selected<rows.size()){detailOffset=Math.min(Math.max(0,rows.get(selected).details.size()-1),detailOffset+1);return;}
-  super.m_29116903(c,key);
+  if(key==1){if(searching){searching=false;return;}Minecraft.m_20213497().m_52715402(null);return;}
+  if(searching){
+   if(key==14&&!query.isEmpty())query=query.substring(0,query.length()-1);
+   else if(c>=32&&c!=127&&query.length()<64)query+=c;
+   filter();return;
+  }
+  if(key==200)detailOffset=Math.max(0,detailOffset-1);
+  if(key==208&&selected<rows.size())detailOffset=Math.min(Math.max(0,rows.get(selected).details.size()-1),detailOffset+1);
  }
 }

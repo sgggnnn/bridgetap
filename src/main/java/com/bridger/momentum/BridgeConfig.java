@@ -17,6 +17,14 @@ public class BridgeConfig {
     public static boolean backgroundEnabled = true;
     public static boolean textShadow = true;
     public static boolean showGainType = false;
+    public static boolean chatOutput = false;
+    public static final String[] COLOR_NAMES = {"Labels", "Coordinates", "Positive delta", "Negative delta", "Ticks", "Gain", "No Gain", "Header", "Background", "Border"};
+    public static final String[] colors = {"b", "e", "a", "c", "7", "a", "e", "b", "0", "7"};
+    public static String color(int part) { return "\u00a7" + colors[part]; }
+    public static int rgb(int part) {
+        int[] palette={0x000000,0x0000AA,0x00AA00,0x00AAAA,0xAA0000,0xAA00AA,0xFFAA00,0xAAAAAA,0x555555,0x5555FF,0x55FF55,0x55FFFF,0xFF5555,0xFF55FF,0xFFFF55,0xFFFFFF};
+        return palette[Integer.parseInt(colors[part],16)];
+    }
     public static String displayMode = "ALL"; // ALL, COORDS, COORDS_ONLY, TICKS, or TIME
     public static int tickOffset = -1;
     public static int plateTickOffset = -1;
@@ -42,6 +50,11 @@ public class BridgeConfig {
             backgroundEnabled = Boolean.parseBoolean(props.getProperty("backgroundEnabled", "true"));
             textShadow = Boolean.parseBoolean(props.getProperty("textShadow", "true"));
             showGainType = Boolean.parseBoolean(props.getProperty("showGainType", "false"));
+            chatOutput = Boolean.parseBoolean(props.getProperty("chatOutput", "false"));
+            for(int i=0;i<colors.length;i++){
+                String value=props.getProperty("color."+i,colors[i]).toLowerCase(java.util.Locale.US);
+                if(value.matches("[0-9a-f]"))colors[i]=value;
+            }
             displayMode = props.getProperty("displayMode", "ALL").toUpperCase(java.util.Locale.US);
             if (!displayMode.equals("ALL") && !displayMode.equals("COORDS") && !displayMode.equals("COORDS_ONLY") && !displayMode.equals("TICKS") && !displayMode.equals("TIME")) {
                 displayMode = "ALL";
@@ -72,6 +85,8 @@ public class BridgeConfig {
                 props.setProperty("backgroundEnabled", String.valueOf(backgroundEnabled));
                 props.setProperty("textShadow", String.valueOf(textShadow));
                 props.setProperty("showGainType", String.valueOf(showGainType));
+                props.setProperty("chatOutput", String.valueOf(chatOutput));
+                for(int i=0;i<colors.length;i++)props.setProperty("color."+i,colors[i]);
                 props.setProperty("displayMode", displayMode);
                 props.setProperty("tickOffset", String.valueOf(tickOffset));
                 props.setProperty("plateTickOffset", String.valueOf(plateTickOffset));

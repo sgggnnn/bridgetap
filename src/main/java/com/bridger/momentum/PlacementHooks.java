@@ -15,6 +15,9 @@ public class PlacementHooks {
   if(after!=beforeHit && after!=null && C_81592558.m_63461719(after)!=0)placed=hit;
   else if(afterAdjacent!=beforeAdjacent && afterAdjacent!=null && C_81592558.m_63461719(afterAdjacent)!=0)placed=adjacent;
   hit=null;
-  if(placed!=null)PlacementEvidence.record(BridgeTracker.bridgetap$getTick(),placed.m_32364273(),placed.m_23514936(),player.f_78826675,player.f_97691941);
+  if(placed!=null){
+   PlacementEvidence.record(BridgeTracker.bridgetap$getTick(),placed.m_32364273(),placed.m_23514936(),player.f_78826675,player.f_97691941);
+   ReplayRecorder.placed(world,placed);
+  }
  }
 }

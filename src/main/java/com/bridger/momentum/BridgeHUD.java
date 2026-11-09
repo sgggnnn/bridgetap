@@ -43,6 +43,7 @@ public class BridgeHUD {
     public static void render(C_97866173 gui) {
         Minecraft mc = Minecraft.m_20213497();
         if (mc == null || mc.f_28396371 == null || mc.f_26407825 == null) return;
+        if (BridgeConfig.chatOutput) return;
         if (!BridgeConfig.shouldShowHud(mc.f_58088711 != null && mc.f_58088711.f_63869242)) return;
 
         C_23014920 fr = mc.f_21497584;
@@ -75,19 +76,9 @@ public class BridgeHUD {
         }
 
         List<String> displayLines = new java.util.ArrayList<>();
-        if (displayMode.equals("ALL")) {
-            for (JumpEntry entry : entries) displayLines.add(withGainType(entry.getFormattedLine(), entry));
-        } else if (displayMode.equals("COORDS")) {
-            for (JumpEntry entry : entries) displayLines.add(withGainType(formatCoordinateLine(entry), entry));
-        } else if (displayMode.equals("COORDS_ONLY")) {
-            for (JumpEntry entry : entries) displayLines.add(formatCoordinateOnlyLine(entry));
-        } else if (displayMode.equals("TICKS")) {
-            for (JumpEntry entry : entries) {
-                if (entry.getType() != JumpEntry.EntryType.PLATES && entry.getType() != JumpEntry.EntryType.PLATES_MINUS_1) {
-                    String line = String.format(Locale.US, "\u00a7b\u00bb \u00a7b%s \u00a77(%dt)", entry.getLabel(), entry.getTicksElapsed());
-                    displayLines.add(withGainType(line, entry));
-                }
-            }
+        if (!displayMode.equals("TIME")) for (JumpEntry entry : entries) {
+            String line = EntryFormatter.format(entry);
+            if (!line.isEmpty()) displayLines.add(line);
         }
         if (header.isEmpty() && displayLines.isEmpty()) return;
 
@@ -117,8 +108,8 @@ public class BridgeHUD {
         C_37925375.m_55305366(); // GlStateManager.enableBlend()
 
         if (BridgeConfig.backgroundEnabled) {
-            C_29058632.m_57734177(0, 0, totalWidth, totalHeight, 0xA00A111F);
-            int borderColor = 0x40FFFFFF;
+            C_29058632.m_57734177(0, 0, totalWidth, totalHeight, (0xA0000000 | BridgeConfig.rgb(8)));
+            int borderColor = 0x80000000 | BridgeConfig.rgb(9);
             C_29058632.m_57734177(0, 0, totalWidth, 1, borderColor);
             C_29058632.m_57734177(0, totalHeight - 1, totalWidth, totalHeight, borderColor);
             C_29058632.m_57734177(0, 0, 1, totalHeight, borderColor);
@@ -129,7 +120,7 @@ public class BridgeHUD {
         int textX = padding;
         int textY = padding;
         if (!header.isEmpty()) {
-            fr.m_11445413(header, textX, textY, 0xFFFFFF, BridgeConfig.textShadow);
+            fr.m_11445413(BridgeConfig.color(7) + header.replaceAll("\u00a7[0-9a-f]", ""), textX, textY, 0xFFFFFF, BridgeConfig.textShadow);
             textY += lineHeight;
         }
 
@@ -142,21 +133,4 @@ public class BridgeHUD {
     GL11.glPopMatrix();
     }
 
-    private static String formatCoordinateLine(JumpEntry entry) {
-        int decimal = (int) Math.round(entry.getDecimal() * 1000.0) % 1000;
-        if (decimal < 0) decimal += 1000;
-        return String.format(Locale.US, "\u00a7b\u00bb \u00a7b%s: \u00a7e.%03d", entry.getLabel(), decimal);
-    }
-
-    private static String formatCoordinateOnlyLine(JumpEntry entry) {
-        int decimal = (int) Math.round(entry.getDecimal() * 1000.0) % 1000;
-        if (decimal < 0) decimal += 1000;
-        return String.format(Locale.US, "\u00a7e.%03d", decimal);
-    }
-
-    private static String withGainType(String line, JumpEntry entry) {
-        if (!BridgeConfig.showGainType || entry.getGainType() == null) return line;
-        String color = entry.getGainType().equals("Gain") ? "\u00a7a" : "\u00a7e";
-        return line + " " + color + "[" + entry.getGainType().toUpperCase(Locale.US) + "]";
-    }
 }

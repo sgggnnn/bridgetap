@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "id": "bridgetap",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "name": "BridgeTap",
-  "description": "Bridge momentum and tap speed tracking HUD for Minecraft speed telly bridging.",
+  "description": "Bridge tracking, saved 3D replays, chat coordinates and customizable HUD for Minecraft 1.8.9.",
   "authors": [
     "Bridger"
   ],
