@@ -1,67 +1,91 @@
-pavelpuchika helped
+# BridgeTap
 
-# BridgeTap 1.4.5 â€” replay speed and display options
+Un mod client **Minecraft 1.8.9** pour analyser ses bridges : coordonnées des sauts, historique des runs et replays avec caméra libre, fantôme et vue à la première personne.
 
-Minecraft 1.8.9 / Legacy Fabric with Ornithe intermediary mappings. Replace the previous BridgeTap JAR in mods with BridgeTap-1.4.5.jar, keep only one BridgeTap version installed, and restart Minecraft. Existing saved recordings, names, favourites and sharing files remain compatible; no new run is required for these interface changes.
+[Télécharger la dernière version](https://github.com/sgggnnn/bridgetap/releases/latest) · [Toutes les versions](https://github.com/sgggnnn/bridgetap/releases) · [Changelog](CHANGELOG.md) · [Signaler un bug](https://github.com/sgggnnn/bridgetap/issues)
 
-## Live coordinates and replay-only telemetry
+## Installation
 
-The original bridge coordinate/jump HUD is restored in normal gameplay with its existing visibility, F3, display-mode, Gain / No Gain and color settings. The extra Player XYZ line above the hotbar is removed outside replays. The optional chat output for coordinate entries at the end of an attempt works again. The newer input, click/CPS, velocity and platform measurement panels remain exclusive to replays. The slot-2 replay book remains removed, and normal inventory actions outside replays are not intercepted. Recording continues in the background.
+1. Ouvre la [release 1.4.5](https://github.com/sgggnnn/bridgetap/releases/tag/v1.4.5).
+2. Télécharge le fichier qui correspond à ton installation :
+   - **Forge 1.8.9** : `BridgeTap-1.4.5-Forge-1.8.9.jar`.
+   - **Ornithe / Legacy Fabric 1.8.9** : `BridgeTap-1.4.5.jar`, pour un environnement utilisant les mappings Ornithe.
+3. Mets ce JAR dans le dossier `mods` de ton instance, en remplaçant l’ancienne version de BridgeTap.
+4. Lance Minecraft avec **Java 8** et le chargeur choisi.
 
-Open the replay gallery with B and click a card's > icon to watch it. Naming, sorting, favourites, search, import/export and saved history remain available.
+Garde une seule édition de BridgeTap par instance. L’édition Forge inclut son moteur Mixin : aucun module Mixin supplémentaire n’est nécessaire. La version Forge utilisée pour les tests est **11.15.1.2318**.
 
-## Replay items
+Les JAR se trouvent dans les **assets des releases GitHub**. Les archives « Source code » servent à récupérer les sources pour le développement.
 
-The private replay inventory contains only:
+## Fonctionnalités
 
-- Slot 1: backward stick.
-- Slot 2: Pause / Play, automatically replaced by Replay from beginning at the end.
-- Slot 3: forward stick.
-- Slot 4: clock to cycle playback speed (0.25x, 0.5x, 1x, 2x, 4x).
-- Slot 9: barrier to exit.
+- **HUD de bridge** : coordonnées des sauts, écarts, ticks, turn, arrivée et indicateur Gain / No Gain.
+- **Affichage personnalisable** : position, taille, fond, ombre, couleurs par élément, sortie dans le chat et mode `LAST_TURN` pour ne garder que les coordonnées du dernier saut et du turn.
+- **Bibliothèque de runs** : historique récent, sauvegardes, favoris, recherche, renommage et tri par date, temps ou nom.
+- **Replays dans un monde local** : déplacements, sauts, rotations, sneak, animations, skin et placements de blocs enregistrés.
+- **Analyse par tick** : touches maintenues, pressées et relâchées, clics, CPS, vélocité et coordonnées du fantôme.
+- **Caméra libre et POV** : déplacement autour du bridge, hitbox blanche et suivi de la vue du joueur enregistré.
+- **Partage** : export et import de fichiers `.btreplay` autonomes.
+- **Mesures du bridge** : distance entre les bords des plateformes et différence de hauteur lorsque l’enregistrement contient les données nécessaires.
 
-The two direction controls are both Minecraft sticks. They skip one recorded second while playback is running and one exact tick while paused. The center item changes its label with the playback state; at the final sample it becomes a replay arrow. Clicking that arrow restarts at tick zero and restores Pause. Rewinding away from the end restores normal Play/Pause behavior.
+Le panneau d’informations du replay se masque avec **Replay info: ON/OFF**. Les coordonnées de bridge classiques restent indépendantes de ce réglage. Le libellé de l’indicateur peut être choisi dans **No gain label**, et sa visibilité dans **Gain type**.
 
-Slots 4â€“8 are empty and cannot select extra tools. Mouse-wheel navigation cycles only through the four occupied slots. There are no separate speed, restart, camera-reset, inspection or POV items.
+## Utilisation
 
-Right-click uses the selected control. Left-click also uses it unless the click targets the recorded player, in which case it enters POV (the barrier always exits). B or Esc also returns to the gallery.
+### Ouvrir et sauvegarder un replay
 
-## POV by clicking the player
+Appuie sur **B** pour ouvrir la galerie ; la touche est modifiable dans les contrôles Minecraft. Le bouton **Settings** ouvre les réglages du mod.
 
-Aim at the recorded player and left-click to follow their POV throughout the bridge. Targeting uses the private replay camera, the player's recorded collision box, a maximum reach of 64 blocks and a replay-world block raycast, so clicking through a wall does not enter POV. A click beside or behind the player does not activate it.
+- Clique sur une carte pour consulter ses détails, puis sur **`>`** pour lancer le replay.
+- **+ Save** conserve une run récente.
+- Un clic droit sur une carte ajoute ou retire le favori. L’ajout aux favoris sauvegarde aussi une run récente.
+- **Rename**, **Sort**, la recherche et les filtres permettent de retrouver tes enregistrements.
 
-POV follows recorded position, rotations, sneak state, swings, held item and skin. Manual mouse rotation is suppressed while following; pause, step, skip and Replay still work. Press the configured Sneak key to return to an external free camera without adding another item. A Sneak key already held while entering POV must be released and pressed again to leave.
+### Contrôles du replay
 
-Free camera uses the configured movement keys, Jump/Sneak vertically and Sprint for faster flight. The existing corrected strafe directions and 12/36 blocks-per-second speeds remain. The ghost model is hidden around an internal camera to clear the view, while its white debug hitbox remains.
+Sélectionne un outil dans la hotbar puis clique pour l’utiliser :
 
-## Recorded information and library
+- **Slot 1 — bâton arrière** : reculer d’une seconde en lecture, ou d’un tick en pause.
+- **Slot 2 — Pause / Play** : mettre en pause ou reprendre. À la fin, l’outil devient **Replay** pour recommencer.
+- **Slot 3 — bâton avant** : avancer d’une seconde en lecture, ou d’un tick en pause.
+- **Slot 4 — horloge** : choisir la vitesse `0.25x`, `0.5x`, `1x`, `2x` ou `4x`.
+- **Slot 9 — barrière** : quitter le replay.
 
-The replay panel keeps the recording name/time/tick, XYZ, held/pressed/released movement and mouse inputs, per-tick physical clicks, trailing-one-second CPS, native velocity XYZ/horizontal magnitude, and available platform gap/height delta. Telemetry comes from the selected recorded sample. Old recordings show unavailable data rather than invented statistics.
+La molette parcourt les emplacements occupés. Utilise tes touches de déplacement Minecraft, **Saut** pour monter, **Sneak** pour descendre et **Sprint** pour voler plus vite.
 
-The gallery offers Rename, Sort, Export, Import and Files. Names persist and appear in search. Sorting supports Newest, Oldest, Fastest, Slowest and Name A-Z. Right-clicking a card toggles its favourite status and saves a recent run when adding it.
+Un **clic gauche sur le joueur enregistré** active sa POV. Appuie sur **Sneak** pour revenir à la caméra libre. **B** ou **Échap** permet aussi de revenir à la galerie.
 
-Export creates a self-contained .btreplay file under config/bridgetap/exports; Files opens that directory. A friend using this mod places the file under config/bridgetap/imports, opens Import, clicks Refresh, then imports the listed file. Import preserves the recording and name while avoiding overwriting an existing ID. No messages or files are sent automatically.
+### Envoyer un replay à un ami
 
-Gap is measured between platform block faces and height is their signed surface-elevation difference. Precise platform boundaries require recordings with version-4 placement tags. Missing or unsupported platform boundaries display N/A. Versions 1â€“4 of .btr remain readable, with their original available data.
+1. Sélectionne une run et clique sur **Export**.
+2. Récupère le fichier `.btreplay` dans `config/bridgetap/exports/` ; **Files** ouvre ce dossier.
+3. Envoie ce fichier à ton ami.
+4. Ton ami le place dans `config/bridgetap/imports/`, ouvre **Import**, clique sur **Refresh**, puis importe le fichier.
 
-The local replay world and renderer remain separate from the live world. Render context is restored in a JVM finally block. No live ability changes or shader-resetting camera setter are used. Renderer workers are reused and per-world buffers are released on exit.
+Le mod n’envoie rien automatiquement. La configuration se trouve dans `config/bridgetap.properties` et les sauvegardes dans `config/bridgetap/saved/`. Ces données peuvent être copiées entre tes instances Forge et Ornithe.
 
-## Build and verification
+## Compatibilité et vérification
 
-Use JDK 9+ targeting Java 8. BRIDGETAP_CLASSPATH must contain the Minecraft intermediary client, Fabric Loader, Mixin, LWJGL 2, Authlib and Guava JARs (semicolon-separated on Windows). Run ./build.ps1 -JavaHome <JDK path>, or python build-source.py. Dependencies are not bundled.
+BridgeTap cible Minecraft **1.8.9**. Les anciennes sauvegardes restent lisibles avec les informations qu’elles contiennent : des métriques absentes ne sont pas recréées. La mesure précise des plateformes nécessite les marqueurs de placement des enregistrements au format 4 ; sinon elle peut afficher `N/A`.
 
-Ten standalone Java regression programs pass on Java 8, including ReplayControlsRegression for the five-item inventory, center Pause/Play/Replay transitions, restart, occupied-slot scrolling and player-ray targeting. Earlier persistence, configuration, telemetry, geometry, camera, naming, sorting and archive tests remain passing.
+La version 1.4.5 corrige l’HUD Forge et les blocs posés qui restaient invisibles pendant un replay. Depuis la 1.4.4, le tick d’arrivée manquant est aussi corrigé : une run de **3,85 s** atteint bien **77 ticks**.
 
-python tests/check_native_hooks.py <minecraft-intermediary.jar> <mod.jar> validates all 34 remaining native hooks/accessors, render restoration, end-of-tick recording, the absence of the live shortcut, replay-tool initialization, replay-world target occlusion and continuous POV guards/skin delegation.
+La validation couvre dix programmes de régression, les 34 hooks natifs et un test de chargement réel Forge/LaunchWrapper. Ce dernier reproduit le problème des chunks synthétiques et vérifie les mises à jour de rendu. Ces tests ne remplacent pas une vérification visuelle dans Minecraft avec les autres mods de ton instance.
 
-Compilation and automated checks pass. The reduced native hotbar, click-to-POV and interaction with the full Minecraft/rendering-mod stack still require an in-game visual check here.
+## Développement
 
-Settings: Replay info toggles the entire replay information panel, including time, tick, Ghost XYZ, inputs, CPS, velocity, gap/height and hints. The preference persists and defaults to ON.
+Les instructions de compilation et de test sont dans [docs/BUILDING.md](docs/BUILDING.md). Pour les contributions, voir [CONTRIBUTING.md](CONTRIBUTING.md).
 
-Display cycles through LAST_TURN to show only Last and Turn coordinates, without the header or other entries. Last is the latest recorded jump/tap; Turn appears once recorded. This also applies to coordinate chat output. The No gain label setting chooses No Gain (default) or No Gay for the gain indicator; the Gain type visibility toggle still applies.
+- `src/main/` : sources Java communes, mixins et ressources.
+- `forge/` : point d’entrée Forge, démarrage Mixin et mappings.
+- `scripts/` : compilation et lancement des tests.
+- `tests/` : régressions Java et vérifications des hooks.
+- `docs/` : documentation technique et notes des releases.
+- `dist/` : JAR compilés localement, ignorés par Git.
+- `build/` : caches, classes et données temporaires, ignorés par Git.
 
-## Forge edition and replay endpoint fix
+## Crédits
 
-The Forge 1.8.9 build is BridgeTap-1.4.5-Forge-1.8.9.jar. See [Forge installation, build and validation](forge/README.md). Version 1.4.4 captures the missing successful-run arrival tick; a 3.85s replay reaches tick 77. Legacy recordings missing exactly that final tick hold their last known pose through their saved run duration. Larger discrepancies are not stretched.
+Projet maintenu sur [sgggnnn/bridgetap](https://github.com/sgggnnn/bridgetap). Merci à **pavelpuchika** pour son aide.
 
-Forge 1.4.5 restores live coordinates through the Forge overlay event and explicitly refreshes replay chunk geometry after block changes, fixing invisible placed blocks and rewind rendering on synthetic chunks. Existing replay files remain compatible.
+BridgeTap s’appuie sur Minecraft Forge, Ornithe, Fabric Loader, Mixin et leurs outils de mapping. Les licences des bibliothèques embarquées sont conservées dans les JAR Forge sous `META-INF/licenses/`.

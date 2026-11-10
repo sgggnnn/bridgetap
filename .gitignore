@@ -1,2 +1,16 @@
 /build/
+/dist/
+*.jar
+*.class
 __pycache__/
+*.py[cod]
+
+# Local game data and editor settings
+/config/
+/logs/
+/crash-reports/
+/.idea/
+/.vscode/
+*.iml
+.DS_Store
+Thumbs.db

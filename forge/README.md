@@ -10,7 +10,7 @@ time controls, speed clock, per-tick inputs/CPS/velocity, settings, names,
 sorting and sharing are retained. Existing `config/bridgetap` recordings and
 `config/bridgetap.properties` can be copied between the two instances.
 
-Version 1.4.5 also captures the arrival sample that used to be excluded when a
+Version 1.4.4 also captures the arrival sample that used to be excluded when a
 successful run ended. A 3.85-second run now reaches tick 77. If a legacy replay
 is exactly one tick shorter than its saved run time, playback holds its last
 known pose for that missing interval. No legacy position or telemetry is
@@ -25,7 +25,7 @@ generated sources stay under `build/forge/generated`. It compiles a separate
 Forge entry point and core plugin, without Fabric metadata or dependencies.
 
 ```powershell
-python build-forge.py --java-home '<JDK directory>' --minecraft '<original Minecraft 1.8.9 client.jar>' --classpath '<LWJGL.jar;authlib.jar;guava.jar>'
+python scripts/build-forge.py --java-home '<JDK directory>' --minecraft '<original Minecraft 1.8.9 client.jar>' --classpath '<LWJGL.jar;authlib.jar;guava.jar>'
 ```
 
 Build dependencies are downloaded from Forge Maven and Maven Central into
@@ -44,7 +44,7 @@ The ten shared Java regressions run against the Forge artifact on Java 8,
 including the 3.85s endpoint and legacy one-tick compatibility cases.
 
 ```powershell
-python tests/check_forge_hooks.py build/forge/minecraft-srg.jar BridgeTap-1.4.5-Forge-1.8.9.jar
+python tests/check_forge_hooks.py build/forge/minecraft-srg.jar dist/BridgeTap-1.4.5-Forge-1.8.9.jar
 python tests/run_forge_smoke.py --java '<Java 8 java.exe>' --javac '<JDK javac.exe>' --classpath '<Forge/Minecraft runtime libraries>'
 ```
 
@@ -60,3 +60,5 @@ The live coordinates HUD now subscribes to RenderGameOverlayEvent.Post (ALL), be
 Replay block changes explicitly notify the replay world's renderer. Synthetic chunks do not receive the populated flags from server chunk packets, so Forge's normal flags=2 notification could skip newly placed or rewound blocks. The notification includes adjacent faces through the native RenderGlobal listener and does not modify the live world. Existing recordings need no conversion.
 
 The Forge smoke test reproduces the skipped notification on an unpopulated synthetic chunk, verifies a control notification, checks explicit edit/rewind notifications, and resolves the Forge GUI override and subscribed overlay handler. Native checks also verify event registration and the HUD render call. Visual behavior still needs a client check.
+
+Build outputs are written to `dist/` and are ignored by Git. Download published JARs from [GitHub Releases](https://github.com/sgggnnn/bridgetap/releases); see the [shared build guide](../docs/BUILDING.md) for the repository layout and test commands.

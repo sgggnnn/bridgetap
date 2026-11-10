@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 root=Path(__file__).resolve().parents[1]
-spec=importlib.util.spec_from_file_location('forge_build',root/'build-forge.py')
+spec=importlib.util.spec_from_file_location('forge_build',root/'scripts/build-forge.py')
 builder=importlib.util.module_from_spec(spec);spec.loader.exec_module(builder)
 classes,members=builder.mappings(root/'forge/mappings/calamus.tiny',root/'build/forge/joined.srg')
 source=builder.convert((root/'tests/check_native_hooks.py').read_text(),classes,members)

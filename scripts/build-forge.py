@@ -16,7 +16,7 @@ import uuid
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]
 WORK = ROOT / 'build' / 'forge'
 FORGE = '1.8.9-11.15.1.2318-1.8.9'
 
@@ -71,9 +71,10 @@ def main():
     parser.add_argument('--java-home', default=os.environ.get('JAVA_HOME'))
     parser.add_argument('--minecraft', type=Path, required=True, help='Original Mojang 1.8.9 client JAR')
     parser.add_argument('--classpath', default=os.environ.get('BRIDGETAP_CLASSPATH', ''), help='LWJGL, Authlib, Guava and other Minecraft libraries')
-    parser.add_argument('--output', type=Path, default=ROOT / 'BridgeTap-1.4.5-Forge-1.8.9.jar')
+    parser.add_argument('--output', type=Path, default=ROOT / 'dist' / 'BridgeTap-1.4.5-Forge-1.8.9.jar')
     args = parser.parse_args()
     if args.output.exists(): raise SystemExit('Output already exists: '+str(args.output))
+    args.output.parent.mkdir(parents=True, exist_ok=True)
     WORK.mkdir(parents=True, exist_ok=True)
     suffix = '.exe' if os.name == 'nt' else ''
     def java_tool(name): return Path(args.java_home)/'bin'/(name+suffix) if args.java_home else name
