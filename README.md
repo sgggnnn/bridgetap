@@ -1,8 +1,8 @@
 pavelpuchika helped
 
-# BridgeTap 1.4.3 â€” replay speed and display options
+# BridgeTap 1.4.4 â€” replay speed and display options
 
-Minecraft 1.8.9 / Legacy Fabric with Ornithe intermediary mappings. Replace the previous BridgeTap JAR in mods with BridgeTap-1.4.3.jar, keep only one BridgeTap version installed, and restart Minecraft. Existing saved recordings, names, favourites and sharing files remain compatible; no new run is required for these interface changes.
+Minecraft 1.8.9 / Legacy Fabric with Ornithe intermediary mappings. Replace the previous BridgeTap JAR in mods with BridgeTap-1.4.4.jar, keep only one BridgeTap version installed, and restart Minecraft. Existing saved recordings, names, favourites and sharing files remain compatible; no new run is required for these interface changes.
 
 ## Live coordinates and replay-only telemetry
 
@@ -59,3 +59,7 @@ Compilation and automated checks pass. The reduced native hotbar, click-to-POV a
 Settings: Replay info toggles the entire replay information panel, including time, tick, Ghost XYZ, inputs, CPS, velocity, gap/height and hints. The preference persists and defaults to ON.
 
 Display cycles through LAST_TURN to show only Last and Turn coordinates, without the header or other entries. Last is the latest recorded jump/tap; Turn appears once recorded. This also applies to coordinate chat output. The No gain label setting chooses No Gain (default) or No Gay for the gain indicator; the Gain type visibility toggle still applies.
+
+## Forge edition and replay endpoint fix
+
+The Forge 1.8.9 build is BridgeTap-1.4.4-Forge-1.8.9.jar. See [Forge installation, build and validation](forge/README.md). Version 1.4.4 captures the missing successful-run arrival tick; a 3.85s replay reaches tick 77. Legacy recordings missing exactly that final tick hold their last known pose through their saved run duration. Larger discrepancies are not stretched.

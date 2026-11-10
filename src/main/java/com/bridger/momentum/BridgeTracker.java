@@ -362,6 +362,9 @@ public class BridgeTracker {
         // Check Gold Pressure Plate
         if (isPlayerOnGoldPlate(mc)) {
             if (!platesRecorded) {
+                // This HEAD-of-tick arrival was previously excluded by the
+                // recording guard at tick RETURN, dropping the final 50 ms.
+                ReplayRecorder.sample();
                 platesRecorded = true;
                 isBridging = false;
                 status = RunStatus.SUCCESS;

@@ -49,7 +49,7 @@ public final class ReplaySession {
  private C_97866173 previousGui;
 
  private ReplaySession(Minecraft mc,RunHistory.Run run,ReplayData data){
-  this.data=data;this.run=run;timeline=new ReplayTimeline(data);source=mc.f_26407825;player=mc.f_28396371;
+  this.data=data;this.run=run;timeline=new ReplayTimeline(data,run.time);source=mc.f_26407825;player=mc.f_28396371;
   world=new C_34399650(null,new C_06007608(0,C_06007608.C_36868821.f_11202516,false,false,C_61837504.f_74160535),data.dimension,C_57526564.f_55214254,mc.f_40149437);
   world.m_44107872(data.dayTime);world.m_04000603(0);world.m_29822868(0);
   camera=new ReplayCamera(mc,world,mc.m_55181026());
@@ -254,7 +254,7 @@ public final class ReplaySession {
  public static void renderHud(){
   ReplaySession s=current;if(s==null||!s.rendering||!BridgeConfig.showReplayInfo)return;
   List<String> lines=new ArrayList<>();
-  lines.add(String.format(Locale.US,"\u00a7b%s \u00a7f%.2f / %.2fs \u00a77| Tick %d/%d | %.2fx | %s",s.run.displayName(),s.timeline.seconds(),s.timeline.duration(),(int)s.timeline.tick(),s.data.frames.size()-1,s.timeline.speed(),s.timeline.playing()?"Play":"Paused"));
+  lines.add(String.format(Locale.US,"\u00a7b%s \u00a7f%.2f / %.2fs \u00a77| Tick %d/%d | %.2fx | %s",s.run.displayName(),s.timeline.seconds(),s.timeline.duration(),(int)s.timeline.tick(),s.timeline.lastTick(),s.timeline.speed(),s.timeline.playing()?"Play":"Paused"));
   ReplayData.Frame actor=s.timeline.sample();
   lines.addAll(BridgeTelemetryHUD.lines(actor.x,actor.y,actor.z,actor.stats,"Ghost"));
   BridgeGeometry.Result dimensions=s.data.geometry();

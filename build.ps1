@@ -1,7 +1,7 @@
 param(
     [string]$JavaHome = $env:JAVA_HOME,
     [string]$Classpath = $env:BRIDGETAP_CLASSPATH,
-    [string]$Output = 'BridgeTap-1.4.3.jar'
+    [string]$Output = 'BridgeTap-1.4.4.jar'
 )
 $ErrorActionPreference = 'Stop'
 if (-not $Classpath) { throw 'Set BRIDGETAP_CLASSPATH to Minecraft intermediary, Fabric Loader, Mixin, LWJGL 2, Authlib and Guava JARs (semicolon-separated on Windows).' }

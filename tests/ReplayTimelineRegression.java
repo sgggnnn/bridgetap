@@ -14,6 +14,17 @@ public class ReplayTimelineRegression {
   ReplayData.Identity who=new ReplayData.Identity(UUID.randomUUID().toString(),"sggn","\u00a79VIP\u00a7a+ \u00a79sggn","recorded-texture-property","recorded-signature","slim",95);
   ReplayData data=new ReplayData(Arrays.asList(first,last),blocks,false,who,0,12345);
   ReplayTimeline timeline=new ReplayTimeline(data);
+  List<ReplayData.Frame> shortFrames=new ArrayList<>();for(int i=0;i<77;i++)shortFrames.add(first);
+  ReplayData shortRun=new ReplayData(shortFrames,blocks,false);
+  ReplayTimeline repaired=new ReplayTimeline(shortRun,3.85);
+  near(repaired.duration(),3.85,"Legacy 3.85s run must include its missing terminal tick");
+  repaired.advance(100);near(repaired.seconds(),3.85,"Playback reaches 3.85s instead of 3.80s");
+  check(repaired.lastTick()==77&&repaired.finished()&&!repaired.playing(),"Correct terminal tick and stopped state");
+  check(repaired.sample()==first&&repaired.pose().x==first.x,"Missing legacy sample holds last known pose without indexing past recording");
+  repaired.skip(-1);near(repaired.tick(),76,"Paused rewind from repaired endpoint moves one tick");
+  near(new ReplayTimeline(shortRun,10).duration(),3.8,"Unrelated or truncated durations are not stretched");
+  near(new ReplayTimeline(new ReplayData(shortFrames,blocks,true),3.85).duration(),3.8,"Known truncated recordings are not extended");
+  shortFrames.add(last);near(new ReplayTimeline(new ReplayData(shortFrames,blocks,false),3.85).duration(),3.85,"New complete recordings receive no extra tick");
   check(timeline.blocks().size()==1,"Future placed blocks must be absent at the start");
   timeline.seek(.5);ReplayData.Frame half=timeline.pose();near(half.x,-2.75,"Position interpolation");near(half.yaw,180,"Yaw crosses +/-180 by shortest rotation");near(half.pitch,15,"Pitch interpolation");
   check(half.sneaking&&half.itemId==24&&half.itemDamage==2,"Pose flags and held item stay at recorded tick until next sample");
