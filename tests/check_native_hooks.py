@@ -129,4 +129,6 @@ position=next(a for n,_,a in session.methods if n=='positionCamera')
 assert session.has_call(position,session.calls('com/bridger/momentum/ReplayTimeline','pose','()Lcom/bridger/momentum/ReplayData$Frame;')),'POV is not updated from recorded poses on every render'
 skin=next(a for n,_,a in camera.methods if n=='m_68930603')
 assert camera.has_call(skin,camera.calls('com/bridger/momentum/ReplayGhost','m_68930603','()Lnet/minecraft/unmapped/C_22168528;')),'Imported POV does not use the recorded actor skin'
+set_block=next(a for n,_,a in session.methods if n=='setBlock')
+assert session.has_call(set_block,session.calls('net/minecraft/unmapped/C_34399650','m_76770021','(IIIIII)V')),'Replay edits do not explicitly invalidate synthetic chunk geometry'
 print('PASS:',checked,'native hooks/accessors, render finally, isolated gallery, tick-driven flight and shader/ability/resource regressions')

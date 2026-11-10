@@ -1,6 +1,6 @@
 # BridgeTap for Forge 1.8.9
 
-Install `BridgeTap-1.4.4-Forge-1.8.9.jar` in the `mods` directory of a Forge
+Install `BridgeTap-1.4.5-Forge-1.8.9.jar` in the `mods` directory of a Forge
 1.8.9 client (tested with 11.15.1.2318 and Java 8). Keep one BridgeTap JAR in
 that instance. No separate Mixin loader is required. The Ornithe/Fabric JAR is
 a separate build and is not installed in Forge.
@@ -10,7 +10,7 @@ time controls, speed clock, per-tick inputs/CPS/velocity, settings, names,
 sorting and sharing are retained. Existing `config/bridgetap` recordings and
 `config/bridgetap.properties` can be copied between the two instances.
 
-Version 1.4.4 also captures the arrival sample that used to be excluded when a
+Version 1.4.5 also captures the arrival sample that used to be excluded when a
 successful run ended. A 3.85-second run now reaches tick 77. If a legacy replay
 is exactly one tick shorter than its saved run time, playback holds its last
 known pose for that missing interval. No legacy position or telemetry is
@@ -44,7 +44,7 @@ The ten shared Java regressions run against the Forge artifact on Java 8,
 including the 3.85s endpoint and legacy one-tick compatibility cases.
 
 ```powershell
-python tests/check_forge_hooks.py build/forge/minecraft-srg.jar BridgeTap-1.4.4-Forge-1.8.9.jar
+python tests/check_forge_hooks.py build/forge/minecraft-srg.jar BridgeTap-1.4.5-Forge-1.8.9.jar
 python tests/run_forge_smoke.py --java '<Java 8 java.exe>' --javac '<JDK javac.exe>' --classpath '<Forge/Minecraft runtime libraries>'
 ```
 
@@ -52,3 +52,11 @@ The smoke test runs real Forge/LaunchWrapper discovery in an isolated temporary
 game directory, applies all 13 Mixins, checks all 34 injected/accessor methods
 and resolves the replay classes. It does not create a graphics context or
 exercise a live world. Rendering and interaction still need an in-game check.
+
+## Forge 1.4.5 rendering fixes
+
+The live coordinates HUD now subscribes to RenderGameOverlayEvent.Post (ALL), because GuiIngameForge overrides the vanilla overlay method without calling it. The private replay GUI retains its vanilla hook, avoiding duplicate drawing.
+
+Replay block changes explicitly notify the replay world's renderer. Synthetic chunks do not receive the populated flags from server chunk packets, so Forge's normal flags=2 notification could skip newly placed or rewound blocks. The notification includes adjacent faces through the native RenderGlobal listener and does not modify the live world. Existing recordings need no conversion.
+
+The Forge smoke test reproduces the skipped notification on an unpopulated synthetic chunk, verifies a control notification, checks explicit edit/rewind notifications, and resolves the Forge GUI override and subscribed overlay handler. Native checks also verify event registration and the HUD render call. Visual behavior still needs a client check.

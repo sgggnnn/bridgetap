@@ -1,8 +1,8 @@
 pavelpuchika helped
 
-# BridgeTap 1.4.4 â€” replay speed and display options
+# BridgeTap 1.4.5 â€” replay speed and display options
 
-Minecraft 1.8.9 / Legacy Fabric with Ornithe intermediary mappings. Replace the previous BridgeTap JAR in mods with BridgeTap-1.4.4.jar, keep only one BridgeTap version installed, and restart Minecraft. Existing saved recordings, names, favourites and sharing files remain compatible; no new run is required for these interface changes.
+Minecraft 1.8.9 / Legacy Fabric with Ornithe intermediary mappings. Replace the previous BridgeTap JAR in mods with BridgeTap-1.4.5.jar, keep only one BridgeTap version installed, and restart Minecraft. Existing saved recordings, names, favourites and sharing files remain compatible; no new run is required for these interface changes.
 
 ## Live coordinates and replay-only telemetry
 
@@ -62,4 +62,6 @@ Display cycles through LAST_TURN to show only Last and Turn coordinates, without
 
 ## Forge edition and replay endpoint fix
 
-The Forge 1.8.9 build is BridgeTap-1.4.4-Forge-1.8.9.jar. See [Forge installation, build and validation](forge/README.md). Version 1.4.4 captures the missing successful-run arrival tick; a 3.85s replay reaches tick 77. Legacy recordings missing exactly that final tick hold their last known pose through their saved run duration. Larger discrepancies are not stretched.
+The Forge 1.8.9 build is BridgeTap-1.4.5-Forge-1.8.9.jar. See [Forge installation, build and validation](forge/README.md). Version 1.4.4 captures the missing successful-run arrival tick; a 3.85s replay reaches tick 77. Legacy recordings missing exactly that final tick hold their last known pose through their saved run duration. Larger discrepancies are not stretched.
+
+Forge 1.4.5 restores live coordinates through the Forge overlay event and explicitly refreshes replay chunk geometry after block changes, fixing invisible placed blocks and rewind rendering on synthetic chunks. Existing replay files remain compatible.

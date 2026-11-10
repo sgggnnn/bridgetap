@@ -248,7 +248,12 @@ public final class ReplaySession {
  private void setBlock(ReplayData.Block b,boolean clear){
   ensureChunk(b.x>>4,b.z>>4);
   C_81592558 block=C_81592558.m_64320102(clear?0:b.id);
-  if(block!=null)world.m_38188749(new C_32594356(b.x,b.y,b.z),block.m_28027445(clear?0:b.metadata),2);
+  if(block!=null&&world.m_38188749(new C_32594356(b.x,b.y,b.z),block.m_28027445(clear?0:b.metadata),2)){
+   // Synthetic client chunks never receive the server's populated/light flags.
+   // setBlockState's normal flags=2 notification skips those chunks. Notify the
+   // replay world's renderer explicitly, including adjacent faces at chunk edges.
+   world.m_76770021(b.x,b.y,b.z,b.x,b.y,b.z);
+  }
  }
  private void ensureChunk(int x,int z){long chunk=((long)x<<32)^(z&0xFFFFFFFFL);if(chunks.add(chunk))world.m_66086785(x,z,true);}
  public static void renderHud(){
