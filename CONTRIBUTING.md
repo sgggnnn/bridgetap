@@ -1,26 +1,26 @@
-# Contribuer à BridgeTap
+# Contributing to BridgeTap
 
-## Signaler un problème
+## Report an issue
 
-Ouvre une [issue](https://github.com/sgggnnn/bridgetap/issues) avec :
+Open an [issue](https://github.com/sgggnnn/bridgetap/issues) and include:
 
-- la version de BridgeTap et l’édition utilisée, Forge ou Ornithe ;
-- la version du chargeur, de Java et les autres mods qui interviennent dans le rendu ou les contrôles ;
-- les étapes pour reproduire le problème, le résultat attendu et ce qui se produit ;
-- un extrait du log, une capture ou un `.btreplay` si cela aide à reproduire le problème.
+- Your BridgeTap version and edition: Forge or Ornithe.
+- Your loader and Java versions, plus other mods affecting rendering or controls.
+- Steps to reproduce the issue, the expected result, and the actual result.
+- A relevant log excerpt, screenshot, or `.btreplay` file if it helps reproduce the problem.
 
-## Proposer une modification
+## Propose a change
 
-1. Crée une branche à partir de `main`.
-2. Consulte [la documentation de compilation](docs/BUILDING.md).
-3. Modifie les sources communes dans `src/main/` ; les fichiers sous `build/forge/generated/` sont générés et ne doivent pas être édités.
-4. Compile les éditions concernées et lance les tests adaptés au changement.
-5. Ouvre une pull request qui explique le problème, la correction et les vérifications effectuées.
+1. Create a branch from `main`.
+2. Read the [build documentation](docs/BUILDING.md).
+3. Edit the shared sources in `src/main/`. Files in `build/forge/generated/` are generated and should not be edited directly.
+4. Build the affected editions and run the checks relevant to your change.
+5. Open a pull request explaining the problem, the change, and how you verified it.
 
-Garde les sources compatibles Java 8. Les changements du replay doivent préserver les anciennes sauvegardes et restaurer le contexte du client après le rendu. Pour une modification visuelle, précise aussi ce qui a été vérifié dans Minecraft.
+Keep the sources compatible with Java 8. Replay changes must preserve older recordings and restore the client context after rendering. For visual changes, describe what you also checked in Minecraft.
 
-## Binaires et releases
+## Binaries and releases
 
-Ne commite pas de `.jar`, de `.class`, de cache de compilation ou de données Minecraft locales. Les sorties de compilation vont dans `dist/` et les caches dans `build/`.
+Do not commit `.jar` files, `.class` files, build caches, or local Minecraft data. Build outputs belong in `dist/`, and caches in `build/`.
 
-Les JAR publiés sont attachés aux releases GitHub avec un fichier `SHA256SUMS.txt`. Le [changelog](CHANGELOG.md) et les notes sous `docs/releases/` décrivent chaque version. Les versions historiques sont conservées sous leur forme d’origine.
+Published JARs are attached to GitHub releases with a `SHA256SUMS.txt` file. The [changelog](CHANGELOG.md) and notes in `docs/releases/` describe each version. Historical binaries are preserved in their original form.

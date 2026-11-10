@@ -1,85 +1,85 @@
-# Compiler et tester BridgeTap
+# Building and testing BridgeTap
 
-Exécute les commandes depuis la racine du dépôt. Les exemples PowerShell utilisent `;` comme séparateur de classpath. Sur un autre système, utilise `:` avec les scripts Python.
+Run these commands from the repository root. PowerShell examples use `;` as the classpath separator. On other systems, use `:` with the Python scripts.
 
-## Prérequis
+## Requirements
 
-- Un **JDK 9 ou supérieur** pour compiler avec `--release 8` ; le JDK 17 a été utilisé pour les vérifications.
-- **Java 8** pour exécuter Minecraft 1.8.9 et vérifier la compatibilité des tests.
-- Python 3 pour le portage Forge et les vérifications du bytecode.
-- Les bibliothèques Minecraft indiquées ci-dessous. Minecraft et les dépendances de compilation ne sont pas versionnés dans ce dépôt.
+- **JDK 9 or newer** to compile with `--release 8`; JDK 17 was used for validation.
+- **Java 8** to run Minecraft 1.8.9 and verify test compatibility.
+- Python 3 for the Forge build and bytecode checks.
+- The Minecraft libraries listed below. Minecraft and build dependencies are not tracked in this repository.
 
-Les JAR générés vont dans `dist/`. Les scripts refusent d’écraser un fichier existant ; supprime cette sortie ou fournis un autre nom avec `--output` / `-Output` avant de recompiler.
+Generated JARs are written to `dist/`. The scripts refuse to overwrite an existing file; remove that output or choose a different name with `--output` / `-Output` before rebuilding.
 
 ## Ornithe / Legacy Fabric 1.8.9
 
-L’édition commune utilise les mappings intermédiaires **Ornithe**, pas les noms du client Minecraft original.
+The shared edition uses **Ornithe intermediary mappings**, rather than the original Minecraft client names.
 
-Le classpath doit contenir :
+The classpath must include:
 
-- le client Minecraft 1.8.9 remappé en intermediary Ornithe ;
-- Fabric Loader, Mixin, LWJGL 2, Authlib et Guava.
+- The Minecraft 1.8.9 client remapped to Ornithe intermediary.
+- Fabric Loader, Mixin, LWJGL 2, Authlib, and Guava.
 
-Versions utilisées localement : Fabric Loader 0.20.1, sponge-mixin 0.17.5 + Mixin 0.8.7, LWJGL 2.9.4 + legacyfabric.15, Authlib 1.5.21 et Guava 17.0.
+Versions used locally: Fabric Loader 0.20.1, sponge-mixin 0.17.5 + Mixin 0.8.7, LWJGL 2.9.4 + legacyfabric.15, Authlib 1.5.21, and Guava 17.0.
 
 ```powershell
-$env:JAVA_HOME = 'C:/chemin/vers/jdk-17'
+$env:JAVA_HOME = 'C:/path/to/jdk-17'
 $env:BRIDGETAP_CLASSPATH = 'C:/libs/client-intermediary.jar;C:/libs/fabric-loader.jar;C:/libs/sponge-mixin.jar;C:/libs/lwjgl.jar;C:/libs/authlib.jar;C:/libs/guava.jar'
 ./scripts/build.ps1
 ```
 
-Alternative Python, qui fonctionne aussi hors Windows :
+Cross-platform Python alternative:
 
 ```powershell
 python scripts/build-source.py --java-home $env:JAVA_HOME --classpath $env:BRIDGETAP_CLASSPATH
 ```
 
-Sortie : `dist/BridgeTap-1.4.5.jar`.
+Output: `dist/BridgeTap-1.4.5.jar`.
 
 ## Forge 1.8.9
 
 ```powershell
-python scripts/build-forge.py --java-home 'C:/chemin/vers/jdk-17' --minecraft 'C:/libs/minecraft-1.8.9-client.jar' --classpath 'C:/libs/lwjgl.jar;C:/libs/authlib.jar;C:/libs/guava.jar'
+python scripts/build-forge.py --java-home 'C:/path/to/jdk-17' --minecraft 'C:/libs/minecraft-1.8.9-client.jar' --classpath 'C:/libs/lwjgl.jar;C:/libs/authlib.jar;C:/libs/guava.jar'
 ```
 
-`--minecraft` attend le **JAR original du client Minecraft 1.8.9**, fourni par ton launcher. Le script télécharge Forge 11.15.1.2318, le mapping MCP et les outils nécessaires dans `build/forge/`.
+`--minecraft` expects the **original Minecraft 1.8.9 client JAR** provided by your launcher. The script downloads Forge 11.15.1.2318, MCP mappings, and the required tools into `build/forge/`.
 
-Les sources communes sont converties en noms SRG puis compilées avec le point d’entrée Forge. Les fichiers convertis se trouvent dans `build/forge/generated/`. Mixin et ses dépendances privées sont inclus dans le JAR ; Minecraft et Forge ne le sont pas.
+Shared sources are converted to SRG names, then compiled with the Forge entry point. Converted files are written to `build/forge/generated/`. Mixin and its private dependencies are bundled in the mod JAR; Minecraft and Forge are not.
 
-Sortie : `dist/BridgeTap-1.4.5-Forge-1.8.9.jar`.
+Output: `dist/BridgeTap-1.4.5-Forge-1.8.9.jar`.
 
-Les détails du portage sont dans [forge/README.md](../forge/README.md).
+See [forge/README.md](../forge/README.md) for details of the port.
 
-## Tests de régression
+## Regression tests
 
-Le lanceur PowerShell crée un dossier de travail isolé sous `build/` pour ne pas modifier ta configuration Minecraft.
+The PowerShell runner creates an isolated working directory under `build/`, so it does not modify your Minecraft configuration.
 
 ```powershell
-./scripts/test.ps1 -JavaHome 'C:/chemin/vers/jdk-17' -RuntimeJavaHome 'C:/chemin/vers/java-8' -Jar dist/BridgeTap-1.4.5.jar
-./scripts/test.ps1 -JavaHome 'C:/chemin/vers/jdk-17' -RuntimeJavaHome 'C:/chemin/vers/java-8' -Jar dist/BridgeTap-1.4.5-Forge-1.8.9.jar
+./scripts/test.ps1 -JavaHome 'C:/path/to/jdk-17' -RuntimeJavaHome 'C:/path/to/java-8' -Jar dist/BridgeTap-1.4.5.jar
+./scripts/test.ps1 -JavaHome 'C:/path/to/jdk-17' -RuntimeJavaHome 'C:/path/to/java-8' -Jar dist/BridgeTap-1.4.5-Forge-1.8.9.jar
 ```
 
-Il compile et exécute dix programmes : configuration, historique, persistance des replays, affichage, timeline, caméra, télémétrie, géométrie, bibliothèque et contrôles.
+It compiles and runs ten programs covering configuration, history, replay persistence, display, timeline, camera, telemetry, geometry, library management, and controls.
 
-### Hooks natifs
+### Native hooks
 
 ```powershell
 python tests/check_native_hooks.py C:/libs/client-intermediary.jar dist/BridgeTap-1.4.5.jar
 python tests/check_forge_hooks.py build/forge/minecraft-srg.jar dist/BridgeTap-1.4.5-Forge-1.8.9.jar
 ```
 
-Pour Forge, lance d’abord `scripts/build-forge.py` afin de préparer les mappings et le client SRG. Ces scripts vérifient les injections et accessors, la restauration du contexte de rendu, l’invalidation des blocs et, sur Forge, l’abonnement de l’HUD à l’événement d’affichage.
+For Forge, run `scripts/build-forge.py` first to prepare the mappings and SRG client. These scripts verify injections and accessors, render-context restoration, block invalidation, and, on Forge, the HUD overlay event subscription.
 
-### Chargement Forge sans fenêtre de jeu
+### Forge startup without a game window
 
 ```powershell
-python tests/run_forge_smoke.py --java 'C:/chemin/vers/java-8/bin/java.exe' --javac 'C:/chemin/vers/jdk-17/bin/javac.exe' --classpath '<bibliothèques complètes du launcher Forge, séparées par ;>'
+python tests/run_forge_smoke.py --java 'C:/path/to/java-8/bin/java.exe' --javac 'C:/path/to/jdk-17/bin/javac.exe' --classpath '<complete Forge launcher libraries, separated by ;>'
 ```
 
-Ce classpath doit contenir Forge universal, LaunchWrapper, le client Minecraft original et ses bibliothèques normales. Le JAR du mod est copié dans un dossier de jeu isolé. Le test vérifie le chargement des 13 mixins et 34 méthodes injectées/accessors, les liaisons des classes du replay et les notifications de rendu des chunks synthétiques.
+This classpath must include Forge universal, LaunchWrapper, the original Minecraft client, and its regular libraries. The mod JAR is copied into an isolated game directory. The test checks all 13 mixins and 34 injected/accessor methods, replay class linkage, and rendering notifications for synthetic chunks.
 
-Il n’ouvre pas de contexte graphique : les textures, le rendu visuel et les interactions doivent aussi être essayés dans Minecraft.
+It does not create a graphics context. Textures, visual rendering, and interactions must also be tested in Minecraft.
 
-## Publication
+## Publishing
 
-Les scripts de build ne publient rien. Pour une release, joins le JAR de chaque édition concernée et ses sommes SHA-256 aux assets GitHub, puis ajoute les changements au [changelog](../CHANGELOG.md). La branche principale conserve uniquement les sources, les scripts et la documentation.
+Build scripts do not publish anything. For a release, attach the JAR for each supported edition and its SHA-256 checksums to the GitHub release, then document the changes in the [changelog](../CHANGELOG.md). The main branch contains only sources, scripts, and documentation.

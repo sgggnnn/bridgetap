@@ -1,91 +1,91 @@
 # BridgeTap
 
-Un mod client **Minecraft 1.8.9** pour analyser ses bridges : coordonnées des sauts, historique des runs et replays avec caméra libre, fantôme et vue à la première personne.
+A **Minecraft 1.8.9** client mod for analyzing your bridges: jump coordinates, run history, and replays with a free camera, a ghost player, and first-person playback.
 
-[Télécharger la dernière version](https://github.com/sgggnnn/bridgetap/releases/latest) · [Toutes les versions](https://github.com/sgggnnn/bridgetap/releases) · [Changelog](CHANGELOG.md) · [Signaler un bug](https://github.com/sgggnnn/bridgetap/issues)
+[Download the latest version](https://github.com/sgggnnn/bridgetap/releases/latest) · [All releases](https://github.com/sgggnnn/bridgetap/releases) · [Changelog](CHANGELOG.md) · [Report a bug](https://github.com/sgggnnn/bridgetap/issues)
 
 ## Installation
 
-1. Ouvre la [release 1.4.5](https://github.com/sgggnnn/bridgetap/releases/tag/v1.4.5).
-2. Télécharge le fichier qui correspond à ton installation :
-   - **Forge 1.8.9** : `BridgeTap-1.4.5-Forge-1.8.9.jar`.
-   - **Ornithe / Legacy Fabric 1.8.9** : `BridgeTap-1.4.5.jar`, pour un environnement utilisant les mappings Ornithe.
-3. Mets ce JAR dans le dossier `mods` de ton instance, en remplaçant l’ancienne version de BridgeTap.
-4. Lance Minecraft avec **Java 8** et le chargeur choisi.
+1. Open [release 1.4.5](https://github.com/sgggnnn/bridgetap/releases/tag/v1.4.5).
+2. Download the file matching your setup:
+   - **Forge 1.8.9**: `BridgeTap-1.4.5-Forge-1.8.9.jar`.
+   - **Ornithe / Legacy Fabric 1.8.9**: `BridgeTap-1.4.5.jar`, for an environment using Ornithe mappings.
+3. Place the JAR in your instance's `mods` folder, replacing the previous BridgeTap version.
+4. Launch Minecraft with **Java 8** and your chosen loader.
 
-Garde une seule édition de BridgeTap par instance. L’édition Forge inclut son moteur Mixin : aucun module Mixin supplémentaire n’est nécessaire. La version Forge utilisée pour les tests est **11.15.1.2318**.
+Keep only one BridgeTap edition installed per instance. The Forge edition bundles its Mixin runtime, so no additional Mixin loader is required. The Forge version used for testing is **11.15.1.2318**.
 
-Les JAR se trouvent dans les **assets des releases GitHub**. Les archives « Source code » servent à récupérer les sources pour le développement.
+Download JARs from the **GitHub release assets**. The “Source code” archives contain the project sources for development.
 
-## Fonctionnalités
+## Features
 
-- **HUD de bridge** : coordonnées des sauts, écarts, ticks, turn, arrivée et indicateur Gain / No Gain.
-- **Affichage personnalisable** : position, taille, fond, ombre, couleurs par élément, sortie dans le chat et mode `LAST_TURN` pour ne garder que les coordonnées du dernier saut et du turn.
-- **Bibliothèque de runs** : historique récent, sauvegardes, favoris, recherche, renommage et tri par date, temps ou nom.
-- **Replays dans un monde local** : déplacements, sauts, rotations, sneak, animations, skin et placements de blocs enregistrés.
-- **Analyse par tick** : touches maintenues, pressées et relâchées, clics, CPS, vélocité et coordonnées du fantôme.
-- **Caméra libre et POV** : déplacement autour du bridge, hitbox blanche et suivi de la vue du joueur enregistré.
-- **Partage** : export et import de fichiers `.btreplay` autonomes.
-- **Mesures du bridge** : distance entre les bords des plateformes et différence de hauteur lorsque l’enregistrement contient les données nécessaires.
+- **Bridge HUD**: jump coordinates, deltas, ticks, turns, finish coordinates, and a Gain / No Gain indicator.
+- **Customizable display**: position, scale, background, shadow, individual element colors, chat output, and a `LAST_TURN` mode showing only the latest jump and turn coordinates.
+- **Run library**: recent history, saved runs, favorites, search, renaming, and sorting by date, time, or name.
+- **Local-world replays**: recorded movement, jumps, rotations, sneaking, animations, skin, and block placements.
+- **Per-tick analysis**: held, pressed, and released inputs, clicks, CPS, velocity, and ghost coordinates.
+- **Free camera and POV**: fly around the bridge, inspect the white hitbox, or follow the recorded player's view.
+- **Sharing**: export and import self-contained `.btreplay` files.
+- **Bridge measurements**: the gap between platform edges and their height difference, when the recording contains the required data.
 
-Le panneau d’informations du replay se masque avec **Replay info: ON/OFF**. Les coordonnées de bridge classiques restent indépendantes de ce réglage. Le libellé de l’indicateur peut être choisi dans **No gain label**, et sa visibilité dans **Gain type**.
+Use **Replay info: ON/OFF** to show or hide the replay information panel. The regular bridge coordinates HUD is independent of this setting. Choose the indicator wording with **No gain label**, and control its visibility with **Gain type**.
 
-## Utilisation
+## Usage
 
-### Ouvrir et sauvegarder un replay
+### Open and save a replay
 
-Appuie sur **B** pour ouvrir la galerie ; la touche est modifiable dans les contrôles Minecraft. Le bouton **Settings** ouvre les réglages du mod.
+Press **B** to open the gallery. You can change the binding in Minecraft's controls. The **Settings** button opens the mod settings.
 
-- Clique sur une carte pour consulter ses détails, puis sur **`>`** pour lancer le replay.
-- **+ Save** conserve une run récente.
-- Un clic droit sur une carte ajoute ou retire le favori. L’ajout aux favoris sauvegarde aussi une run récente.
-- **Rename**, **Sort**, la recherche et les filtres permettent de retrouver tes enregistrements.
+- Click a card to view its details, then **`>`** to play the replay.
+- **+ Save** keeps a recent run.
+- Right-click a card to add or remove a favorite. Favoriting a recent run also saves it.
+- Use **Rename**, **Sort**, search, and filters to organize your recordings.
 
-### Contrôles du replay
+### Replay controls
 
-Sélectionne un outil dans la hotbar puis clique pour l’utiliser :
+Select a hotbar tool, then click to use it:
 
-- **Slot 1 — bâton arrière** : reculer d’une seconde en lecture, ou d’un tick en pause.
-- **Slot 2 — Pause / Play** : mettre en pause ou reprendre. À la fin, l’outil devient **Replay** pour recommencer.
-- **Slot 3 — bâton avant** : avancer d’une seconde en lecture, ou d’un tick en pause.
-- **Slot 4 — horloge** : choisir la vitesse `0.25x`, `0.5x`, `1x`, `2x` ou `4x`.
-- **Slot 9 — barrière** : quitter le replay.
+- **Slot 1 — backward stick**: move back one second during playback, or one tick while paused.
+- **Slot 2 — Pause / Play**: pause or resume. At the end, the tool becomes **Replay** to start again.
+- **Slot 3 — forward stick**: move forward one second during playback, or one tick while paused.
+- **Slot 4 — clock**: cycle through `0.25x`, `0.5x`, `1x`, `2x`, and `4x` playback speed.
+- **Slot 9 — barrier**: exit the replay.
 
-La molette parcourt les emplacements occupés. Utilise tes touches de déplacement Minecraft, **Saut** pour monter, **Sneak** pour descendre et **Sprint** pour voler plus vite.
+The mouse wheel cycles through occupied slots. Use your Minecraft movement keys, **Jump** to move up, **Sneak** to move down, and **Sprint** to fly faster.
 
-Un **clic gauche sur le joueur enregistré** active sa POV. Appuie sur **Sneak** pour revenir à la caméra libre. **B** ou **Échap** permet aussi de revenir à la galerie.
+**Left-click the recorded player** to enter their POV. Press **Sneak** to return to the free camera. **B** or **Escape** also returns to the gallery.
 
-### Envoyer un replay à un ami
+### Share a replay with a friend
 
-1. Sélectionne une run et clique sur **Export**.
-2. Récupère le fichier `.btreplay` dans `config/bridgetap/exports/` ; **Files** ouvre ce dossier.
-3. Envoie ce fichier à ton ami.
-4. Ton ami le place dans `config/bridgetap/imports/`, ouvre **Import**, clique sur **Refresh**, puis importe le fichier.
+1. Select a run and click **Export**.
+2. Find its `.btreplay` file in `config/bridgetap/exports/`; **Files** opens that folder.
+3. Send the file to your friend.
+4. Your friend places it in `config/bridgetap/imports/`, opens **Import**, clicks **Refresh**, and imports the file.
 
-Le mod n’envoie rien automatiquement. La configuration se trouve dans `config/bridgetap.properties` et les sauvegardes dans `config/bridgetap/saved/`. Ces données peuvent être copiées entre tes instances Forge et Ornithe.
+The mod does not send files automatically. Settings are stored in `config/bridgetap.properties`, and saved runs in `config/bridgetap/saved/`. You can copy this data between your Forge and Ornithe instances.
 
-## Compatibilité et vérification
+## Compatibility and validation
 
-BridgeTap cible Minecraft **1.8.9**. Les anciennes sauvegardes restent lisibles avec les informations qu’elles contiennent : des métriques absentes ne sont pas recréées. La mesure précise des plateformes nécessite les marqueurs de placement des enregistrements au format 4 ; sinon elle peut afficher `N/A`.
+BridgeTap targets Minecraft **1.8.9**. Older recordings remain readable with the information they originally contained; missing metrics are not recreated. Accurate platform measurements require placement markers from recording format 4; otherwise, they may display `N/A`.
 
-La version 1.4.5 corrige l’HUD Forge et les blocs posés qui restaient invisibles pendant un replay. Depuis la 1.4.4, le tick d’arrivée manquant est aussi corrigé : une run de **3,85 s** atteint bien **77 ticks**.
+Version 1.4.5 fixes the Forge coordinates HUD and placed blocks remaining invisible during replays. Since 1.4.4, the missing arrival tick is also fixed: a **3.85-second** run correctly reaches **77 ticks**.
 
-La validation couvre dix programmes de régression, les 34 hooks natifs et un test de chargement réel Forge/LaunchWrapper. Ce dernier reproduit le problème des chunks synthétiques et vérifie les mises à jour de rendu. Ces tests ne remplacent pas une vérification visuelle dans Minecraft avec les autres mods de ton instance.
+Validation covers ten regression programs, all 34 native hooks, and a real Forge/LaunchWrapper startup test. The startup test also reproduces the synthetic-chunk notification issue and verifies rendering updates. These checks do not replace visual testing in Minecraft with the other mods in your instance.
 
-## Développement
+## Development
 
-Les instructions de compilation et de test sont dans [docs/BUILDING.md](docs/BUILDING.md). Pour les contributions, voir [CONTRIBUTING.md](CONTRIBUTING.md).
+See [docs/BUILDING.md](docs/BUILDING.md) for build and test instructions, and [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 
-- `src/main/` : sources Java communes, mixins et ressources.
-- `forge/` : point d’entrée Forge, démarrage Mixin et mappings.
-- `scripts/` : compilation et lancement des tests.
-- `tests/` : régressions Java et vérifications des hooks.
-- `docs/` : documentation technique et notes des releases.
-- `dist/` : JAR compilés localement, ignorés par Git.
-- `build/` : caches, classes et données temporaires, ignorés par Git.
+- `src/main/`: shared Java sources, mixins, and resources.
+- `forge/`: Forge entry point, Mixin bootstrap, and mappings.
+- `scripts/`: build scripts and the test runner.
+- `tests/`: Java regressions and native hook checks.
+- `docs/`: technical documentation and release notes.
+- `dist/`: locally compiled JARs, ignored by Git.
+- `build/`: caches, compiled classes, and temporary data, ignored by Git.
 
-## Crédits
+## Credits
 
-Projet maintenu sur [sgggnnn/bridgetap](https://github.com/sgggnnn/bridgetap). Merci à **pavelpuchika** pour son aide.
+Maintained at [sgggnnn/bridgetap](https://github.com/sgggnnn/bridgetap). Thanks to **pavelpuchika** for their help.
 
-BridgeTap s’appuie sur Minecraft Forge, Ornithe, Fabric Loader, Mixin et leurs outils de mapping. Les licences des bibliothèques embarquées sont conservées dans les JAR Forge sous `META-INF/licenses/`.
+BridgeTap uses Minecraft Forge, Ornithe, Fabric Loader, Mixin, and their mapping tools. Licenses for bundled libraries are included in Forge JARs under `META-INF/licenses/`.
