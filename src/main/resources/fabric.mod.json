@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "id": "bridgetap",
-  "version": "1.2.2",
+  "version": "1.4.3",
   "name": "BridgeTap",
-  "description": "Native Minecraft bridge replays with free flight, a skinned ghost, hotbar time controls and favourites.",
+  "description": "Named and shareable Minecraft bridge replays with sorting, platform measurements, per-tick telemetry and continuous POV.",
   "authors": [
     "Bridger"
   ],

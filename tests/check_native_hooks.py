@@ -74,11 +74,14 @@ for mixin in config['client']:
      assert field,(mixin,name,'missing accessor field',values['value'])
      assert desc in ('()'+field[1],'('+field[1]+')V'),(mixin,name,'accessor type mismatch',desc,field[1])
      checked+=1
-    if annotation.endswith(('/Inject;','/Redirect;')):
+    if annotation.endswith(('/Inject;','/Redirect;','/ModifyVariable;')):
      methods=values['method'];methods=[methods] if isinstance(methods,str) else methods
      for method in methods:
       candidates=[m for m in native.methods if m[0]==method.split('(')[0]]
       assert candidates,(mixin,name,'missing target',method)
+      if annotation.endswith('/ModifyVariable;'):
+       value_type=desc.split(')')[1]
+       assert any(desc=='('+value_type+m[1][1:m[1].index(')')]+')'+value_type for m in candidates),(mixin,name,'invalid target argument capture',desc)
       checked+=1
       ats=values['at'];ats=[ats] if isinstance(ats,tuple) else ats
       for _,at in ats:
@@ -107,4 +110,23 @@ for kind in ('ReplayCamera','ReplayGhost'):
  cls=Class(mod.read('com/bridger/momentum/'+kind+'.class'))
  assert any(n=='m_13836848' and desc=='()Z' for n,desc,_ in cls.methods),'Replay entity still inherits the live spectator mode: '+kind
 assert session.calls('net/minecraft/unmapped/C_61390454','m_60634394','()V'),'Replay chunk GPU buffers are not released'
+after_tick=next(a for n,_,a in mc_mixin.methods if n=='bridgetap$afterTick')
+assert mc_mixin.has_call(after_tick,mc_mixin.calls('com/bridger/momentum/ReplayRecorder','sample','()V')),'Recording is not sampled after the tick inputs/physics'
+assert 'com/bridger/momentum/BridgeHotbarReplay.class' not in mod.namelist(),'Live slot-2 replay shortcut is still packaged'
+assert 'LastBridgeHotbarMixin' not in config['client'],'Live inventory renderer is still intercepted'
+hud=Class(mod.read('com/bridger/momentum/BridgeHUD.class'))
+assert not hud.calls('com/bridger/momentum/BridgeTelemetryHUD','live','()V'),'Live telemetry is still displayed'
+assert not hud.calls('com/bridger/momentum/BridgeTelemetryHUD','liveCoordinates','()V'),'Player XYZ still displayed outside replay'
+assert session.calls('com/bridger/momentum/ReplayTimeline','cycleSpeed','()V'),'Playback speed control is not wired'
+constructor=next(a for n,_,a in session.methods if n=='<init>')
+assert session.has_call(constructor,session.calls('com/bridger/momentum/ReplayControls','slots','()[I')),'Replay inventory does not use the replay-tool definition'
+targeting=next(a for n,_,a in session.methods if n=='aimsAtGhost')
+assert session.has_call(targeting,session.calls('net/minecraft/unmapped/C_34399650','m_82559274','(Lnet/minecraft/unmapped/C_94584382;Lnet/minecraft/unmapped/C_94584382;)Lnet/minecraft/unmapped/C_24654288;')),'POV picking does not check replay-world occlusion'
+camera=Class(mod.read('com/bridger/momentum/ReplayCamera.class'))
+mouse=next(a for n,_,a in camera.methods if n=='m_74052865')
+assert camera.has_call(mouse,camera.calls('com/bridger/momentum/ReplaySession','povLocked','()Z')),'POV does not suppress manual camera rotation'
+position=next(a for n,_,a in session.methods if n=='positionCamera')
+assert session.has_call(position,session.calls('com/bridger/momentum/ReplayTimeline','pose','()Lcom/bridger/momentum/ReplayData$Frame;')),'POV is not updated from recorded poses on every render'
+skin=next(a for n,_,a in camera.methods if n=='m_68930603')
+assert camera.has_call(skin,camera.calls('com/bridger/momentum/ReplayGhost','m_68930603','()Lnet/minecraft/unmapped/C_22168528;')),'Imported POV does not use the recorded actor skin'
 print('PASS:',checked,'native hooks/accessors, render finally, isolated gallery, tick-driven flight and shader/ability/resource regressions')

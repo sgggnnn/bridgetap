@@ -18,6 +18,9 @@ public class BridgeConfig {
     public static boolean textShadow = true;
     public static boolean showGainType = false;
     public static boolean chatOutput = false;
+    public static boolean showReplayInfo = true;
+    public static boolean useNoGayLabel = false;
+    public static String replaySort="NEWEST";
     public static final String[] COLOR_NAMES = {"Labels", "Coordinates", "Positive delta", "Negative delta", "Ticks", "Gain", "No Gain", "Header", "Background", "Border"};
     public static final String[] colors = {"b", "e", "a", "c", "7", "a", "e", "b", "0", "7"};
     public static String color(int part) { return "\u00a7" + colors[part]; }
@@ -51,12 +54,15 @@ public class BridgeConfig {
             textShadow = Boolean.parseBoolean(props.getProperty("textShadow", "true"));
             showGainType = Boolean.parseBoolean(props.getProperty("showGainType", "false"));
             chatOutput = Boolean.parseBoolean(props.getProperty("chatOutput", "false"));
+            showReplayInfo = Boolean.parseBoolean(props.getProperty("showReplayInfo", "true"));
+            useNoGayLabel = Boolean.parseBoolean(props.getProperty("useNoGayLabel", "false"));
+            replaySort=ReplaySort.parse(props.getProperty("replaySort","NEWEST")).name();
             for(int i=0;i<colors.length;i++){
                 String value=props.getProperty("color."+i,colors[i]).toLowerCase(java.util.Locale.US);
                 if(value.matches("[0-9a-f]"))colors[i]=value;
             }
             displayMode = props.getProperty("displayMode", "ALL").toUpperCase(java.util.Locale.US);
-            if (!displayMode.equals("ALL") && !displayMode.equals("COORDS") && !displayMode.equals("COORDS_ONLY") && !displayMode.equals("TICKS") && !displayMode.equals("TIME")) {
+            if (!displayMode.equals("ALL") && !displayMode.equals("COORDS") && !displayMode.equals("COORDS_ONLY") && !displayMode.equals("LAST_TURN") && !displayMode.equals("TICKS") && !displayMode.equals("TIME")) {
                 displayMode = "ALL";
             }
             tickOffset = parseOffset(props.getProperty("tickOffset", "-1"), -1);
@@ -86,6 +92,9 @@ public class BridgeConfig {
                 props.setProperty("textShadow", String.valueOf(textShadow));
                 props.setProperty("showGainType", String.valueOf(showGainType));
                 props.setProperty("chatOutput", String.valueOf(chatOutput));
+                props.setProperty("showReplayInfo", String.valueOf(showReplayInfo));
+                props.setProperty("useNoGayLabel", String.valueOf(useNoGayLabel));
+                props.setProperty("replaySort",replaySort);
                 for(int i=0;i<colors.length;i++)props.setProperty("color."+i,colors[i]);
                 props.setProperty("displayMode", displayMode);
                 props.setProperty("tickOffset", String.valueOf(tickOffset));

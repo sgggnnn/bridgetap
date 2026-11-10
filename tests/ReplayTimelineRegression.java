@@ -24,7 +24,7 @@ public class ReplayTimelineRegression {
   timeline.cycleSpeed();near(timeline.speed(),2,"2x playback");timeline.restart();timeline.advance(.0125);near(timeline.tick(),.5,"Playback speed changes time");
   timeline.seek(-200);near(timeline.tick(),0,"Rewind clamps at start");timeline.seek(200);near(timeline.tick(),1,"Forward clamps at end");
   Path path=Files.createTempDirectory("bridgetap-v2-").resolve("recording.btr");data.write(path);ReplayData read=ReplayData.read(path);
-  check(read.formatVersion==2&&read.identity.displayName.equals(who.displayName)&&read.identity.textureValue.equals(who.textureValue)&&read.identity.textureSignature.equals(who.textureSignature)&&read.identity.model.equals("slim"),"Identity, formatted rank and skin survive restart");
+  check(read.formatVersion==4&&read.identity.displayName.equals(who.displayName)&&read.identity.textureValue.equals(who.textureValue)&&read.identity.textureSignature.equals(who.textureSignature)&&read.identity.model.equals("slim"),"Identity, formatted rank and skin survive restart");
   check(read.identity.modelParts==95,"Configured skin layers survive restart");
   near(read.frames.get(0).bodyYaw,160,"Body yaw round trip");near(read.frames.get(0).swing,.5,"Arm animation round trip");
   check(read.frames.get(0).sneaking&&read.frames.get(0).onGround&&read.frames.get(0).itemDamage==2&&read.blocks.get(0).metadata==5&&read.dayTime==12345,"Pose, colored blocks and world time round trip");

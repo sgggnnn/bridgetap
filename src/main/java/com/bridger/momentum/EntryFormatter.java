@@ -4,6 +4,26 @@ import java.util.Locale;
 /** One formatter for chat and HUD: gain visibility is applied exactly once. */
 public final class EntryFormatter {
  private EntryFormatter(){}
+ public static java.util.List<String> lines(java.util.List<JumpEntry> entries){
+  java.util.List<String> result=new java.util.ArrayList<>();
+  if("LAST_TURN".equals(BridgeConfig.displayMode)){
+   JumpEntry last=null,turn=null;
+   for(JumpEntry entry:entries){
+    switch(entry.getType()){
+     case FLAT: case TAP: case FAIL_TAP: last=entry;break;
+     case TURN: turn=entry;break;
+     default: break;
+    }
+   }
+   if(last!=null)result.add(compact("Last",last));
+   if(turn!=null)result.add(compact("Turn",turn));
+  }else for(JumpEntry entry:entries){String line=format(entry);if(!line.isEmpty())result.add(line);}
+  return result;
+ }
+ private static String compact(String label,JumpEntry entry){
+  int dec=Math.floorMod((int)Math.round(entry.getDecimal()*1000),1000);
+  return BridgeConfig.color(0)+"\u00bb "+label+": "+BridgeConfig.color(1)+String.format(Locale.US,".%03d",dec);
+ }
  public static String format(JumpEntry entry){
   String mode=BridgeConfig.displayMode;
   int dec=Math.floorMod((int)Math.round(entry.getDecimal()*1000),1000);
@@ -24,6 +44,7 @@ public final class EntryFormatter {
   }
   if(BridgeConfig.showGainType&&entry.getGainType()!=null){
    String gain=entry.getGainType().replace("#", "").replace("No Gay", "No Gain");
+   if("No Gain".equals(gain)&&BridgeConfig.useNoGayLabel)gain="No Gay";
    line+=" "+BridgeConfig.color("Gain".equals(gain)?5:6)+"["+gain+"]";
   }
   return line;

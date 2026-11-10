@@ -64,7 +64,7 @@ public class BridgeHUD {
         if (displayMode.equals("TIME")) {
             String color = status == BridgeTracker.RunStatus.SUCCESS ? "\u00a7a" : status == BridgeTracker.RunStatus.FAILED ? "\u00a7c" : "\u00a7e";
             header = color + String.format(Locale.US, "Time: %.2fs", time);
-        } else if (displayMode.equals("COORDS") || displayMode.equals("COORDS_ONLY") || displayMode.equals("TICKS")) {
+        } else if (displayMode.equals("COORDS") || displayMode.equals("COORDS_ONLY") || displayMode.equals("LAST_TURN") || displayMode.equals("TICKS")) {
             header = "";
         } else if (status == BridgeTracker.RunStatus.SUCCESS) {
             header = String.format(Locale.US, "\u00a7aSuccess %.2fs %d jumps, axis: %s", time, jumpCount, axis);
@@ -75,10 +75,7 @@ public class BridgeHUD {
         }
 
         List<String> displayLines = new java.util.ArrayList<>();
-        if (!displayMode.equals("TIME")) for (JumpEntry entry : entries) {
-            String line = EntryFormatter.format(entry);
-            if (!line.isEmpty()) displayLines.add(line);
-        }
+        if (!displayMode.equals("TIME")) displayLines.addAll(EntryFormatter.lines(entries));
         if (header.isEmpty() && displayLines.isEmpty()) return;
 
         // Calculate box dimensions

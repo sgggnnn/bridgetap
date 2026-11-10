@@ -11,7 +11,7 @@ import org.lwjgl.opengl.GL11;
 /** Modal native Minecraft screen for editing BridgeTap HUD settings. */
 public class BridgeSettingsScreen extends C_85740840 {
     private static final int PANEL_WIDTH = 360;
-    private static final int PANEL_HEIGHT = 381;
+    private static final int PANEL_HEIGHT = 429;
 
     @Override
     public void m_93956703(int mouseX, int mouseY, float partialTicks) {
@@ -43,7 +43,9 @@ public class BridgeSettingsScreen extends C_85740840 {
         drawButton(x + 10, y + 264, PANEL_WIDTH - 20, 20, "Gain type: " + onOff(BridgeConfig.showGainType));
         drawButton(x + 10, y + 288, PANEL_WIDTH - 20, 20, "Coordinates output: " + (BridgeConfig.chatOutput ? "CHAT (end of run)" : "OVERLAY"));
         drawButton(x + 10, y + 312, PANEL_WIDTH - 20, 20, "Overlay colors...");
-        drawButton(x + 130, y + 351, 100, 20, "Done (Esc)");
+        drawButton(x + 10, y + 336, PANEL_WIDTH - 20, 20, "Replay info: " + onOff(BridgeConfig.showReplayInfo));
+        drawButton(x + 10, y + 360, PANEL_WIDTH - 20, 20, "No gain label: " + (BridgeConfig.useNoGayLabel ? "NO GAY" : "NO GAIN"));
+        drawButton(x + 130, y + 399, 100, 20, "Done (Esc)");
         GL11.glPopMatrix();
         C_37925375.m_23590488();
     }
@@ -98,7 +100,11 @@ public class BridgeSettingsScreen extends C_85740840 {
         } else if (inside(mouseX, mouseY, x + 10, y + 312, PANEL_WIDTH - 20, 20)) {
             Minecraft.m_20213497().m_52715402(new BridgeColorsScreen());
             return;
-        } else if (inside(mouseX, mouseY, x + 130, y + 351, 100, 20)) {
+        } else if (inside(mouseX, mouseY, x + 10, y + 336, PANEL_WIDTH - 20, 20)) {
+            BridgeConfig.showReplayInfo = !BridgeConfig.showReplayInfo;
+        } else if (inside(mouseX, mouseY, x + 10, y + 360, PANEL_WIDTH - 20, 20)) {
+            BridgeConfig.useNoGayLabel = !BridgeConfig.useNoGayLabel;
+        } else if (inside(mouseX, mouseY, x + 130, y + 399, 100, 20)) {
             close();
             return;
         } else {
@@ -157,7 +163,8 @@ public class BridgeSettingsScreen extends C_85740840 {
     private static void cycleDisplayMode() {
         if (BridgeConfig.displayMode.equals("ALL")) BridgeConfig.displayMode = "COORDS";
         else if (BridgeConfig.displayMode.equals("COORDS")) BridgeConfig.displayMode = "COORDS_ONLY";
-        else if (BridgeConfig.displayMode.equals("COORDS_ONLY")) BridgeConfig.displayMode = "TICKS";
+        else if (BridgeConfig.displayMode.equals("COORDS_ONLY")) BridgeConfig.displayMode = "LAST_TURN";
+        else if (BridgeConfig.displayMode.equals("LAST_TURN")) BridgeConfig.displayMode = "TICKS";
         else if (BridgeConfig.displayMode.equals("TICKS")) BridgeConfig.displayMode = "TIME";
         else BridgeConfig.displayMode = "ALL";
     }

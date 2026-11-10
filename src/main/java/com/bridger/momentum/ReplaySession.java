@@ -27,7 +27,11 @@ public final class ReplaySession {
  private final Set<Long> chunks=new HashSet<>();
  private int sceneTick=-1,sourceSlot;
  private boolean rendering;
+ private boolean followPov;
+ private boolean previousSneak;
+ private ReplayControls.Center centerState;
  private long lastFrame=System.nanoTime(),lastAction;
+ private long lastActionSequence;
  private C_24384787 previousRenderer;
  private C_16190149 previousParticles;
  private C_34267874 previousControls;
@@ -56,14 +60,9 @@ public final class ReplaySession {
   ghost=new ReplayGhost(world,data.identity);ghost.apply(data.frames.get(0));
   syncScene();world.m_34714727(-198954,ghost);
   resetCamera();
-  camera.f_29439708.f_35249023[0]=tool(280,"\u00a7eBackward -0.05 seconds");
-  camera.f_29439708.f_35249023[1]=tool(341,"\u00a7aPause / Play");
-  camera.f_29439708.f_35249023[2]=tool(369,"\u00a7eForward +0.05 seconds");
-  camera.f_29439708.f_35249023[3]=tool(347,"\u00a7bPlayback speed");
-  camera.f_29439708.f_35249023[4]=tool(262,"\u00a7eRestart");
-  camera.f_29439708.f_35249023[5]=tool(345,"\u00a7bReturn camera to ghost");
-  camera.f_29439708.f_35249023[6]=tool(381,"\u00a7bInspect ghost (pause + exact POV)");
-  camera.f_29439708.f_35249023[8]=tool(166,"\u00a7cExit replay");
+  Arrays.fill(camera.f_29439708.f_35249023,null);
+  for(int slot:ReplayControls.slots())camera.f_29439708.f_35249023[slot]=tool(ReplayControls.item(slot,timeline),ReplayControls.label(slot,timeline));
+  centerState=ReplayControls.center(timeline);
   camera.f_29439708.f_13682807=1;
   // A renderer owns worker threads and large native buffers. Reuse the worker
   // pool, and release world-specific buffers when leaving each replay.
@@ -75,10 +74,12 @@ public final class ReplaySession {
  private static C_88708284 tool(int id,String name){return new C_88708284(C_98888256.m_06629599(id)).m_12689347(name);}
  public static boolean active(){return current!=null;}
  public static boolean rendering(){return current!=null&&current.rendering;}
+ public static boolean povLocked(){return current!=null&&current.followPov;}
+ public static ReplayGhost povActor(){return povLocked()?current.ghost:null;}
  public static C_57778754 realPlayer(){return current==null?Minecraft.m_20213497().f_28396371:current.player;}
  public static boolean start(RunHistory.Run run,ReplayData data){
   Minecraft mc=Minecraft.m_20213497();if(mc.f_26407825==null||mc.f_28396371==null)return false;
-  stop();current=new ReplaySession(mc,run,data);mc.m_52715402(null);status("\u00a7aPlay");return true;
+  stop();current=new ReplaySession(mc,run,data);current.lastActionSequence=BridgeTelemetry.actionSequence();mc.m_52715402(null);status("\u00a7aPlay");return true;
  }
  public static void stop(){
   ReplaySession session=current;if(session==null)return;
@@ -110,10 +111,13 @@ public final class ReplaySession {
    Minecraft mc=Minecraft.m_20213497();C_76792751 keys=mc.f_58088711;
    if(mc.f_70816363==null&&mc.f_92501186){
     s.selectHotbar(keys);
+    boolean sneak=down(keys.f_89071996);
+    if(s.followPov&&sneak&&!s.previousSneak){s.resetCamera();status("\u00a7bFree camera");}
+    s.previousSneak=sneak;
     double forward=s.movementCaptured?s.forward:axis(keys.f_15607202,keys.f_46759128);
     double right=s.movementCaptured?s.right:axis(keys.f_25268871,keys.f_20678369);
     double up=s.movementCaptured?(s.jumping?1:0)-(s.sneaking?1:0):axis(keys.f_94470987,keys.f_89071996);
-    s.movement.step(.05,s.camera.f_80130373,forward,right,up,down(keys.f_50204069));
+    if(!s.followPov)s.movement.step(.05,s.camera.f_80130373,forward,right,up,down(keys.f_50204069));
    }else s.movement.step(.05,s.camera.f_80130373,0,0,0,false);
    s.guiTick=true;
   }
@@ -128,6 +132,7 @@ public final class ReplaySession {
   if(mc.f_26407825!=s.source||mc.f_28396371!=s.player){stop();return;}
   long now=System.nanoTime();double dt=Math.min(.1,(now-s.lastFrame)/1e9);s.lastFrame=now;
   if(mc.f_70816363==null&&mc.f_92501186)s.timeline.advance(dt);
+  s.updateCenter();
   s.positionCamera(partial);
   s.syncScene();ReplayData.Frame pose=s.timeline.pose();s.ghost.apply(pose);
   s.ensureChunk((int)Math.floor(pose.x)>>4,(int)Math.floor(pose.z)>>4);
@@ -142,7 +147,7 @@ public final class ReplaySession {
   ((ReplayContextAccessor)mc).bridgetap$setRenderCamera(s.camera);mc.f_58088711.f_33865429=0;mc.m_64046137().m_72442377(true);
   ItemInHandAccessor hand=(ItemInHandAccessor)mc.m_52934152();
   s.previousHand=hand.bridgetap$getItem();s.previousHandHeight=hand.bridgetap$getHeight();s.previousLastHandHeight=hand.bridgetap$getLastHeight();
-  hand.bridgetap$setItem(s.camera.f_29439708.m_27760697());hand.bridgetap$setHeight(1);hand.bridgetap$setLastHeight(1);
+  hand.bridgetap$setItem(s.followPov?s.ghost.f_29439708.m_27760697():s.camera.f_29439708.m_27760697());hand.bridgetap$setHeight(1);hand.bridgetap$setLastHeight(1);
   if(s.guiTick){s.gui.m_74507790();s.guiTick=false;}
  }
  public static void endRender(){
@@ -155,9 +160,19 @@ public final class ReplaySession {
  private static boolean down(C_23708450 key){return key.m_70603120();}
  private static double axis(C_23708450 positive,C_23708450 negative){return (down(positive)?1:0)-(down(negative)?1:0);}
  private void selectHotbar(C_76792751 keys){
-  for(int i=0;i<Math.min(9,keys.f_81621289.length);i++)if(down(keys.f_81621289[i]))camera.f_29439708.f_13682807=i;
+  for(int i:ReplayControls.slots())if(i<keys.f_81621289.length&&down(keys.f_81621289[i]))camera.f_29439708.f_13682807=i;
  }
  private void positionCamera(float partial){
+  if(followPov){
+   ReplayData.Frame f=timeline.pose();
+   camera.m_12877971(f.x,f.y,f.z,f.yaw,f.pitch);camera.f_74900774=f.yaw;camera.f_45219594=f.pitch;
+   camera.f_09368719=camera.f_59999765=f.x;camera.f_93723721=camera.f_90348373=f.y;camera.f_84066837=camera.f_88346412=f.z;
+   camera.f_92990329.f_28813338=f.sneaking;camera.m_22136189(f.sneaking);camera.f_47825615=f.onGround;
+   camera.f_67244135=camera.f_19026405=f.swing;
+   if(f.stats!=null){camera.f_24826402=f.stats.vx;camera.f_35148123=f.stats.vy;camera.f_21201587=f.stats.vz;}
+   camera.f_67908378=camera.f_11999391=f.yaw;camera.f_96860657=camera.f_67640190=f.pitch;camera.f_95719371=true;
+   return;
+  }
   double x=movement.x(partial),y=movement.y(partial),z=movement.z(partial);
   camera.m_70517412(x,y,z);
   camera.f_95719371=true;
@@ -168,31 +183,55 @@ public final class ReplaySession {
  public static boolean scroll(C_87542771 inventory,int delta){
   ReplaySession s=current;if(s==null||inventory!=s.player.f_29439708)return false;
   if(delta==0)return true;
-  s.camera.f_29439708.f_13682807=Math.floorMod(s.camera.f_29439708.f_13682807-(delta>0?1:-1),9);return true;
+  s.camera.f_29439708.f_13682807=ReplayControls.scroll(s.camera.f_29439708.f_13682807,delta);return true;
  }
- public static void action(){
-  ReplaySession s=current;if(s==null)return;long now=System.nanoTime();if(now-s.lastAction<120000000)return;s.lastAction=now;
+ public static void action(boolean attack){
+  ReplaySession s=current;if(s==null)return;
   s.selectHotbar(Minecraft.m_20213497().f_58088711);
   int slot=s.camera.f_29439708.f_13682807;
-  if(slot==0||slot==2){s.timeline.seek(s.timeline.tick()+(slot==0?-1:1));status(String.format(Locale.US,"\u00a7e%s %+.2f seconds",slot==0?"Backward":"Forward",slot==0?-.05:.05));}
-  if(slot==1){s.timeline.toggle();status(s.timeline.playing()?"\u00a7aPlay":"\u00a7ePause");}
-  if(slot==3){s.timeline.cycleSpeed();status("\u00a7bSpeed: "+s.timeline.speed()+"x");}
-  if(slot==4){s.timeline.restart();status("\u00a7aRestart");}
-  if(slot==5){s.resetCamera();status("\u00a7bCamera reset");}
-  if(slot==6){s.inspectGhost();status("\u00a7bGhost POV - paused at recorded tick (free flight)");}
-  if(slot==8)exit();
+  long sequence=BridgeTelemetry.actionSequence();boolean fresh=sequence!=s.lastActionSequence;
+  if(slot!=ReplayControls.BACK&&slot!=ReplayControls.FORWARD&&!fresh)return;
+  long now=System.nanoTime();if(now-s.lastAction<120000000)return;s.lastAction=now;s.lastActionSequence=sequence;
+  if(slot==ReplayControls.EXIT){exit();return;}
+  if(attack&&fresh&&!s.followPov&&s.aimsAtGhost()){s.setPov(true);status("\u00a7bPOV - Sneak to return to free camera");return;}
+  if(slot==ReplayControls.BACK||slot==ReplayControls.FORWARD){int step=s.timeline.skip(slot==ReplayControls.BACK?-1:1);status(String.format(Locale.US,"\u00a7e%s %+.2f seconds",slot==ReplayControls.BACK?"Backward":"Forward",(slot==ReplayControls.BACK?-step:step)/20.0));}
+  if(slot==ReplayControls.CENTER){
+   if(s.timeline.finished()){s.timeline.restart();status("\u00a7aReplay from beginning");}
+   else{s.timeline.toggle();status(s.timeline.playing()?"\u00a7aPlay":"\u00a7ePause");}
+  }
+  if(slot==ReplayControls.SPEED){
+   s.timeline.cycleSpeed();
+   String label=ReplayControls.label(ReplayControls.SPEED,s.timeline);
+   s.camera.f_29439708.f_35249023[ReplayControls.SPEED]=tool(ReplayControls.item(ReplayControls.SPEED,s.timeline),label);
+   status(label);
+  }
+  s.updateCenter();
+ }
+ private void updateCenter(){
+  ReplayControls.Center state=ReplayControls.center(timeline);
+  if(state!=centerState){camera.f_29439708.f_35249023[ReplayControls.CENTER]=tool(ReplayControls.item(ReplayControls.CENTER,timeline),ReplayControls.label(ReplayControls.CENTER,timeline));centerState=state;}
+ }
+ private boolean aimsAtGhost(){
+  double x=camera.f_78826675,y=camera.f_31030949+camera.m_75246573(),z=camera.f_97691941;
+  double distance=ReplayTargeting.hit(timeline.pose(),x,y,z,camera.f_80130373,camera.f_03549461,64);
+  if(!Double.isFinite(distance))return false;if(distance<.02)return true;
+  double[] dir=ReplayTargeting.direction(camera.f_80130373,camera.f_03549461);
+  C_94584382 origin=new C_94584382(x,y,z);
+  C_24654288 obstacle=world.m_82559274(origin,new C_94584382(x+dir[0]*(distance-.02),y+dir[1]*(distance-.02),z+dir[2]*(distance-.02)));
+  return obstacle==null||(obstacle.f_94083482!=null&&origin.m_74339345(obstacle.f_94083482)>=distance-.03);
  }
  private void resetCamera(){
+  followPov=false;clearPose();
   ReplayData.Frame f=timeline.pose();double a=Math.toRadians(f.yaw+100),x=f.x+Math.cos(a)*7,z=f.z+Math.sin(a)*7;
   float yaw=(float)Math.toDegrees(Math.atan2(-(f.x-x),f.z-z));camera.m_12877971(x,f.y+4,z,yaw,22);
   camera.f_74900774=yaw;camera.f_45219594=22;
   movement.reset(x,f.y+4,z);positionCamera(1);
  }
- private void inspectGhost(){
-  timeline.pause();timeline.seek(Math.floor(timeline.tick()));
-  ReplayData.Frame f=timeline.pose();
-  camera.m_12877971(f.x,f.y,f.z,f.yaw,f.pitch);camera.f_74900774=f.yaw;camera.f_45219594=f.pitch;
-  movement.reset(f.x,f.y,f.z);positionCamera(1);
+ private void clearPose(){camera.f_92990329.f_28813338=false;camera.m_22136189(false);camera.f_67244135=camera.f_19026405=0;camera.f_24826402=camera.f_35148123=camera.f_21201587=0;}
+ private void setPov(boolean follow){
+  if(!follow){movement.reset(camera.f_78826675,camera.f_31030949,camera.f_97691941);clearPose();}
+  followPov=follow;positionCamera(1);
+  previousSneak=down(Minecraft.m_20213497().f_58088711.f_89071996);
  }
  public static boolean hideGhostModel(C_23527099 actor){
   ReplaySession s=current;
@@ -213,15 +252,14 @@ public final class ReplaySession {
  }
  private void ensureChunk(int x,int z){long chunk=((long)x<<32)^(z&0xFFFFFFFFL);if(chunks.add(chunk))world.m_66086785(x,z,true);}
  public static void renderHud(){
-  ReplaySession s=current;if(s==null||!s.rendering)return;Minecraft mc=Minecraft.m_20213497();
-  C_43718703 scaled=new C_43718703(mc);
-  String label=String.format(Locale.US,"\u00a7bReplay \u00a7f%.2f / %.2fs \u00a77| %.2fx | %s",s.timeline.seconds(),s.timeline.duration(),s.timeline.speed(),s.timeline.playing()?"Play":"Paused");
-  ReplayData.Frame actor=s.timeline.pose();
-  String coords=String.format(Locale.US,"\u00a7eGhost XYZ: \u00a7f%.4f  %.4f  %.4f",actor.x,actor.y,actor.z);
-  String hint="\u00a77Jump/Sneak: vertical | Sprint: fast | Slot 7: inspect";
-  int y=scaled.m_16103615()-118;
-  mc.f_21497584.m_11445413(label,(scaled.m_39119333()-mc.f_21497584.m_09235706(label))/2,y,0xFFFFFF,true);
-  mc.f_21497584.m_11445413(coords,(scaled.m_39119333()-mc.f_21497584.m_09235706(coords))/2,y+12,0xFFFFFF,true);
-  mc.f_21497584.m_11445413(hint,(scaled.m_39119333()-mc.f_21497584.m_09235706(hint))/2,y+24,0xFFFFFF,true);
+  ReplaySession s=current;if(s==null||!s.rendering||!BridgeConfig.showReplayInfo)return;
+  List<String> lines=new ArrayList<>();
+  lines.add(String.format(Locale.US,"\u00a7b%s \u00a7f%.2f / %.2fs \u00a77| Tick %d/%d | %.2fx | %s",s.run.displayName(),s.timeline.seconds(),s.timeline.duration(),(int)s.timeline.tick(),s.data.frames.size()-1,s.timeline.speed(),s.timeline.playing()?"Play":"Paused"));
+  ReplayData.Frame actor=s.timeline.sample();
+  lines.addAll(BridgeTelemetryHUD.lines(actor.x,actor.y,actor.z,actor.stats,"Ghost"));
+  BridgeGeometry.Result dimensions=s.data.geometry();
+  if(dimensions.available)lines.add(String.format(Locale.US,"\u00a77Platform gap: %.2fb | Height: %+.2fb",dimensions.gap,dimensions.rise));
+  lines.add("\u00a77Sticks: "+(s.timeline.playing()?"1 second":"1 tick")+" | "+(s.followPov?"POV: Sneak to leave":"Left-click player: POV"));
+  BridgeTelemetryHUD.draw(lines);
  }
 }

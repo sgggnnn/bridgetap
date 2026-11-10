@@ -13,6 +13,9 @@ public class RunHistory {
   public final long created;
   public final List<String> details;
   public final ReplayData replay;
+  private String name="";
+  public String name(){return name;}
+  public String displayName(){return name.isEmpty()?"Bridge replay":name;}
   public String replayId() {
    String value=new java.math.BigInteger(id.replace("-",""),16).toString(36);
    while(value.length()<25)value="0"+value;
@@ -46,13 +49,7 @@ public class RunHistory {
    for(Path file:files) {
     if(Files.size(file)>1024*1024) continue;
     try(InputStream in=Files.newInputStream(file)) {
-     Properties p=new Properties();p.load(in);
-     UUID.fromString(p.getProperty("id"));
-     int count=Integer.parseInt(p.getProperty("count","0"));
-     if(count<0 || count>2000) continue;
-     List<String> details=new ArrayList<>();
-     for(int i=0;i<count;i++) details.add(p.getProperty("line."+i,"").replace("No Gay","No Gain"));
-     runs.add(new Run(p.getProperty("id"),p.getProperty("status"),Double.parseDouble(p.getProperty("time")),Integer.parseInt(p.getProperty("jumps")),p.getProperty("axis"),Long.parseLong(p.getProperty("created")),details));
+     Properties p=new Properties();p.load(in);runs.add(parse(p,null));
     } catch(IllegalArgumentException | NullPointerException ex) {System.err.println("[BridgeTap] Invalid saved run: "+file);}
    }
   }
@@ -62,14 +59,57 @@ public class RunHistory {
   UUID.fromString(run.id);
   Files.createDirectories(folder);Path dest=folder.resolve(run.id+".properties");
   if(Files.exists(dest))return;
-  Properties p=new Properties();p.setProperty("id",run.id);p.setProperty("status",run.status);p.setProperty("time",String.valueOf(run.time));p.setProperty("jumps",String.valueOf(run.jumps));p.setProperty("axis",run.axis);p.setProperty("created",String.valueOf(run.created));p.setProperty("count",String.valueOf(run.details.size()));
-  for(int i=0;i<run.details.size();i++)p.setProperty("line."+i,run.details.get(i));
+  Properties p=metadata(run);
   Path replayFile=folder.resolve(run.id+".btr");
   if(run.replay!=null){
    Files.deleteIfExists(replayFile);
    run.replay.write(replayFile);
   }
   try(OutputStream out=Files.newOutputStream(dest,StandardOpenOption.CREATE_NEW,StandardOpenOption.WRITE)){p.store(out,"BridgeTap run summary and replay");}
+ }
+ public static String validName(String name){
+  String value=name.trim();if(value.length()>64)throw new IllegalArgumentException("Name: maximum 64 characters");
+  for(int i=0;i<value.length();i++)if(value.charAt(i)<32||value.charAt(i)==127||value.charAt(i)=='\u00a7')throw new IllegalArgumentException("Name contains control codes");
+  return value;
+ }
+ private static Properties metadata(Run run){
+  Properties p=new Properties();p.setProperty("id",run.id);p.setProperty("status",run.status);p.setProperty("time",String.valueOf(run.time));p.setProperty("jumps",String.valueOf(run.jumps));p.setProperty("axis",run.axis);p.setProperty("created",String.valueOf(run.created));p.setProperty("count",String.valueOf(run.details.size()));p.setProperty("name",run.name);
+  for(int i=0;i<run.details.size();i++)p.setProperty("line."+i,run.details.get(i));return p;
+ }
+ private static Run parse(Properties p,ReplayData replay){
+  String id=UUID.fromString(p.getProperty("id")).toString(),status=p.getProperty("status"),axis=p.getProperty("axis");
+  double time=Double.parseDouble(p.getProperty("time"));int jumps=Integer.parseInt(p.getProperty("jumps")),count=Integer.parseInt(p.getProperty("count","0"));long created=Long.parseLong(p.getProperty("created"));
+  if((!"SUCCESS".equals(status)&&!"FAILED".equals(status))||(!"X".equals(axis)&&!"Z".equals(axis))||!Double.isFinite(time)||time<0||jumps<0||jumps>1000000||created<0||count<0||count>2000)throw new IllegalArgumentException("Invalid replay metadata");
+  List<String> details=new ArrayList<>();for(int i=0;i<count;i++)details.add(p.getProperty("line."+i,"").replace("No Gay","No Gain"));
+  Run run=new Run(id,status,time,jumps,axis,created,details,replay);run.name=validName(p.getProperty("name",""));return run;
+ }
+ public void rename(Run run,String name)throws IOException{
+  String value=validName(name);save(run);Properties p=metadata(run);p.setProperty("name",value);
+  Path temp=Files.createTempFile(folder,"rename-",".tmp");
+  try{
+   try(OutputStream out=Files.newOutputStream(temp)){p.store(out,"BridgeTap named replay");}
+   try{Files.move(temp,folder.resolve(run.id+".properties"),StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.ATOMIC_MOVE);}
+   catch(AtomicMoveNotSupportedException ex){Files.move(temp,folder.resolve(run.id+".properties"),StandardCopyOption.REPLACE_EXISTING);}
+   run.name=value;for(Run recentRun:recent)if(recentRun.id.equals(run.id))recentRun.name=value;
+  }finally{Files.deleteIfExists(temp);}
+ }
+ public Path exportsFolder(){return folder.getParent().resolve("exports");}
+ public Path importsFolder(){return folder.getParent().resolve("imports");}
+ public Path exportReplay(Run run)throws IOException{
+  ReplayData data=replay(run);if(data==null)throw new IOException("This summary has no replay");
+  Files.createDirectories(exportsFolder());String base=run.displayName().replaceAll("[^a-zA-Z0-9_-]","_");if(base.length()>32)base=base.substring(0,32);
+  Path file=exportsFolder().resolve(base+"-"+run.id+".btreplay");int suffix=2;
+  while(Files.exists(file))file=exportsFolder().resolve(base+"-"+run.id+"-"+(suffix++)+".btreplay");
+  ReplayArchive.write(file,metadata(run),data);return file;
+ }
+ public Run importReplay(Path file)throws IOException{
+  ReplayArchive.Content content=ReplayArchive.read(file);Run imported;
+  try{imported=parse(content.metadata,content.replay);}catch(IllegalArgumentException|NullPointerException ex){throw new IOException("Invalid replay metadata",ex);}
+  final String id=imported.id;
+  if(Files.exists(folder.resolve(id+".properties"))||recent.stream().anyMatch(r->r.id.equals(id))){
+   Run copy=new Run(UUID.randomUUID().toString(),imported.status,imported.time,imported.jumps,imported.axis,imported.created,imported.details,imported.replay);copy.name=imported.name;imported=copy;
+  }
+  save(imported);recent.add(0,imported);if(recent.size()>10)recent.remove(10);return imported;
  }
  public ReplayData replay(Run run)throws IOException {
   if(run.replay!=null)return run.replay;

@@ -31,6 +31,7 @@ public final class ReplayGhost extends C_54810664 {
   f_67244135=f_19026405=f.swing;f_47083104=f_18020014=f.walkSpeed;f_00715684=f.walkProgress;
   f_99890177=f_22466577=f.x;f_62909408=f_60272612=f.y;f_49011524=f_22361063=f.z;
   f_47825615=f.onGround;m_22136189(f.sneaking);
+  if(f.stats!=null){f_24826402=f.stats.vx;f_35148123=f.stats.vy;f_21201587=f.stats.vz;}
   C_88708284 held=f_29439708.f_35249023[0];
   if(f.itemId==0)f_29439708.f_35249023[0]=null;
   else if(held==null||C_98888256.m_18004261(held.m_23235460())!=f.itemId||held.m_30227787()!=f.itemDamage){

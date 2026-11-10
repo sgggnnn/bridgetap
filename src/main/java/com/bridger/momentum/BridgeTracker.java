@@ -38,8 +38,7 @@ public class BridgeTracker {
         java.util.List<String> lines = new java.util.ArrayList<>();
         for (JumpEntry entry : entries) lines.add(entry.getFormattedLine());
         HISTORY.add(status.name(), currentBridgeTime, getJumpCount(), currentAxis, lines, ReplayRecorder.snapshot());
-        if (BridgeConfig.chatOutput) for (JumpEntry entry : entries) {
-            String line=EntryFormatter.format(entry);
+        if (BridgeConfig.chatOutput) for (String line : EntryFormatter.lines(entries)) {
             if(!line.isEmpty())sendMessage("\u00a7b[BridgeTap] " + line);
         }
         historyCaptured = true;
@@ -309,7 +308,6 @@ public class BridgeTracker {
             previousVelocityY = player.f_35148123;
             return;
         }
-        if (isBridging) ReplayRecorder.sample();
         if (isBridging && !player.f_47825615 && player.f_09676126 && (previousVelocityY > 0 || (long) currentTick - lastJumpSignalTick == 1) && !entries.isEmpty()) {
             double c = currentAxis.equals("X") ? player.f_78826675 : player.f_97691941;
             double d = Math.abs(c) - Math.floor(Math.abs(c));
@@ -422,9 +420,6 @@ public class BridgeTracker {
         double pDec = pAbs - Math.floor(pAbs);
         entries.add(new JumpEntry("Plates", pCoord, pDec, Double.NaN, 0, JumpEntry.EntryType.PLATES));
 
-        int decP1 = (int) Math.round(p1Dec * 1000.0) % 1000;
-        int decP = (int) Math.round(pDec * 1000.0) % 1000;
-        sendMessage(String.format(Locale.US, "\u00a7a[BridgeTap] Success! Time: \u00a7e%.2fs \u00a7a| Plates-1t: \u00a7e.%03d \u00a7a| Plates: \u00a7e.%03d", currentBridgeTime, decP1, decP));
     }
 
     private static void finalizeFlat(double duration) {

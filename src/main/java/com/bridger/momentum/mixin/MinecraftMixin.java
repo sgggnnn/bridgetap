@@ -4,6 +4,10 @@ import com.bridger.momentum.BridgeHUD;
 import com.bridger.momentum.BridgeTracker;
 import com.bridger.momentum.ReplaySession;
 import com.bridger.momentum.BridgeHistoryScreen;
+import com.bridger.momentum.BridgeTelemetry;
+import com.bridger.momentum.ReplayRecorder;
+import org.lwjgl.input.Mouse;
+import org.lwjgl.input.Keyboard;
 import net.minecraft.unmapped.*;
 import net.minecraft.client.Minecraft;
 import org.spongepowered.asm.mixin.Mixin;
@@ -17,13 +21,25 @@ public class MinecraftMixin {
 
     @Inject(method = "m_67975642", at = @At("HEAD"))
     private void bridgetap$onRunTick(CallbackInfo ci) {
+        BridgeTelemetry.beginTick();
         ReplaySession.tickHead();
         BridgeHUD.onClientTick();
         BridgeTracker.onTick((Minecraft) (Object) this);
     }
 
     @Inject(method = "m_67975642", at = @At("RETURN"))
-    private void bridgetap$afterTick(CallbackInfo ci) { ReplaySession.tickTail(); }
+    private void bridgetap$afterTick(CallbackInfo ci) {
+        ReplaySession.tickTail();
+        if(!ReplaySession.active() && BridgeTracker.isBridging())ReplayRecorder.sample();
+    }
+
+    @Inject(method="m_67975642",at=@At(value="INVOKE",target="Lorg/lwjgl/input/Mouse;getEventButton()I",ordinal=0))
+    private void bridgetap$rawMouse(CallbackInfo ci) {
+        int button=Mouse.getEventButton();if(button>=0)BridgeTelemetry.input(button-100,Mouse.getEventButtonState());
+    }
+
+    @Inject(method="m_67975642",at=@At(value="INVOKE",target="Lorg/lwjgl/input/Keyboard;getEventKey()I",ordinal=0))
+    private void bridgetap$rawKeyboard(CallbackInfo ci) { BridgeTelemetry.input(Keyboard.getEventKey(),Keyboard.getEventKeyState()); }
 
     @Redirect(method = "m_97212553", at = @At(value = "INVOKE", target = "Lnet/minecraft/unmapped/C_03140863;m_08357947(FJ)V"))
     private void bridgetap$renderReplay(C_03140863 renderer,float partial,long deadline) {
@@ -31,9 +47,13 @@ public class MinecraftMixin {
         finally { ReplaySession.endRender(); }
     }
 
-    @Inject(method = {"m_16966855", "m_61857590"}, at = @At("HEAD"), cancellable = true)
-    private void bridgetap$replayAction(CallbackInfo ci) {
-        if (ReplaySession.active()) { ReplaySession.action(); ci.cancel(); }
+    @Inject(method = "m_16966855", at = @At("HEAD"), cancellable = true)
+    private void bridgetap$replayAttack(CallbackInfo ci) {
+        if (ReplaySession.active()) { ReplaySession.action(true); ci.cancel(); }
+    }
+    @Inject(method = "m_61857590", at = @At("HEAD"), cancellable = true)
+    private void bridgetap$replayUse(CallbackInfo ci) {
+        if (ReplaySession.active()) { ReplaySession.action(false); ci.cancel(); }
     }
 
     @Inject(method = "m_77225877", at = @At("HEAD"), cancellable = true)
