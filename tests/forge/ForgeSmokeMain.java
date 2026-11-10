@@ -25,7 +25,7 @@ public final class ForgeSmokeMain {
             hooks+=count;
             System.out.println("PASS Forge transformed "+target+" ("+count+" BridgeTap methods)");
         }
-        for(String name:Arrays.asList("ReplaySession","ReplayCamera","ReplayGhost","BridgeHistoryScreen","BridgeSettingsScreen","ReplayRecorder")) {
+        for(String name:Arrays.asList("ReplaySession","ReplayCamera","ReplayGhost","BridgeHistoryScreen","BridgeSettingsScreen","BridgeColorsScreen","BridgeLayoutScreen","BridgeScreen","ReplayInputOverlay","ReplayRecorder")) {
             Class<?> type=Class.forName("com.bridger.momentum."+name,false,Launch.classLoader);
             type.getDeclaredMethods();type.getDeclaredConstructors();
         }

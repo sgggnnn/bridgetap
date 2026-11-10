@@ -9,7 +9,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
-@Mod(modid="bridgetap", name="BridgeTap", version="1.4.5", clientSideOnly=true,
+@Mod(modid="bridgetap", name="BridgeTap", version="1.5.0", clientSideOnly=true,
      acceptedMinecraftVersions="[1.8.9]", acceptableRemoteVersions="*")
 public final class BridgeTapForge {
     @Mod.EventHandler

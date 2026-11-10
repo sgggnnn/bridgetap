@@ -63,9 +63,9 @@ public class MinecraftMixin {
     private void bridgetap$noPicking(CallbackInfo ci) { if (ReplaySession.active()) ci.cancel(); }
 
     @Inject(method = "m_52715402", at = @At("HEAD"), cancellable = true)
-    private void bridgetap$exitToGallery(C_85740840 screen,CallbackInfo ci) {
+    private void bridgetap$keepReplayOpen(C_85740840 screen,CallbackInfo ci) {
         if (ReplaySession.active() && (screen instanceof C_55401126 || screen instanceof C_87711245)) {
-            ReplaySession.exit(); ci.cancel();
+            ci.cancel();
         }
     }
 

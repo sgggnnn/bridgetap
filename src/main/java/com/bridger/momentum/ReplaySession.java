@@ -257,7 +257,16 @@ public final class ReplaySession {
  }
  private void ensureChunk(int x,int z){long chunk=((long)x<<32)^(z&0xFFFFFFFFL);if(chunks.add(chunk))world.m_66086785(x,z,true);}
  public static void renderHud(){
-  ReplaySession s=current;if(s==null||!s.rendering||!BridgeConfig.showReplayInfo)return;
+  ReplaySession s=current;if(s==null||!s.rendering)return;
+  if(BridgeConfig.showReplayInputs){
+   Minecraft mc=Minecraft.m_20213497();C_43718703 window=new C_43718703(mc);
+   int height=ReplayInputOverlay.height(s.timeline.sample().stats);
+   float scale=(float)Math.min(BridgeConfig.inputHudScale,Math.min((window.m_39119333()-8f)/76,(window.m_16103615()-8f)/height));
+   int x=OverlayPlacement.clamp(BridgeConfig.inputHudX,(int)Math.ceil(76*scale),window.m_39119333());
+   int y=OverlayPlacement.clamp(BridgeConfig.inputHudY,(int)Math.ceil(height*scale),window.m_16103615());
+   ReplayInputOverlay.paint(new ScaledUiCanvas(new MinecraftUiCanvas(mc.f_21497584),x,y,scale),0,0,s.timeline.sample().stats);
+  }
+  if(!BridgeConfig.showReplayInfo)return;
   List<String> lines=new ArrayList<>();
   lines.add(String.format(Locale.US,"\u00a7b%s \u00a7f%.2f / %.2fs \u00a77| Tick %d/%d | %.2fx | %s",s.run.displayName(),s.timeline.seconds(),s.timeline.duration(),(int)s.timeline.tick(),s.timeline.lastTick(),s.timeline.speed(),s.timeline.playing()?"Play":"Paused"));
   ReplayData.Frame actor=s.timeline.sample();

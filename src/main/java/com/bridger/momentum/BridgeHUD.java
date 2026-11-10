@@ -6,6 +6,7 @@ import net.minecraft.unmapped.C_29058632;
 import net.minecraft.unmapped.C_23708450;
 import net.minecraft.unmapped.C_37925375;
 import net.minecraft.unmapped.C_97866173;
+import net.minecraft.unmapped.C_43718703;
 
 import java.util.List;
 import java.util.Locale;
@@ -30,18 +31,20 @@ public class BridgeHUD {
 
         // Consume the press even with a screen open; never trigger the UI while typing in chat.
         boolean pressed = settingsKey.m_37810647();
-        if (pressed && mc.f_70816363 == null) openSettings();
+        if (pressed && mc.f_70816363 == null && !ReplaySession.active()) openSettings();
     }
 
     public static void openSettings() {
+        if (ReplaySession.active()) return;
         Minecraft mc = Minecraft.m_20213497();
-        if (mc != null && mc.f_28396371 != null) { ReplaySession.stop(); mc.m_52715402(new BridgeHistoryScreen()); }
+        if (mc != null && mc.f_28396371 != null) mc.m_52715402(new BridgeHistoryScreen());
     }
 
     public static void render(C_97866173 gui) {
         if (ReplaySession.active()) { ReplaySession.renderHud(); return; }
         Minecraft mc = Minecraft.m_20213497();
         if (mc == null || mc.f_28396371 == null || mc.f_26407825 == null) return;
+        if (mc.f_70816363 instanceof BridgeLayoutScreen) return;
         if (BridgeConfig.chatOutput) return;
         if (!BridgeConfig.shouldShowHud(mc.f_58088711 != null && mc.f_58088711.f_63869242)) return;
 
@@ -91,9 +94,10 @@ public class BridgeHUD {
         int totalHeight = lineHeight * lineCount + padding;
         int totalWidth = maxWidth + padding * 2;
 
-        int x = BridgeConfig.hudX;
-        int y = BridgeConfig.hudY;
-        float scale = (float) BridgeConfig.hudScale;
+        C_43718703 window = new C_43718703(mc);
+        float scale = (float)Math.min(BridgeConfig.hudScale,Math.min((window.m_39119333()-8.0)/totalWidth,(window.m_16103615()-8.0)/totalHeight));
+        int x = OverlayPlacement.clamp(BridgeConfig.hudX,(int)Math.ceil(totalWidth*scale),window.m_39119333());
+        int y = OverlayPlacement.clamp(BridgeConfig.hudY,(int)Math.ceil(totalHeight*scale),window.m_16103615());
 
         // Anchor at the configured position, then scale the complete HUD layout.
         GL11.glPushMatrix();

@@ -1,7 +1,7 @@
 param(
     [string]$JavaHome = $env:JAVA_HOME,
     [string]$RuntimeJavaHome = $JavaHome,
-    [string]$Jar = 'dist/BridgeTap-1.4.5.jar',
+    [string]$Jar = 'dist/BridgeTap-1.5.0.jar',
     [string]$MinecraftJar,
     [string]$Python = 'python',
     [switch]$Forge
@@ -20,7 +20,7 @@ $sources = @(Get-ChildItem (Join-Path $projectRoot 'tests') -Filter '*.java' | F
 if ($LASTEXITCODE -ne 0) { throw 'Test compilation failed' }
 Push-Location $work
 try {
-    foreach ($test in @('ConfigRegression', 'HistoryRegression', 'ReplayRegression', 'DisplayRegression', 'ReplayTimelineRegression', 'ReplayCameraRegression', 'TelemetryRegression', 'BridgeGeometryRegression', 'ReplayLibraryRegression', 'ReplayControlsRegression')) {
+    foreach ($test in @('ConfigRegression', 'HistoryRegression', 'ReplayRegression', 'DisplayRegression', 'ReplayTimelineRegression', 'ReplayCameraRegression', 'TelemetryRegression', 'BridgeGeometryRegression', 'ReplayLibraryRegression', 'ReplayControlsRegression', 'BridgeDetectionRegression', 'ReplayQueryRegression', 'OverlayPlacementRegression')) {
         & $runtime -cp "$artifact;$classes" $test
         if ($LASTEXITCODE -ne 0) { throw "Regression failed: $test" }
     }

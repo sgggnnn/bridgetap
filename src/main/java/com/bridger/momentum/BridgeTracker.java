@@ -30,6 +30,7 @@ public class BridgeTracker {
 
     private static int startTick = 0;
     private static int currentTick = 0;
+    private static final RunStartCooldown restartCooldown=new RunStartCooldown();
     private static final RunHistory HISTORY = new RunHistory(java.nio.file.Paths.get("config", "bridgetap", "saved"));
     private static boolean historyCaptured = true;
     public static RunHistory history() { return HISTORY; }
@@ -49,6 +50,7 @@ public class BridgeTracker {
     private static final int POSITION_HISTORY_SIZE = 81;
     private static final int[] positionHistoryTicks = new int[POSITION_HISTORY_SIZE];
     private static final double[] positionHistoryX = new double[POSITION_HISTORY_SIZE];
+    private static final double[] positionHistoryY = new double[POSITION_HISTORY_SIZE];
     private static final double[] positionHistoryZ = new double[POSITION_HISTORY_SIZE];
     private static final boolean[] positionHistoryValid = new boolean[POSITION_HISTORY_SIZE];
     private static final int[] movementHistoryTicks = new int[POSITION_HISTORY_SIZE];
@@ -64,6 +66,8 @@ public class BridgeTracker {
     private static final boolean[] jumpInputValid = new boolean[POSITION_HISTORY_SIZE];
     private static double lastJumpCoord = 0.0;
     private static double lastJumpDecimal = 0.0;
+    private static double lastLaunchX, lastLaunchY, lastLaunchZ;
+    private static int openingTicks;
 
     private static double prevTickCoord = 0.0;
     private static double lastTickCoord = 0.0;
@@ -135,6 +139,7 @@ public class BridgeTracker {
     public static int bridgetap$getTick() { return currentTick; }
 
     public static synchronized void reset() {
+        restartCooldown.reset();
         ReplayRecorder.reset();
         PlacementEvidence.reset();
         status = RunStatus.IDLE;
@@ -161,6 +166,7 @@ public class BridgeTracker {
         int index = Math.floorMod(tick, POSITION_HISTORY_SIZE);
         positionHistoryTicks[index] = tick;
         positionHistoryX[index] = player.f_78826675;
+        positionHistoryY[index] = player.f_31030949;
         positionHistoryZ[index] = player.f_97691941;
         positionHistoryValid[index] = true;
     }
@@ -232,7 +238,7 @@ public class BridgeTracker {
             PendingJump pending = pendingJumps.get(i);
             if (hasPositionSnapshot(pending.sampleTick)) {
                 int index = Math.floorMod(pending.sampleTick, POSITION_HISTORY_SIZE);
-                recordJump(positionHistoryX[index], positionHistoryZ[index], pending.jumpTick, pending.flatTime);
+                recordJump(positionHistoryX[index], positionHistoryY[index], positionHistoryZ[index], pending.jumpTick, pending.flatTime);
                 pendingJumps.remove(i);
             } else {
                 i++;
@@ -245,11 +251,13 @@ public class BridgeTracker {
     }
 
     public static synchronized void onBlockPlaced() {
+        if(ReplaySession.active())return;
         Minecraft mc = Minecraft.m_20213497();
         if (mc == null || mc.f_28396371 == null) return;
         C_57778754 player = mc.f_28396371;
 
         if (!isBridging || status == RunStatus.SUCCESS || status == RunStatus.FAILED) {
+            if(!restartCooldown.ready(currentTick)||pendingPlateSample||!pendingJumps.isEmpty()||isPlayerOnGoldPlate(mc))return;
             // Start a new run upon placing the first block!
             startNewRun(player);
         }
@@ -261,6 +269,7 @@ public class BridgeTracker {
         PlacementEvidence.reset();
         entries.clear();
         jumpCount = 0;
+        openingTicks = 0;
         pendingJumps.clear();
         pendingGainSamples.clear();
         pendingPlateSample = false;
@@ -292,7 +301,7 @@ public class BridgeTracker {
     public static synchronized void onTick(Minecraft mc) {
         if (ReplaySession.active()) return;
         if (mc == null || mc.f_28396371 == null || mc.f_26407825 == null) {
-            if (isBridging) { isBridging=false; status=RunStatus.FAILED; }
+            if (isBridging) { isBridging=false; status=RunStatus.FAILED;restartCooldown.finish(currentTick); }
             pendingPlateSample=false;pendingJumps.clear();captureFinishedRun();
             return;
         }
@@ -368,6 +377,7 @@ public class BridgeTracker {
                 platesRecorded = true;
                 isBridging = false;
                 status = RunStatus.SUCCESS;
+                restartCooldown.finish(currentTick);
 
                 pendingPlateTick = currentTick + BridgeConfig.plateTickOffset;
                 if (hasPositionSnapshot(pendingPlateTick)) {
@@ -390,6 +400,7 @@ public class BridgeTracker {
         if (!isBridging) return;
         isBridging = false;
         status = RunStatus.FAILED;
+        restartCooldown.finish(currentTick);
 
         // Use the same expected 9-tick sample (including the configured offset) as a real tap.
         int expectedTapTick = lastJumpTick + 9;
@@ -434,17 +445,7 @@ public class BridgeTracker {
     }
 
     private static String getFlatLabel(int ticks, double duration) {
-        // The placement callback and jump callback can straddle a tick boundary, so
-        // a real 12-tick flat may be observed as 11 elapsed tick intervals.
-        if (ticks >= 11 && ticks <= 12) return "4b Flat";
-        if (ticks == 4) return "1.05 Flat";
-        if (ticks == 5) return "1.1 Flat";
-        if (ticks == 6) return duration >= 1.175 ? "1.2 Flat" : "1.15 Flat";
-        if (duration <= 1.075) return "1.05 Flat";
-        if (duration <= 1.125) return "1.1 Flat";
-        if (duration <= 1.175) return "1.15 Flat";
-        if (duration <= 1.225) return "1.2 Flat";
-        return String.format(Locale.US, "%.2f Flat", duration);
+        return BridgeDetection.flatLabel(ticks, duration);
     }
 
     public static synchronized void onJump(C_42232651 entity) {
@@ -469,7 +470,7 @@ public class BridgeTracker {
         if (jumpFlatTime < 0.0) jumpFlatTime = flatDuration;
         if (hasPositionSnapshot(sampleTick)) {
             int index = Math.floorMod(sampleTick, POSITION_HISTORY_SIZE);
-            recordJump(positionHistoryX[index], positionHistoryZ[index], jumpTick, jumpFlatTime);
+            recordJump(positionHistoryX[index], positionHistoryY[index], positionHistoryZ[index], jumpTick, jumpFlatTime);
         } else if (sampleTick > jumpTick && BridgeConfig.tickOffset <= 40) {
             pendingJumps.add(new PendingJump(sampleTick, jumpTick, jumpFlatTime));
         } else {
@@ -490,7 +491,7 @@ public class BridgeTracker {
         return jumpInputValid[i] && jumpInputTicks[i] == tick;
     }
 
-    private static void recordJump(double sampledX, double sampledZ, int jumpTick, double jumpFlatTime) {
+    private static void recordJump(double sampledX, double sampledY, double sampledZ, int jumpTick, double jumpFlatTime) {
         // Determine the tracking axis using the selected tick's coordinates.
         if ("X".equalsIgnoreCase(BridgeConfig.preferredAxis)) {
             currentAxis = "X";
@@ -499,7 +500,9 @@ public class BridgeTracker {
         } else {
             double dx = Math.abs(sampledX - startX);
             double dz = Math.abs(sampledZ - startZ);
-            currentAxis = (dx > dz && dx > 1.0) ? "X" : "Z";
+            // Short three-tick openings can travel less than one block. Waiting
+            // for dx > 1 mislabeled their axis and discarded valid placement data.
+            currentAxis = (dx > dz && dx > 0.05) ? "X" : "Z";
         }
 
         double currentCoord = currentAxis.equals("X") ? sampledX : sampledZ;
@@ -509,6 +512,7 @@ public class BridgeTracker {
         if (entries.isEmpty()) {
             // First jump (the flat) after first block placed
             int ticks = Math.max(1, jumpTick - startTick);
+            openingTicks = ticks;
             String label = getFlatLabel(ticks, jumpFlatTime);
             double startCoord = currentAxis.equals("X") ? startX : startZ;
             if (!PlacementEvidence.qualifies(startTick, jumpTick, startCoord, currentCoord, currentAxis.equals("X"), ticks >= 11 && ticks <= 12 ? 4 : 1)) label = "Jump";
@@ -545,6 +549,12 @@ public class BridgeTracker {
             }
 
             if (!turnRecorded && !PlacementEvidence.qualifies(lastJumpTick, jumpTick, lastJumpCoord, currentCoord, currentAxis.equals("X"), ticksElapsed == 12 ? 4 : 1)) label = "Jump #" + jumpCount;
+            String late = BridgeDetection.lateLabel(jumpCount, openingTicks, ticksElapsed,
+                    lastLaunchX, lastLaunchY, lastLaunchZ, sampledX, sampledY, sampledZ,
+                    currentAxis.equals("X"), !turnRecorded && entries.get(0).getLabel().endsWith("Flat")
+                    && PlacementEvidence.qualifies(lastJumpTick + 1, jumpTick, lastJumpCoord,
+                        currentCoord, currentAxis.equals("X"), 2));
+            if (late != null) label = late;
             JumpEntry tapEntry = new JumpEntry(label, currentCoord, decimal, delta, ticksElapsed, JumpEntry.EntryType.TAP);
             entries.add(tapEntry);
             if (hasJumpInput(jumpTick)) tapEntry.setGainType(jumpInputHistory[Math.floorMod(jumpTick, POSITION_HISTORY_SIZE)]);
@@ -555,6 +565,7 @@ public class BridgeTracker {
         }
 
         wasInAir = false;
+        lastLaunchX = sampledX; lastLaunchY = sampledY; lastLaunchZ = sampledZ;
         groundTicksAfterLanding = 0;
     }
 

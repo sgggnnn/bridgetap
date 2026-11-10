@@ -58,7 +58,7 @@ public final class ReplayRecorder {
   blocks.add(new ReplayData.Block(pos.m_32364273(),pos.m_62825721(),pos.m_23514936(),id,metadata,tick,placed));
  }
  public static void placed(C_34399650 world,C_32594356 pos){
-  if(frames.isEmpty()||ReplaySession.active())return;
+  if(frames.isEmpty()||ReplaySession.active()||!BridgeTracker.isBridging())return;
   int tick=BridgeTracker.bridgetap$getTick()==lastFrameTick?frames.size()-1:frames.size();
   if(tick>=ReplayData.MAX_FRAMES){truncated=true;return;}
   // Mark the placement before scanning this tick so it cannot become a tick-0 background block.

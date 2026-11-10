@@ -1,177 +1,50 @@
 package com.bridger.momentum;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.unmapped.C_29058632;
-import net.minecraft.unmapped.C_37925375;
 import net.minecraft.unmapped.C_85740840;
-
 import java.util.Locale;
-import org.lwjgl.opengl.GL11;
 
-/** Modal native Minecraft screen for editing BridgeTap HUD settings. */
-public class BridgeSettingsScreen extends C_85740840 {
-    private static final int PANEL_WIDTH = 360;
-    private static final int PANEL_HEIGHT = 429;
+/** Categorized settings with consistent toggles and numeric steppers. */
+public class BridgeSettingsScreen extends BridgeScreen {
+    private final C_85740840 parent;
+    public BridgeSettingsScreen(){this(null);}
+    public BridgeSettingsScreen(C_85740840 parent){this.parent=parent;}
+    @Override protected void paint(){
+        header("Settings","Make BridgeTap work your way");
+        panel(20,72,400,358);panel(438,72,402,230);panel(438,310,402,120);
+        text("HUD & POSITIONING",36,88,TEXT);label("Your regular bridge coordinates display",36,103);
+        toggle("HUD enabled",BridgeConfig.enabled,36,122,368,()->BridgeConfig.enabled=!BridgeConfig.enabled);
+        toggle("Hide while F3 is open",BridgeConfig.hideOnF3,36,154,368,()->BridgeConfig.hideOnF3=!BridgeConfig.hideOnF3);
+        line(36,187,368);
+        button("Edit HUD layout",36,199,368,30,true,true,()->open(new BridgeLayoutScreen(this)));
+        label("Drag coordinates, replay info and recorded inputs.",36,240);
+        stepper("Scale",String.format(Locale.US,"%.1fx",BridgeConfig.hudScale),36,263,368,
+            ()->BridgeConfig.hudScale=Math.max(.5,Math.round((BridgeConfig.hudScale-.1)*10)/10.0),
+            ()->BridgeConfig.hudScale=Math.min(2,Math.round((BridgeConfig.hudScale+.1)*10)/10.0));
+        toggle("Text shadow",BridgeConfig.textShadow,36,301,368,()->BridgeConfig.textShadow=!BridgeConfig.textShadow);
+        toggle("Background",BridgeConfig.backgroundEnabled,36,333,368,()->BridgeConfig.backgroundEnabled=!BridgeConfig.backgroundEnabled);
+        label("Display mode",36,375);
+        String[] modes={"ALL","COORDS","COORDS_ONLY","LAST_TURN","TICKS","TIME"};
+        String[] modeLabels={"All statistics","Coordinates with labels","Coordinates only","Last + Turn coordinates","Ticks only","Run time only"};
+        int mode=java.util.Arrays.asList(modes).indexOf(BridgeConfig.displayMode);
+        dropdown("display",modeLabels[Math.max(0,mode)],modeLabels,mode,188,366,216,i->{BridgeConfig.displayMode=modes[i];BridgeConfig.save();});
 
-    @Override
-    public void m_93956703(int mouseX, int mouseY, float partialTicks) {
-        super.m_93956703(mouseX, mouseY, partialTicks);
-        C_37925375.m_55305366();
-        drawRect(0, 0, f_05230747, f_07021018, 0xC008101B);
+        text("DETECTION & CALCULATIONS",454,88,TEXT);
+        button("Reset offsets",718,82,106,22,true,false,()->{BridgeConfig.tickOffset=BridgeConfig.plateTickOffset=0;BridgeConfig.save();});
+        stepper("Jump offset",BridgeConfig.tickOffset+" ticks",454,119,370,()->BridgeConfig.tickOffset=Math.max(-40,BridgeConfig.tickOffset-1),()->BridgeConfig.tickOffset=Math.min(40,BridgeConfig.tickOffset+1));
+        stepper("Plate offset",BridgeConfig.plateTickOffset+" ticks",454,151,370,()->BridgeConfig.plateTickOffset=Math.max(-40,BridgeConfig.plateTickOffset-1),()->BridgeConfig.plateTickOffset=Math.min(40,BridgeConfig.plateTickOffset+1));
+        stepper("Turn detection",BridgeConfig.turnTicks+" ticks",454,183,370,()->BridgeConfig.turnTicks=12,()->BridgeConfig.turnTicks=15);
+        toggle("Show Gain / No Gain",BridgeConfig.showGainType,454,217,370,()->BridgeConfig.showGainType=!BridgeConfig.showGainType);
+        label("Indicator label",454,264);
+        dropdown("gain",BridgeConfig.useNoGayLabel?"No Gay":"No Gain",new String[]{"No Gain","No Gay"},BridgeConfig.useNoGayLabel?1:0,654,255,170,i->{BridgeConfig.useNoGayLabel=i==1;BridgeConfig.save();});
 
-        float scale = panelScale();
-        int x = ((int)(f_05230747 / scale) - PANEL_WIDTH) / 2;
-        int y = ((int)(f_07021018 / scale) - PANEL_HEIGHT) / 2;
-        GL11.glPushMatrix();
-        GL11.glScalef(scale, scale, 1.0f);
-        drawRect(x, y, PANEL_WIDTH, PANEL_HEIGHT, 0xF0162232);
-        drawRect(x, y, PANEL_WIDTH, 2, 0xFF53D8E8);
-        drawText("BridgeTap Settings", x + 12, y + 12, 0xFF53D8E8);
-        drawButton(x + 10, y + 27, 108, 18, "HUD: " + onOff(BridgeConfig.enabled));
-        drawButton(x + 124, y + 27, 108, 18, "Hide F3: " + onOff(BridgeConfig.hideOnF3));
-        drawButton(x + 238, y + 27, 112, 18, "History");
-
-        drawAdjustRow(x, y + 48, "HUD X", String.valueOf(BridgeConfig.hudX));
-        drawAdjustRow(x, y + 72, "HUD Y", String.valueOf(BridgeConfig.hudY));
-        drawAdjustRow(x, y + 96, "HUD size", String.format(Locale.US, "%.1fx", BridgeConfig.hudScale));
-        drawButton(x + 10, y + 120, PANEL_WIDTH - 20, 20, "Background: " + onOff(BridgeConfig.backgroundEnabled));
-        drawButton(x + 10, y + 144, PANEL_WIDTH - 20, 20, "Display: " + BridgeConfig.displayMode);
-        drawButton(x + 10, y + 168, PANEL_WIDTH - 20, 20, "Text shadow: " + onOff(BridgeConfig.textShadow));
-        drawAdjustRow(x, y + 192, "Jump offset", signed(BridgeConfig.tickOffset));
-        drawAdjustRow(x, y + 216, "Plate offset", signed(BridgeConfig.plateTickOffset));
-        drawButton(x + 10, y + 240, PANEL_WIDTH - 20, 20, "Turn detection: " + BridgeConfig.turnTicks + " ticks");
-        drawButton(x + 10, y + 264, PANEL_WIDTH - 20, 20, "Gain type: " + onOff(BridgeConfig.showGainType));
-        drawButton(x + 10, y + 288, PANEL_WIDTH - 20, 20, "Coordinates output: " + (BridgeConfig.chatOutput ? "CHAT (end of run)" : "OVERLAY"));
-        drawButton(x + 10, y + 312, PANEL_WIDTH - 20, 20, "Overlay colors...");
-        drawButton(x + 10, y + 336, PANEL_WIDTH - 20, 20, "Replay info: " + onOff(BridgeConfig.showReplayInfo));
-        drawButton(x + 10, y + 360, PANEL_WIDTH - 20, 20, "No gain label: " + (BridgeConfig.useNoGayLabel ? "NO GAY" : "NO GAIN"));
-        drawButton(x + 130, y + 399, 100, 20, "Done (Esc)");
-        GL11.glPopMatrix();
-        C_37925375.m_23590488();
+        text("OVERLAY & REPLAY",454,324,TEXT);
+        toggle("Replay information",BridgeConfig.showReplayInfo,454,340,370,()->BridgeConfig.showReplayInfo=!BridgeConfig.showReplayInfo);
+        toggle("Recorded input overlay",BridgeConfig.showReplayInputs,454,368,370,()->BridgeConfig.showReplayInputs=!BridgeConfig.showReplayInputs);
+        dropdown("output",BridgeConfig.chatOutput?"Output: Chat":"Output: Overlay",new String[]{"Overlay","Chat at end of run"},BridgeConfig.chatOutput?1:0,454,398,174,i->{BridgeConfig.chatOutput=i==1;BridgeConfig.save();});
+        button("Customize colors",640,398,184,()->open(new BridgeColorsScreen(this)));
+        label("Default offsets: 0 ticks / New-run delay: 5 ticks",22,450);
+        button("Back to replays",706,442,134,26,true,true,this::back);
+        footer("Changes are saved automatically  /  Esc: back");
     }
-
-    @Override
-    protected void m_23755539(int mouseX, int mouseY, int button) {
-        if (button != 0) return;
-        float scale = panelScale();
-        mouseX = (int)(mouseX / scale); mouseY = (int)(mouseY / scale);
-        int x = ((int)(f_05230747 / scale) - PANEL_WIDTH) / 2;
-        int y = ((int)(f_07021018 / scale) - PANEL_HEIGHT) / 2;
-
-        if (inside(mouseX, mouseY, x + 10, y + 27, 108, 18)) {
-            BridgeConfig.enabled = !BridgeConfig.enabled;
-        } else if (inside(mouseX, mouseY, x + 124, y + 27, 108, 18)) {
-            BridgeConfig.hideOnF3 = !BridgeConfig.hideOnF3;
-        } else if (inside(mouseX, mouseY, x + 238, y + 27, 112, 18)) {
-            Minecraft.m_20213497().m_52715402(new BridgeHistoryScreen());
-            return;
-        } else if (inside(mouseX, mouseY, x + 250, y + 48, 34, 20)) {
-            BridgeConfig.hudX -= 5;
-        } else if (inside(mouseX, mouseY, x + 305, y + 48, 34, 20)) {
-            BridgeConfig.hudX += 5;
-        } else if (inside(mouseX, mouseY, x + 250, y + 72, 34, 20)) {
-            BridgeConfig.hudY -= 5;
-        } else if (inside(mouseX, mouseY, x + 305, y + 72, 34, 20)) {
-            BridgeConfig.hudY += 5;
-        } else if (inside(mouseX, mouseY, x + 250, y + 96, 34, 20)) {
-            BridgeConfig.hudScale = Math.max(0.5, Math.round((BridgeConfig.hudScale - 0.1) * 10.0) / 10.0);
-        } else if (inside(mouseX, mouseY, x + 305, y + 96, 34, 20)) {
-            BridgeConfig.hudScale = Math.min(2.0, Math.round((BridgeConfig.hudScale + 0.1) * 10.0) / 10.0);
-        } else if (inside(mouseX, mouseY, x + 10, y + 120, PANEL_WIDTH - 20, 20)) {
-            BridgeConfig.backgroundEnabled = !BridgeConfig.backgroundEnabled;
-        } else if (inside(mouseX, mouseY, x + 10, y + 144, PANEL_WIDTH - 20, 20)) {
-            cycleDisplayMode();
-        } else if (inside(mouseX, mouseY, x + 10, y + 168, PANEL_WIDTH - 20, 20)) {
-            BridgeConfig.textShadow = !BridgeConfig.textShadow;
-        } else if (inside(mouseX, mouseY, x + 250, y + 192, 34, 20)) {
-            BridgeConfig.tickOffset = Math.max(-40, BridgeConfig.tickOffset - 1);
-        } else if (inside(mouseX, mouseY, x + 305, y + 192, 34, 20)) {
-            BridgeConfig.tickOffset = Math.min(40, BridgeConfig.tickOffset + 1);
-        } else if (inside(mouseX, mouseY, x + 250, y + 216, 34, 20)) {
-            BridgeConfig.plateTickOffset = Math.max(-40, BridgeConfig.plateTickOffset - 1);
-        } else if (inside(mouseX, mouseY, x + 305, y + 216, 34, 20)) {
-            BridgeConfig.plateTickOffset = Math.min(40, BridgeConfig.plateTickOffset + 1);
-        } else if (inside(mouseX, mouseY, x + 10, y + 240, PANEL_WIDTH - 20, 20)) {
-            BridgeConfig.turnTicks = BridgeConfig.turnTicks == 15 ? 12 : 15;
-        } else if (inside(mouseX, mouseY, x + 10, y + 264, PANEL_WIDTH - 20, 20)) {
-            BridgeConfig.showGainType = !BridgeConfig.showGainType;
-        } else if (inside(mouseX, mouseY, x + 10, y + 288, PANEL_WIDTH - 20, 20)) {
-            BridgeConfig.chatOutput = !BridgeConfig.chatOutput;
-        } else if (inside(mouseX, mouseY, x + 10, y + 312, PANEL_WIDTH - 20, 20)) {
-            Minecraft.m_20213497().m_52715402(new BridgeColorsScreen());
-            return;
-        } else if (inside(mouseX, mouseY, x + 10, y + 336, PANEL_WIDTH - 20, 20)) {
-            BridgeConfig.showReplayInfo = !BridgeConfig.showReplayInfo;
-        } else if (inside(mouseX, mouseY, x + 10, y + 360, PANEL_WIDTH - 20, 20)) {
-            BridgeConfig.useNoGayLabel = !BridgeConfig.useNoGayLabel;
-        } else if (inside(mouseX, mouseY, x + 130, y + 399, 100, 20)) {
-            close();
-            return;
-        } else {
-            return;
-        }
-        BridgeConfig.save();
-    }
-
-    @Override
-    protected void m_29116903(char typedChar, int keyCode) {
-        if (keyCode == 1) {
-            close();
-            return;
-        }
-        super.m_29116903(typedChar, keyCode);
-    }
-
-    private float panelScale() {
-        return Math.min(1.0f, Math.min((f_05230747 - 8.0f) / PANEL_WIDTH, (f_07021018 - 8.0f) / PANEL_HEIGHT));
-    }
-
-    private void drawAdjustRow(int x, int y, String label, String value) {
-        drawText(label + ": " + value, x + 12, y + 6, 0xFFFFFFFF);
-        drawButton(x + 250, y, 34, 20, "-");
-        drawButton(x + 305, y, 34, 20, "+");
-    }
-
-    private void drawButton(int x, int y, int width, int height, String label) {
-        drawRect(x, y, width, height, 0xFF2C3A4B);
-        drawRect(x, y, width, 1, 0xFF61758A);
-        int textX = x + (width - f_11884601.m_09235706(label)) / 2;
-        int textY = y + (height - f_11884601.f_30706543) / 2;
-        drawText(label, textX, textY, 0xFFFFFFFF);
-    }
-
-    private void drawText(String text, int x, int y, int color) {
-        f_11884601.m_11445413(text, x, y, color, BridgeConfig.textShadow);
-    }
-
-    private static void drawRect(int x, int y, int width, int height, int color) {
-        C_29058632.m_57734177(x, y, x + width, y + height, color);
-    }
-
-    private static boolean inside(int mouseX, int mouseY, int x, int y, int width, int height) {
-        return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
-    }
-
-    private static String onOff(boolean value) {
-        return value ? "ON" : "OFF";
-    }
-
-    private static String signed(int value) {
-        return value > 0 ? "+" + value : String.valueOf(value);
-    }
-
-    private static void cycleDisplayMode() {
-        if (BridgeConfig.displayMode.equals("ALL")) BridgeConfig.displayMode = "COORDS";
-        else if (BridgeConfig.displayMode.equals("COORDS")) BridgeConfig.displayMode = "COORDS_ONLY";
-        else if (BridgeConfig.displayMode.equals("COORDS_ONLY")) BridgeConfig.displayMode = "LAST_TURN";
-        else if (BridgeConfig.displayMode.equals("LAST_TURN")) BridgeConfig.displayMode = "TICKS";
-        else if (BridgeConfig.displayMode.equals("TICKS")) BridgeConfig.displayMode = "TIME";
-        else BridgeConfig.displayMode = "ALL";
-    }
-
-    private void close() {
-        Minecraft mc = Minecraft.m_20213497();
-        BridgeConfig.save();
-        if (mc != null) mc.m_52715402(null);
-    }
+    @Override protected void back(){BridgeConfig.save();open(parent==null?new BridgeHistoryScreen():parent);}
 }

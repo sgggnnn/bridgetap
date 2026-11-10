@@ -117,6 +117,16 @@ assert 'LastBridgeHotbarMixin' not in config['client'],'Live inventory renderer 
 hud=Class(mod.read('com/bridger/momentum/BridgeHUD.class'))
 assert not hud.calls('com/bridger/momentum/BridgeTelemetryHUD','live','()V'),'Live telemetry is still displayed'
 assert not hud.calls('com/bridger/momentum/BridgeTelemetryHUD','liveCoordinates','()V'),'Player XYZ still displayed outside replay'
+assert not hud.calls('com/bridger/momentum/ReplaySession','stop','()V'),'Gallery shortcut still stops playback'
+assert not mc_mixin.calls('com/bridger/momentum/ReplaySession','exit','()V'),'A keyboard/menu hook still exits playback instead of the barrier control'
+assert session.calls('com/bridger/momentum/ReplayInputOverlay','paint','(Lcom/bridger/momentum/UiCanvas;IILcom/bridger/momentum/ReplayData$TickStats;)V'),'Recorded input overlay is not rendered'
+tracker=Class(mod.read('com/bridger/momentum/BridgeTracker.class'))
+block_placed=next(a for n,_,a in tracker.methods if n=='onBlockPlaced')
+assert tracker.has_call(block_placed,tracker.calls('com/bridger/momentum/RunStartCooldown','ready','(I)Z')),'New bridge placements bypass the restart cooldown'
+assert tracker.calls('com/bridger/momentum/RunStartCooldown','finish','(I)V'),'Run completion does not arm the restart cooldown'
+placements=Class(mod.read('com/bridger/momentum/PlacementHooks.class'))
+finish=next(a for n,_,a in placements.methods if n=='finish')
+assert placements.has_call(finish,placements.calls('com/bridger/momentum/BridgeTracker','isBridging','()Z')),'Post-run placements can still enter a completed recording'
 assert session.calls('com/bridger/momentum/ReplayTimeline','cycleSpeed','()V'),'Playback speed control is not wired'
 constructor=next(a for n,_,a in session.methods if n=='<init>')
 assert session.has_call(constructor,session.calls('com/bridger/momentum/ReplayControls','slots','()[I')),'Replay inventory does not use the replay-tool definition'

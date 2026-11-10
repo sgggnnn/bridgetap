@@ -34,7 +34,7 @@ Cross-platform Python alternative:
 python scripts/build-source.py --java-home $env:JAVA_HOME --classpath $env:BRIDGETAP_CLASSPATH
 ```
 
-Output: `dist/BridgeTap-1.4.5.jar`.
+Output: `dist/BridgeTap-1.5.0.jar`.
 
 ## Forge 1.8.9
 
@@ -46,7 +46,7 @@ python scripts/build-forge.py --java-home 'C:/path/to/jdk-17' --minecraft 'C:/li
 
 Shared sources are converted to SRG names, then compiled with the Forge entry point. Converted files are written to `build/forge/generated/`. Mixin and its private dependencies are bundled in the mod JAR; Minecraft and Forge are not.
 
-Output: `dist/BridgeTap-1.4.5-Forge-1.8.9.jar`.
+Output: `dist/BridgeTap-1.5.0-Forge-1.8.9.jar`.
 
 See [forge/README.md](../forge/README.md) for details of the port.
 
@@ -55,17 +55,17 @@ See [forge/README.md](../forge/README.md) for details of the port.
 The PowerShell runner creates an isolated working directory under `build/`, so it does not modify your Minecraft configuration.
 
 ```powershell
-./scripts/test.ps1 -JavaHome 'C:/path/to/jdk-17' -RuntimeJavaHome 'C:/path/to/java-8' -Jar dist/BridgeTap-1.4.5.jar
-./scripts/test.ps1 -JavaHome 'C:/path/to/jdk-17' -RuntimeJavaHome 'C:/path/to/java-8' -Jar dist/BridgeTap-1.4.5-Forge-1.8.9.jar
+./scripts/test.ps1 -JavaHome 'C:/path/to/jdk-17' -RuntimeJavaHome 'C:/path/to/java-8' -Jar dist/BridgeTap-1.5.0.jar
+./scripts/test.ps1 -JavaHome 'C:/path/to/jdk-17' -RuntimeJavaHome 'C:/path/to/java-8' -Jar dist/BridgeTap-1.5.0-Forge-1.8.9.jar
 ```
 
-It compiles and runs ten programs covering configuration, history, replay persistence, display, timeline, camera, telemetry, geometry, library management, and controls.
+It compiles and runs thirteen programs covering configuration, history, replay persistence, display, timeline, camera, telemetry, geometry, library management, controls, opening detection, combined filtering, and HUD placement/input display.
 
 ### Native hooks
 
 ```powershell
-python tests/check_native_hooks.py C:/libs/client-intermediary.jar dist/BridgeTap-1.4.5.jar
-python tests/check_forge_hooks.py build/forge/minecraft-srg.jar dist/BridgeTap-1.4.5-Forge-1.8.9.jar
+python tests/check_native_hooks.py C:/libs/client-intermediary.jar dist/BridgeTap-1.5.0.jar
+python tests/check_forge_hooks.py build/forge/minecraft-srg.jar dist/BridgeTap-1.5.0-Forge-1.8.9.jar
 ```
 
 For Forge, run `scripts/build-forge.py` first to prepare the mappings and SRG client. These scripts verify injections and accessors, render-context restoration, block invalidation, and, on Forge, the HUD overlay event subscription.
@@ -83,3 +83,13 @@ It does not create a graphics context. Textures, visual rendering, and interacti
 ## Publishing
 
 Build scripts do not publish anything. For a release, attach the JAR for each supported edition and its SHA-256 checksums to the GitHub release, then document the changes in the [changelog](../CHANGELOG.md). The main branch contains only sources, scripts, and documentation.
+
+## Menu previews and interaction checks
+
+Build the Ornithe edition first. The preview runner executes the real Java menu drawing paths using Minecraft's bitmap font and a headless drawing adapter. It also checks opening detection through the tracker, filter/sort click targets, swatches, and dragging.
+
+```powershell
+./scripts/preview-ui.ps1 -JavaHome 'C:/path/to/jdk-17' -RuntimeJavaHome 'C:/path/to/java-8' -Minecraft 'C:/libs/minecraft-1.8.9-client.jar' -Classpath '<Ornithe intermediary client and complete Minecraft runtime libraries, separated by ;>'
+```
+
+Use the full Minecraft runtime libraries, including Log4j and Guava, in addition to the Ornithe intermediary client. The original client JAR supplies the font texture to this local test; that texture is not bundled in the mod. PNG previews and isolated fixture data are written under `build/ui-preview-<id>/`. This does not test the live world, GL state, or other mods.

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "bridgetap",
-  "version": "1.4.5",
+  "version": "1.5.0",
   "name": "BridgeTap",
   "description": "Named and shareable Minecraft bridge replays with sorting, platform measurements, per-tick telemetry and continuous POV.",
   "authors": [

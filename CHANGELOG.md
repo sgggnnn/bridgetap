@@ -4,6 +4,28 @@ History of versions available in [GitHub Releases](https://github.com/sgggnnn/br
 
 Some commits contain several intermediate versions. Those versions are tagged at the first commit archiving their binary, rather than at a dedicated source snapshot. The affected release notes explain this distinction.
 
+## [1.5.0](https://github.com/sgggnnn/bridgetap/releases/tag/v1.5.0) — Visual HUD studio, replay library and opening detection
+
+### Added
+
+- Drag-and-drop positioning, handle resizing, snapping and saved layout for three overlays.
+- Replay-only directional/jump/LMB/RMB input overlay using recorded ticks.
+- 3-tick 1.0 Flat and opening-only 5b/6b Late detection, with timing, axial distance, height and placement checks.
+- Combined replay filters, multi-term search and two-way sorting by date, time, name and jump count.
+
+### Redesigned
+
+- Replay tabs, cards, grouped details, secondary tools and a primary PLAY REPLAY action.
+- Categorized settings, consistent toggles/steppers, color swatches and live preview.
+
+### Changed
+
+- Five client ticks of cooldown after a completed attempt, excluding intervening placements from the finished replay.
+- Jump and plate offsets default to zero; existing custom values are retained.
+- The barrier is the only replay exit control; library keys and Escape no longer exit playback.
+
+[Full release notes](docs/releases/v1.5.0.md).
+
 ## [1.4.5](https://github.com/sgggnnn/bridgetap/releases/tag/v1.4.5) — Forge HUD and replay block rendering fixes
 
 ### Fixed

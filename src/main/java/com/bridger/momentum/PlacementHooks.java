@@ -9,6 +9,7 @@ public class PlacementHooks {
   beforeHit=world.m_77852500(hit).m_41958956();beforeAdjacent=world.m_77852500(adjacent).m_41958956();
  }
  public static void finish(C_34399650 world,C_57778754 player){
+  if(!BridgeTracker.isBridging()||ReplaySession.active()){hit=null;return;}
   if(world==null||player==null||hit==null)return;
   C_81592558 after=world.m_77852500(hit).m_41958956(),afterAdjacent=world.m_77852500(adjacent).m_41958956();
   C_32594356 placed=null;

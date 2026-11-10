@@ -1,6 +1,6 @@
 # BridgeTap for Forge 1.8.9
 
-Install `BridgeTap-1.4.5-Forge-1.8.9.jar` in the `mods` directory of a Forge
+Install `BridgeTap-1.5.0-Forge-1.8.9.jar` in the `mods` directory of a Forge
 1.8.9 client (tested with 11.15.1.2318 and Java 8). Keep one BridgeTap JAR in
 that instance. No separate Mixin loader is required. The Ornithe/Fabric JAR is
 a separate build and is not installed in Forge.
@@ -40,11 +40,11 @@ from `de.oceanlabs.mcp:mcp:1.8.9:srg`.
 
 ## Validation
 
-The ten shared Java regressions run against the Forge artifact on Java 8,
+The thirteen shared Java regressions run against the Forge artifact on Java 8,
 including the 3.85s endpoint and legacy one-tick compatibility cases.
 
 ```powershell
-python tests/check_forge_hooks.py build/forge/minecraft-srg.jar dist/BridgeTap-1.4.5-Forge-1.8.9.jar
+python tests/check_forge_hooks.py build/forge/minecraft-srg.jar dist/BridgeTap-1.5.0-Forge-1.8.9.jar
 python tests/run_forge_smoke.py --java '<Java 8 java.exe>' --javac '<JDK javac.exe>' --classpath '<Forge/Minecraft runtime libraries>'
 ```
 
@@ -62,3 +62,7 @@ Replay block changes explicitly notify the replay world's renderer. Synthetic ch
 The Forge smoke test reproduces the skipped notification on an unpopulated synthetic chunk, verifies a control notification, checks explicit edit/rewind notifications, and resolves the Forge GUI override and subscribed overlay handler. Native checks also verify event registration and the HUD render call. Visual behavior still needs a client check.
 
 Build outputs are written to `dist/` and are ignored by Git. Download published JARs from [GitHub Releases](https://github.com/sgggnnn/bridgetap/releases); see the [shared build guide](../docs/BUILDING.md) for the repository layout and test commands.
+
+## Version 1.5.0
+
+The Forge edition shares the new categorized settings, color swatches/live preview, replay library with composable filters, and drag-and-drop HUD layout studio with the Ornithe edition. It adds the recorded-input HUD during replays and restricts replay exit to the barrier control. Jump/plate offsets now default to zero; existing values remain configurable. Three-tick 1.0 Flat and opening-only 5b/6b Late labels use the same rules and tests on both loaders.
