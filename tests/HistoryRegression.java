@@ -8,6 +8,7 @@ public class HistoryRegression {
   RunHistory history=new RunHistory(folder);
   List<String> details=new ArrayList<>(Arrays.asList("Jump .500"));
   history.add("SUCCESS",3.5,2,"Z",details);
+  check(history.recent().get(0).server.isEmpty()&&history.recent().get(0).serverLabel().contains("Unknown"),"Older recordings must not be assigned the current server");
   details.set(0,"changed");
   check(history.recent().get(0).details.get(0).equals("Jump .500"),"history must copy mutable entries");
   for(int i=0;i<11;i++)history.add("FAILED",i,1,"X",Collections.singletonList("Tap"));

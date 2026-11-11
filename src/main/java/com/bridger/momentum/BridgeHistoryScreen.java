@@ -9,6 +9,7 @@ import java.util.*;
 public class BridgeHistoryScreen extends BridgeScreen {
     private static final int GRID_X=20, GRID_Y=150, CARD_W=263, ROW=76, PAGE_SIZE=8;
     private int view,selected,page,detailOffset;
+    private String folder=ReplayFolders.ALL;
     private String message="";
     private ReplaySort sort=ReplaySort.parse(BridgeConfig.replaySort);
     private ReplayQuery query=ReplayQuery.load(),draft;
@@ -26,12 +27,17 @@ public class BridgeHistoryScreen extends BridgeScreen {
     private void filter(){
         RunHistory.Run previous=current();String id=previous==null?"":previous.id;
         List<RunHistory.Run> result=new ArrayList<>();
-        for(RunHistory.Run run:all)if(query.matches(run,BridgeTracker.history().hasReplay(run)))result.add(run);
+        ReplayFolders folders=null;
+        if(!folder.equals(ReplayFolders.ALL))try{folders=ReplayFolders.local();}catch(IOException ex){message="Could not read replay folders.";}
+        for(RunHistory.Run run:all)if((folder.equals(ReplayFolders.ALL)||(folders!=null&&folders.matches(run.id,folder)))&&query.matches(run,BridgeTracker.history().hasReplay(run)))result.add(run);
         result.sort(sort.comparator());rows=result;selected=0;
         for(int i=0;i<rows.size();i++)if(rows.get(i).id.equals(id)){selected=i;break;}
         page=selected/PAGE_SIZE;detailOffset=0;query.store();BridgeConfig.replaySort=sort.name();
     }
     private void changed(){filter();BridgeConfig.save();}
+    public void folder(String id){folder=id;refresh();}
+    public void refreshFolders(){refresh();}
+    private String folderLabel(){try{return ReplayFolders.local().label(folder);}catch(IOException ex){return "Folders unavailable";}}
     private void switchView(int value){view=value;message="";selected=page=0;refresh();}
     public void refreshFor(String id,String status){refresh();for(int i=0;i<rows.size();i++)if(rows.get(i).id.equals(id)){selected=i;page=i/PAGE_SIZE;break;}message=status;}
     public void imported(RunHistory.Run run){view=1;query=new ReplayQuery();refreshFor(run.id,"Imported: "+run.displayName());}
@@ -47,11 +53,14 @@ public class BridgeHistoryScreen extends BridgeScreen {
     }
     private void play(int index){
         if(index<0||index>=rows.size())return;selected=index;
+        playReplay(rows.get(index));
+    }
+    public void playReplay(RunHistory.Run run){
         try{
-            ReplayData data=BridgeTracker.history().replay(rows.get(index));
+            ReplayData data=BridgeTracker.history().replay(run);
             if(data==null){message="This older save contains statistics only.";return;}
             if(BridgeTracker.isBridging()){message="Finish the current attempt or use /bt reset first.";return;}
-            query.store();BridgeConfig.save();ReplaySession.start(rows.get(index),data);
+            query.store();BridgeConfig.save();ReplaySession.start(run,data);
         }catch(IOException|IllegalArgumentException ex){message="The replay could not be read.";System.err.println("[BridgeTap] "+ex);}
     }
     @Override protected void paint(){
@@ -60,7 +69,8 @@ public class BridgeHistoryScreen extends BridgeScreen {
         tab("Recent",20,59,78,view==0,()->switchView(0));
         tab("Saved",104,59,76,view==1,()->switchView(1));
         tab("Favorites",186,59,96,view==2,()->switchView(2));
-        dropdown("tools","Tools",new String[]{"Import replays","Open exports folder"},-1,660,60,180,i->{if(i==0)open(new BridgeImportScreen(this));else openFiles();});
+        button("Folders: "+folderLabel(),298,60,244,()->open(new ReplayFolderScreen(this,current())));
+        dropdown("tools","Tools",new String[]{"Import replays","Open exports folder","Island scenery","Video clips"},-1,660,60,180,i->{if(i==0)open(new BridgeImportScreen(this));else if(i==1)openFiles();else if(i==2)open(new IslandScreen(this,current()));else open(new ClipScreen(this));});
         input("search",query.search,"Search name, ID or technique...",20,99,260,64,value->{query.search=value;filter();});
         dropdown("status",query.status==ReplayQuery.Status.ALL?"All results":query.status==ReplayQuery.Status.SUCCESS?"Success":"Failed",new String[]{"All results","Success","Failed"},query.status.ordinal(),292,99,110,i->{query.status=ReplayQuery.Status.values()[i];changed();});
         String[] keys={"Date","Run time","Name","Jump count"};
@@ -106,11 +116,12 @@ public class BridgeHistoryScreen extends BridgeScreen {
         label("ID",590,223);clipped(run.replayId(),616,223,208,MUTED);
         label(new SimpleDateFormat("MMM dd, yyyy  HH:mm:ss",Locale.US).format(new Date(run.created)),590,239);
         text(String.format(Locale.US,"%.3f seconds",run.time),590,255,TEXT);label(run.jumps+" jumps",748,255);
-        line(590,274,234);label("MAP INFO",590,285);
+        clipped("Server: "+run.serverLabel(),590,270,234,MUTED);
+        line(590,286,234);label("MAP INFO",590,297);
         BridgeGeometry.Result bridge=dimensions(run);
-        text("Axis "+run.axis,590,303,TEXT);clipped(bridge.available?String.format(Locale.US,"Gap %.2fb",bridge.gap):"Gap N/A",674,303,150,TEXT);
-        clipped(bridge.available?String.format(Locale.US,"Height delta %+.2fb",bridge.rise):bridge.reason,590,319,234,MUTED);
-        line(590,338,234);label("PERFORMANCE BREAKDOWN",590,348);
+        text("Axis "+run.axis,590,315,TEXT);clipped(bridge.available?String.format(Locale.US,"Gap %.2fb",bridge.gap):"Gap N/A",674,315,150,TEXT);
+        clipped(bridge.available?String.format(Locale.US,"Height delta %+.2fb",bridge.rise):bridge.reason,590,331,234,MUTED);
+        line(590,346,234);label("PERFORMANCE BREAKDOWN",590,355);
         int count=Math.min(4,Math.max(0,run.details.size()-detailOffset));
         if(run.details.isEmpty())label("No jump samples in this run.",590,366);
         for(int i=0;i<count;i++)clipped(run.details.get(detailOffset+i).replaceAll("\u00a7.",""),590,365+i*12,222,TEXT);

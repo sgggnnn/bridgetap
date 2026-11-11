@@ -38,7 +38,8 @@ public class BridgeTracker {
         if (historyCaptured || isBridging || pendingPlateSample || !pendingJumps.isEmpty() || (status != RunStatus.SUCCESS && status != RunStatus.FAILED)) return;
         java.util.List<String> lines = new java.util.ArrayList<>();
         for (JumpEntry entry : entries) lines.add(entry.getFormattedLine());
-        HISTORY.add(status.name(), currentBridgeTime, getJumpCount(), currentAxis, lines, ReplayRecorder.snapshot());
+        HISTORY.add(status.name(), currentBridgeTime, getJumpCount(), currentAxis, lines, ReplayRecorder.snapshot(),ReplayRecorder.serverAddress());
+        try{ReplayFolders.local().fileByServer(HISTORY,HISTORY.recent().get(0));}catch(java.io.IOException|IllegalArgumentException ex){System.err.println("[BridgeTap] Server folder: "+ex.getMessage());}
         if (BridgeConfig.chatOutput) for (String line : EntryFormatter.lines(entries)) {
             if(!line.isEmpty())sendMessage("\u00a7b[BridgeTap] " + line);
         }
@@ -612,10 +613,22 @@ public class BridgeTracker {
             sendMessage("\u00a7e/bt pos <x> <y> \u00a77- Set the HUD position");
             sendMessage("\u00a7e/bt ui \u00a77- Open BridgeTap settings");
             sendMessage("\u00a7e/bt axis <AUTO|Z|X> \u00a77- Set the tracking axis");
+            sendMessage("\u00a7e/bt island [pos1|pos2|copy <name>|hide] \u00a77- Island scenery");
+            sendMessage("\u00a7e/bt clips \u00a77- Silent video buffer settings");
             return true;
         }
 
         String sub = parts[1].toLowerCase(Locale.US);
+        if(sub.equals("island")){
+            try{
+                String action=parts.length>2?parts[2].toLowerCase(Locale.US):"ui";
+                if(action.equals("pos1")||action.equals("pos2")){IslandOverlay.corner(action.equals("pos1"));sendMessage("\u00a7b[BridgeTap] "+IslandOverlay.corners());}
+                else if(action.equals("copy")){String name=parts.length>3?String.join(" ",java.util.Arrays.copyOfRange(parts,3,parts.length)):"My island";IslandTemplate t=IslandOverlay.copy(name);IslandLibrary.save(t,"saved");sendMessage("\u00a7aCopied "+t.blocks.size()+" static blocks. /bt island opens the library.");}
+                else if(action.equals("hide")){IslandOverlay.disable();sendMessage("\u00a7aScenery hidden.");}
+                else Minecraft.m_20213497().m_52715402(new IslandScreen(null));
+            }catch(Exception ex){sendMessage("\u00a7c"+ex.getMessage());}return true;
+        }
+        if(sub.equals("clips")){Minecraft.m_20213497().m_52715402(new ClipScreen(null));return true;}
         if (sub.equals("toggle")) {
             BridgeConfig.enabled = !BridgeConfig.enabled;
             BridgeConfig.save();

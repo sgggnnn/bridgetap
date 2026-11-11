@@ -18,6 +18,7 @@ public abstract class BridgeScreen extends C_85740840 {
     private final List<Action> actions=new ArrayList<>();
     private final List<Runnable> overlays=new ArrayList<>();
     private Field activeField;
+    private float controlScale=1;private int controlX,controlY;
     private static final class Action {
         int x,y,w,h;Runnable action;
         Action(int x,int y,int w,int h,Runnable action){this.x=x;this.y=y;this.w=w;this.h=h;this.action=action;}
@@ -30,12 +31,14 @@ public abstract class BridgeScreen extends C_85740840 {
     protected abstract void paint();
     public final void drawPreview(UiCanvas canvas,int mx,int my) {
         ui=canvas;mouseX=mx;mouseY=my;actions.clear();overlays.clear();activeField=null;
-        rect(0,0,WIDTH,HEIGHT,backgroundColor());paint();
+        rect(0,0,canvasWidth(),canvasHeight(),backgroundColor());paint();
         for(int i=0;i<overlays.size();i++)overlays.get(i).run();
     }
-    private float scale(){return Math.min(1f,Math.min((f_05230747-8f)/WIDTH,(f_07021018-8f)/HEIGHT));}
-    private int originX(float s){return (int)((f_05230747/s-WIDTH)/2);}
-    private int originY(float s){return (int)((f_07021018/s-HEIGHT)/2);}
+    protected int canvasWidth(){return WIDTH;}
+    protected int canvasHeight(){return HEIGHT;}
+    protected float scale(){return Math.min(1f,Math.min((f_05230747-8f)/WIDTH,(f_07021018-8f)/HEIGHT));}
+    protected int originX(float s){return (int)((f_05230747/s-WIDTH)/2);}
+    protected int originY(float s){return (int)((f_07021018/s-HEIGHT)/2);}
     @Override public final void m_93956703(int mx,int my,float partial) {
         C_29058632.m_57734177(0,0,f_05230747,f_07021018,backdropColor());
         float s=scale();int x=originX(s),y=originY(s);
@@ -58,7 +61,7 @@ public abstract class BridgeScreen extends C_85740840 {
     public void dragPreview(int x,int y){mouseX=x;mouseY=y;}
     public void releasePreview(){BridgeConfig.save();}
     @Override protected void m_52921597(int x,int y,int button,long elapsed){float s=scale();if(button==0)dragPreview((int)(x/s)-originX(s),(int)(y/s)-originY(s));}
-    @Override protected void m_47537840(int x,int y,int button){if(button==0)releasePreview();}
+    @Override protected void m_47537840(int x,int y,int button){if(button==0){float s=scale();mouseX=(int)(x/s)-originX(s);mouseY=(int)(y/s)-originY(s);releasePreview();}}
     protected void scroll(int x,int y,int direction){}
     @Override public void m_29921564(){super.m_29921564();int d=Mouse.getEventDWheel();if(d!=0&&dropdown.isEmpty())scroll(mouseX,mouseY,d>0?-1:1);}
     @Override protected final void m_29116903(char c,int key){
@@ -76,9 +79,14 @@ public abstract class BridgeScreen extends C_85740840 {
     protected void key(int key){}
     protected boolean escapeModal(){return false;}
     protected void back(){Minecraft.m_20213497().m_52715402(null);}
-    protected final void open(C_85740840 screen){BridgeConfig.save();Minecraft.m_20213497().m_52715402(screen);}
+    protected final void open(C_85740840 screen){BridgeConfig.save();Minecraft mc=Minecraft.m_20213497();if(mc!=null)mc.m_52715402(screen);}
     protected final boolean over(int x,int y,int w,int h){return mouseX>=x&&mouseX<x+w&&mouseY>=y&&mouseY<y+h;}
-    protected final void region(int x,int y,int w,int h,Runnable callback){actions.add(new Action(x,y,w,h,callback));}
+    protected final void region(int x,int y,int w,int h,Runnable callback){actions.add(new Action(controlX+Math.round(x*controlScale),controlY+Math.round(y*controlScale),Math.round(w*controlScale),Math.round(h*controlScale),callback));}
+    protected final void controlsAt(int x,int y,float scale,Runnable draw){
+        UiCanvas previous=ui;int mx=mouseX,my=mouseY,ox=controlX,oy=controlY;float oldScale=controlScale;
+        ui=new ScaledUiCanvas(previous,x,y,scale);mouseX=Math.round((mx-x)/scale);mouseY=Math.round((my-y)/scale);controlX=x;controlY=y;controlScale=scale;
+        try{draw.run();}finally{ui=previous;mouseX=mx;mouseY=my;controlX=ox;controlY=oy;controlScale=oldScale;}
+    }
     protected final void rect(int x,int y,int w,int h,int color){ui.rect(x,y,w,h,color);}
     protected final void text(String value,int x,int y,int color){ui.text(value,x,y,color);}
     protected final void label(String value,int x,int y){text(value,x,y,MUTED);}

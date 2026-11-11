@@ -3,7 +3,7 @@ param(
     [string]$RuntimeJavaHome = $JavaHome,
     [string]$Classpath = $env:BRIDGETAP_CLASSPATH,
     [Parameter(Mandatory=$true)][string]$Minecraft,
-    [string]$Jar = 'dist/BridgeTap-1.5.0.jar'
+    [string]$Jar = 'dist/BridgeTap-1.6.0.jar'
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot

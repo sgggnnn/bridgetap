@@ -7,6 +7,8 @@ Run these commands from the repository root. PowerShell examples use `;` as the 
 - **JDK 9 or newer** to compile with `--release 8`; JDK 17 was used for validation.
 - **Java 8** to run Minecraft 1.8.9 and verify test compatibility.
 - Python 3 for the Forge build and bytecode checks.
+- The first build downloads JCodec 0.2.5 and SpecialSource from Maven Central, verifies pinned SHA-256 checksums, and bundles a private relocated video runtime. No separate codec install is required by players. See `third_party/jcodec-LICENSE.txt`.
+- Windows builds also compile `native/Loopback.cs` with .NET Framework 4's C# compiler and bundle the pinned imageio-ffmpeg 0.6.0 Windows runtime. The wheel checksum is verified. See `third_party/ffmpeg-NOTICE.md` and the bundled GPLv3 license. Native tools are separate processes, extracted with checksum verification at runtime.
 - The Minecraft libraries listed below. Minecraft and build dependencies are not tracked in this repository.
 
 Generated JARs are written to `dist/`. The scripts refuse to overwrite an existing file; remove that output or choose a different name with `--output` / `-Output` before rebuilding.
@@ -34,7 +36,7 @@ Cross-platform Python alternative:
 python scripts/build-source.py --java-home $env:JAVA_HOME --classpath $env:BRIDGETAP_CLASSPATH
 ```
 
-Output: `dist/BridgeTap-1.5.0.jar`.
+Output: `dist/BridgeTap-1.6.0.jar`.
 
 ## Forge 1.8.9
 
@@ -46,7 +48,7 @@ python scripts/build-forge.py --java-home 'C:/path/to/jdk-17' --minecraft 'C:/li
 
 Shared sources are converted to SRG names, then compiled with the Forge entry point. Converted files are written to `build/forge/generated/`. Mixin and its private dependencies are bundled in the mod JAR; Minecraft and Forge are not.
 
-Output: `dist/BridgeTap-1.5.0-Forge-1.8.9.jar`.
+Output: `dist/BridgeTap-1.6.0-Forge-1.8.9.jar`.
 
 See [forge/README.md](../forge/README.md) for details of the port.
 
@@ -55,8 +57,8 @@ See [forge/README.md](../forge/README.md) for details of the port.
 The PowerShell runner creates an isolated working directory under `build/`, so it does not modify your Minecraft configuration.
 
 ```powershell
-./scripts/test.ps1 -JavaHome 'C:/path/to/jdk-17' -RuntimeJavaHome 'C:/path/to/java-8' -Jar dist/BridgeTap-1.5.0.jar
-./scripts/test.ps1 -JavaHome 'C:/path/to/jdk-17' -RuntimeJavaHome 'C:/path/to/java-8' -Jar dist/BridgeTap-1.5.0-Forge-1.8.9.jar
+./scripts/test.ps1 -JavaHome 'C:/path/to/jdk-17' -RuntimeJavaHome 'C:/path/to/java-8' -Jar dist/BridgeTap-1.6.0.jar
+./scripts/test.ps1 -JavaHome 'C:/path/to/jdk-17' -RuntimeJavaHome 'C:/path/to/java-8' -Jar dist/BridgeTap-1.6.0-Forge-1.8.9.jar
 ```
 
 It compiles and runs thirteen programs covering configuration, history, replay persistence, display, timeline, camera, telemetry, geometry, library management, controls, opening detection, combined filtering, and HUD placement/input display.
@@ -64,8 +66,8 @@ It compiles and runs thirteen programs covering configuration, history, replay p
 ### Native hooks
 
 ```powershell
-python tests/check_native_hooks.py C:/libs/client-intermediary.jar dist/BridgeTap-1.5.0.jar
-python tests/check_forge_hooks.py build/forge/minecraft-srg.jar dist/BridgeTap-1.5.0-Forge-1.8.9.jar
+python tests/check_native_hooks.py C:/libs/client-intermediary.jar dist/BridgeTap-1.6.0.jar
+python tests/check_forge_hooks.py build/forge/minecraft-srg.jar dist/BridgeTap-1.6.0-Forge-1.8.9.jar
 ```
 
 For Forge, run `scripts/build-forge.py` first to prepare the mappings and SRG client. These scripts verify injections and accessors, render-context restoration, block invalidation, and, on Forge, the HUD overlay event subscription.
@@ -76,7 +78,7 @@ For Forge, run `scripts/build-forge.py` first to prepare the mappings and SRG cl
 python tests/run_forge_smoke.py --java 'C:/path/to/java-8/bin/java.exe' --javac 'C:/path/to/jdk-17/bin/javac.exe' --classpath '<complete Forge launcher libraries, separated by ;>'
 ```
 
-This classpath must include Forge universal, LaunchWrapper, the original Minecraft client, and its regular libraries. The mod JAR is copied into an isolated game directory. The test checks all 13 mixins and 34 injected/accessor methods, replay class linkage, and rendering notifications for synthetic chunks.
+This classpath must include Forge universal, LaunchWrapper, the original Minecraft client, and its regular libraries. The mod JAR is copied into an isolated game directory. The test checks the registered mixins and all 43 injected/accessor methods, replay class linkage, and rendering notifications for synthetic chunks.
 
 It does not create a graphics context. Textures, visual rendering, and interactions must also be tested in Minecraft.
 

@@ -1,7 +1,7 @@
 param(
     [string]$JavaHome = $env:JAVA_HOME,
     [string]$RuntimeJavaHome = $JavaHome,
-    [string]$Jar = 'dist/BridgeTap-1.5.0.jar',
+    [string]$Jar = 'dist/BridgeTap-1.6.0.jar',
     [string]$MinecraftJar,
     [string]$Python = 'python',
     [switch]$Forge
@@ -20,10 +20,12 @@ $sources = @(Get-ChildItem (Join-Path $projectRoot 'tests') -Filter '*.java' | F
 if ($LASTEXITCODE -ne 0) { throw 'Test compilation failed' }
 Push-Location $work
 try {
-    foreach ($test in @('ConfigRegression', 'HistoryRegression', 'ReplayRegression', 'DisplayRegression', 'ReplayTimelineRegression', 'ReplayCameraRegression', 'TelemetryRegression', 'BridgeGeometryRegression', 'ReplayLibraryRegression', 'ReplayControlsRegression', 'BridgeDetectionRegression', 'ReplayQueryRegression', 'OverlayPlacementRegression')) {
+    foreach ($test in @('ConfigRegression', 'HistoryRegression', 'ReplayRegression', 'DisplayRegression', 'ReplayTimelineRegression', 'ReplayCameraRegression', 'TelemetryRegression', 'BridgeGeometryRegression', 'ReplayLibraryRegression', 'ReplayControlsRegression', 'BridgeDetectionRegression', 'ReplayQueryRegression', 'OverlayPlacementRegression', 'IslandRegression','IslandPresetsRegression','FocusAudioRegression', 'ReplayFoldersRegression','ReplayRetentionRegression', 'ClipRegression','ClipStreamRegression')) {
         & $runtime -cp "$artifact;$classes" $test
         if ($LASTEXITCODE -ne 0) { throw "Regression failed: $test" }
     }
+    & $runtime -cp "$artifact;$classes" ClipStreamRegression 120
+    if ($LASTEXITCODE -ne 0) { throw "120 FPS native clip regression failed" }
 } finally { Pop-Location }
 if ($MinecraftJar) {
     $checker = if ($Forge) { 'tests/check_forge_hooks.py' } else { 'tests/check_native_hooks.py' }

@@ -24,6 +24,7 @@ public final class ReplaySession {
  private final C_16190149 particles;
  private final C_34267874 controls;
  private final Map<Long,ReplayData.Block> applied=new HashMap<>();
+ private volatile Map<Long,Integer> placedIds=Collections.emptyMap();
  private final Set<Long> chunks=new HashSet<>();
  private int sceneTick=-1,sourceSlot;
  private boolean rendering;
@@ -73,6 +74,16 @@ public final class ReplaySession {
  }
  private static C_88708284 tool(int id,String name){return new C_88708284(C_98888256.m_06629599(id)).m_12689347(name);}
  public static boolean active(){return current!=null;}
+ public static Integer placedId(long key){return current==null||current.placedIds==null?null:current.placedIds.get(key);}
+ public static ReplayData recording(){return current==null?null:current.data;}
+ public static String recordingName(){return current==null?"":current.run.displayName();}
+ public static C_57778754 viewer(){return current==null?Minecraft.m_20213497().f_28396371:current.camera;}
+ public static C_34399650 sourceWorld(){return current==null?Minecraft.m_20213497().f_26407825:current.source;}
+ public static C_34399650 viewWorld(){return current==null?Minecraft.m_20213497().f_26407825:current.world;}
+ public static void freeCopyCamera(){if(current!=null&&current.followPov)current.setPov(false);}
+ public static void rebuildSceneryTerrain(){Minecraft mc=Minecraft.m_20213497();if(mc!=null&&mc.f_48619021!=null)mc.f_48619021.m_12518137();if(current!=null&&current.renderer!=null&&current.renderer!=mc.f_48619021)current.renderer.m_12518137();}
+ public static void invalidateScenery(int x,int y,int z,int maxX,int maxY,int maxZ){Minecraft mc=Minecraft.m_20213497();if(mc==null)return;C_34399650 live=sourceWorld();if(live!=null)live.m_76770021(x,y,z,maxX,maxY,maxZ);if(current!=null&&current.world!=null)current.world.m_76770021(x,y,z,maxX,maxY,maxZ);}
+ public static ReplayData.TickStats recordedInputs(){return current==null?null:current.timeline.sample().stats;}
  public static boolean rendering(){return current!=null&&current.rendering;}
  public static boolean povLocked(){return current!=null&&current.followPov;}
  public static ReplayGhost povActor(){return povLocked()?current.ghost:null;}
@@ -97,7 +108,7 @@ public final class ReplaySession {
    Minecraft mc=Minecraft.m_20213497();mc.m_64046137().m_77304627(mc.f_26407825);
   }
  }
- public static void exit(){stop();Minecraft.m_20213497().m_52715402(new BridgeHistoryScreen());}
+ public static void exit(){stop();Minecraft.m_20213497().m_52715402(ReplayFolderScreen.home());}
  public static void tickHead(){
   ReplaySession s=current;ticking=s;if(s==null)return;Minecraft mc=Minecraft.m_20213497();
   if(mc.f_26407825!=s.source||mc.f_28396371!=s.player){stop();return;}
@@ -241,6 +252,7 @@ public final class ReplaySession {
  private void syncScene(){
   int tick=(int)timeline.tick();if(sceneTick==tick)return;
   Map<Long,ReplayData.Block> next=timeline.blocks();
+  Map<Long,Integer> placed=new HashMap<>();for(ReplayData.Block b:next.values())if(b.placed&&b.id!=0)placed.put(b.key(),b.id);placedIds=Collections.unmodifiableMap(placed);
   for(Map.Entry<Long,ReplayData.Block> e:applied.entrySet())if(!next.containsKey(e.getKey()))setBlock(e.getValue(),true);
   for(Map.Entry<Long,ReplayData.Block> e:next.entrySet())if(!e.getValue().sameState(applied.get(e.getKey())))setBlock(e.getValue(),false);
   applied.clear();applied.putAll(next);sceneTick=tick;

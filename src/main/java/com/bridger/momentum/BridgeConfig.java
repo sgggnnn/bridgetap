@@ -25,6 +25,7 @@ public class BridgeConfig {
     public static boolean useNoGayLabel = false;
     public static String replaySort="NEWEST";
     public static String replayQuery="", replayStatus="ALL", replayAxis="ALL", replayTechnique="ALL", replayContent="ALL";
+    public static String replaySource="ALL";
     public static String replayMinTime="", replayMaxTime="";
     public static final String[] COLOR_NAMES = {"Labels", "Coordinates", "Positive delta", "Negative delta", "Ticks", "Gain", "No Gain", "Header", "Background", "Border"};
     public static final String[] colors = {"b", "e", "a", "c", "7", "a", "e", "b", "0", "7"};
@@ -68,6 +69,7 @@ public class BridgeConfig {
             replaySort=ReplaySort.parse(props.getProperty("replaySort","NEWEST")).name();
             replayQuery=props.getProperty("replayQuery", "");
             replayStatus=props.getProperty("replayStatus", "ALL");
+            replaySource=props.getProperty("replaySource","ALL");
             replayAxis=props.getProperty("replayAxis", "ALL");
             replayTechnique=props.getProperty("replayTechnique", "ALL");
             replayContent=props.getProperty("replayContent", "ALL");
@@ -117,6 +119,7 @@ public class BridgeConfig {
                 props.setProperty("replaySort",replaySort);
                 props.setProperty("replayQuery",replayQuery);
                 props.setProperty("replayStatus",replayStatus);
+                props.setProperty("replaySource",replaySource);
                 props.setProperty("replayAxis",replayAxis);
                 props.setProperty("replayTechnique",replayTechnique);
                 props.setProperty("replayContent",replayContent);

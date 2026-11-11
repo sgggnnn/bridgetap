@@ -4,6 +4,13 @@
   "compatibilityLevel": "JAVA_8",
   "client": [
     "MinecraftMixin",
+    "FocusSoundMixin",
+    "IslandRenderMixin",
+    "IslandBlockMaskMixin",
+    "IslandRenderCacheMaskMixin",
+    "IslandChunkCacheMaskMixin",
+    "IslandBlockEntityMaskMixin",
+    "IslandArgentumMaskMixin",
     "EntityLivingBaseMixin",
     "GuiIngameMixin",
     "EntityPlayerSPMixin",

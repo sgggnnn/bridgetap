@@ -61,11 +61,13 @@ class Class:
 client=zipfile.ZipFile(sys.argv[1]);mod=zipfile.ZipFile(sys.argv[2]);config=json.loads(mod.read('bridgetap.mixins.json'));checked=0
 for mixin in config['client']:
  cls=Class(mod.read(config['package'].replace('.','/')+'/'+mixin+'.class'))
- targets=[]
+ targets=[];optional=False
  for kind,values in cls.annotations(cls.attrs):
-  if kind.endswith('/Mixin;'):targets=values.get('value',[])
+  if kind.endswith('/Mixin;'):targets=values.get('value',[])+['L'+n.replace('.','/')+';' for n in values.get('targets',[])]
+  if kind.endswith('/Pseudo;'):optional=True
  assert targets,'Mixin has no target: '+mixin
  for target in targets:
+  if target[1:-1]+'.class' not in client.namelist() and optional:continue
   native=Class(client.read(target[1:-1]+'.class'))
   for name,desc,attrs in cls.methods:
    for annotation,values in cls.annotations(attrs):
@@ -119,6 +121,8 @@ assert not hud.calls('com/bridger/momentum/BridgeTelemetryHUD','live','()V'),'Li
 assert not hud.calls('com/bridger/momentum/BridgeTelemetryHUD','liveCoordinates','()V'),'Player XYZ still displayed outside replay'
 assert not hud.calls('com/bridger/momentum/ReplaySession','stop','()V'),'Gallery shortcut still stops playback'
 assert not mc_mixin.calls('com/bridger/momentum/ReplaySession','exit','()V'),'A keyboard/menu hook still exits playback instead of the barrier control'
+assert not any(isinstance(c,tuple) and c[0]==7 and mc_mixin.cp[c[1]]=='net/minecraft/unmapped/C_55401126' for c in mc_mixin.cp),'The native Escape pause menu is still intercepted'
+assert hud.calls('com/bridger/momentum/BridgeLayoutScreen','<init>','(Lnet/minecraft/unmapped/C_85740840;)V'),'Replay HUD editor shortcut is not wired'
 assert session.calls('com/bridger/momentum/ReplayInputOverlay','paint','(Lcom/bridger/momentum/UiCanvas;IILcom/bridger/momentum/ReplayData$TickStats;)V'),'Recorded input overlay is not rendered'
 tracker=Class(mod.read('com/bridger/momentum/BridgeTracker.class'))
 block_placed=next(a for n,_,a in tracker.methods if n=='onBlockPlaced')
@@ -141,4 +145,9 @@ skin=next(a for n,_,a in camera.methods if n=='m_68930603')
 assert camera.has_call(skin,camera.calls('com/bridger/momentum/ReplayGhost','m_68930603','()Lnet/minecraft/unmapped/C_22168528;')),'Imported POV does not use the recorded actor skin'
 set_block=next(a for n,_,a in session.methods if n=='setBlock')
 assert session.has_call(set_block,session.calls('net/minecraft/unmapped/C_34399650','m_76770021','(IIIIII)V')),'Replay edits do not explicitly invalidate synthetic chunk geometry'
+scenery=Class(mod.read('com/bridger/momentum/IslandOverlay.class'))
+assert not scenery.calls('net/minecraft/unmapped/C_34399650','m_38188749','(Lnet/minecraft/unmapped/C_32594356;Lnet/minecraft/unmapped/C_15815210;I)Z'),'Scenery modifies the live world'
+capture=next(a for n,_,a in mc_mixin.methods if n=='bridgetap$captureVideo')
+assert mc_mixin.has_call(capture,mc_mixin.calls('com/bridger/momentum/ClipCapture','capture','()V')),'Completed-frame video capture is not wired'
+assert 'com/bridger/momentum/shaded/jcodec/api/awt/AWTSequenceEncoder.class' in mod.namelist(),'Private MP4 encoder is not bundled'
 print('PASS:',checked,'native hooks/accessors, render finally, isolated gallery, tick-driven flight and shader/ability/resource regressions')

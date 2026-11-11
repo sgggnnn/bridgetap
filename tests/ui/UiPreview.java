@@ -34,11 +34,12 @@ public final class UiPreview implements UiCanvas {
     private static UiPreview render(BridgeScreen screen,BufferedImage font,String name)throws Exception{UiPreview canvas=new UiPreview(font);screen.drawPreview(canvas,-10,-10);canvas.save(name);return canvas;}
     public static void main(String[] args)throws Exception{
         testDetectionIntegration();
+        if(ReplayFolders.local().autoServers())ReplayFolders.local().toggleAutoServers();
         BufferedImage font;try(ZipFile z=new ZipFile(args[0])){font=ImageIO.read(z.getInputStream(z.getEntry("assets/minecraft/textures/font/ascii.png")));}
         List<ReplayData.Block> blocks=Arrays.asList(new ReplayData.Block(0,69,0,1,0,0),new ReplayData.Block(0,74,31,1,0,0),new ReplayData.Block(0,69,1,24,0,0,true),new ReplayData.Block(0,74,30,24,0,1,true));
         ReplayData data=new ReplayData(Arrays.asList(new ReplayData.Frame(.5,70,.5),new ReplayData.Frame(.5,75,31.5)),blocks,false);
         for(int i=9;i>=0;i--){
-            BridgeTracker.history().add(i%4==0?"FAILED":"SUCCESS",3.85+i*.12,7+i%3,i%2==0?"X":"Z",Arrays.asList("1.0 Flat: .504 +.n/a (3t)","5b Late: .460 -.044 (9t)","Tap Speed #2: .541 +.081 (9t)","Turn: .216 +.475 (15t)","Plates-1t: .260","Plates: .102"),data);
+            BridgeTracker.history().add(i%4==0?"FAILED":"SUCCESS",3.85+i*.12,7+i%3,i%2==0?"X":"Z",Arrays.asList("1.0 Flat: .504 +.n/a (3t)","5b Late: .460 -.044 (9t)","Tap Speed #2: .541 +.081 (9t)","Turn: .216 +.475 (15t)","Plates-1t: .260","Plates: .102"),data,"mc.example.net");
             RunHistory.Run run=BridgeTracker.history().recent().get(0);BridgeTracker.history().rename(run,i==0?"Opening / 1.0 Flat to 5b Late":i==1?"Evening practice / clean run":"Bridge practice "+(i+1));
             if(i%3==0)BridgeTracker.history().toggleFavorite(run);
         }
@@ -54,7 +55,7 @@ public final class UiPreview implements UiCanvas {
         BridgeColorsScreen colors=new BridgeColorsScreen();render(colors,font,"colors");colors.clickPreview(65,145,0);render(colors,font,"color-selected");colors.clickPreview(530,150,0);
         if(!"4".equals(BridgeConfig.colors[1]))throw new AssertionError("Swatch click did not update selected coordinate color");BridgeConfig.colors[1]="e";
         BridgeLayoutScreen layout=new BridgeLayoutScreen(settings);render(layout,font,"layout");int before=BridgeConfig.hudX;
-        layout.clickPreview(45,117,0);layout.dragPreview(140,195);layout.releasePreview();render(layout,font,"layout-dragged");
+        layout.clickPreview(15,15,0);layout.dragPreview(140,195);layout.releasePreview();render(layout,font,"layout-dragged");
         if(BridgeConfig.hudX<=before||BridgeConfig.hudY<=10)throw new AssertionError("Studio drag did not update both coordinates");
         java.lang.reflect.Field boundField=BridgeLayoutScreen.class.getDeclaredField("bounds");boundField.setAccessible(true);int[] b=((int[][])boundField.get(layout))[0];
         java.lang.reflect.Field sceneScale=BridgeLayoutScreen.class.getDeclaredField("sceneScale"),sceneX=BridgeLayoutScreen.class.getDeclaredField("sceneX"),sceneY=BridgeLayoutScreen.class.getDeclaredField("sceneY");
@@ -62,6 +63,61 @@ public final class UiPreview implements UiCanvas {
         int handleX=sceneX.getInt(layout)+Math.round(b[0]*scale)+Math.round(b[2]*scale),handleY=sceneY.getInt(layout)+Math.round(b[1]*scale)+Math.round(b[3]*scale);
         double oldScale=BridgeConfig.hudScale;layout.clickPreview(handleX,handleY,0);layout.dragPreview(handleX+30,handleY+18);layout.releasePreview();
         if(BridgeConfig.hudScale<=oldScale)throw new AssertionError("Lower-right handle did not resize the selected overlay");render(layout,font,"layout-resized");
+        java.lang.reflect.Method key=BridgeLayoutScreen.class.getDeclaredMethod("key",int.class);key.setAccessible(true);key.invoke(layout,15);
+        render(layout,font,"layout-fullscreen");b=((int[][])boundField.get(layout))[0];
+        layout.clickPreview(b[0]+5,b[1]+5,0);layout.dragPreview(859,499);layout.releasePreview();render(layout,font,"layout-bottom-right");
+        b=((int[][])boundField.get(layout))[0];
+        if(b[0]+b[2]!=860||b[1]+b[3]!=500)throw new AssertionError("HUD cannot reach the bottom-right screen edges behind the hidden inspector");
+        layout.clickPreview(b[0]+5,b[1]+5,0);layout.dragPreview(0,0);layout.releasePreview();render(layout,font,"layout-top-left");
+        b=((int[][])boundField.get(layout))[0];
+        if(b[0]!=0||b[1]!=0)throw new AssertionError("HUD cannot reach the top-left screen edges");
+        // Select keystrokes through the floating inspector, then drag to a screen corner.
+        key.invoke(layout,15);render(layout,font,"layout-inspector");layout.clickPreview(650,125,0);render(layout,font,"layout-inputs");
+        java.lang.reflect.Field selection=BridgeLayoutScreen.class.getDeclaredField("selected");selection.setAccessible(true);
+        if(selection.getInt(layout)!=2)throw new AssertionError("Floating inspector did not select recorded inputs");
+        key.invoke(layout,15);render(layout,font,"layout-inputs-fullscreen");b=((int[][])boundField.get(layout))[2];
+        layout.clickPreview(b[0]+5,b[1]+5,0);layout.dragPreview(859,499);layout.releasePreview();render(layout,font,"layout-inputs-bottom-right");
+        b=((int[][])boundField.get(layout))[2];
+        if(b[0]+b[2]!=860||b[1]+b[3]!=500)throw new AssertionError("Recorded inputs cannot reach the bottom-right screen edges");
+        java.lang.reflect.Method current=BridgeHistoryScreen.class.getDeclaredMethod("current");current.setAccessible(true);RunHistory.Run selectedRun=(RunHistory.Run)current.invoke(library);
+        String folderId=ReplayFolders.local().create("Training bridges");ReplayFolderScreen folders=new ReplayFolderScreen(library,selectedRun);render(folders,font,"replay-folders");
+        java.lang.reflect.Field managerRows=ReplayFolderScreen.class.getDeclaredField("rows");managerRows.setAccessible(true);List<RunHistory.Run> managerRuns=(List<RunHistory.Run>)managerRows.get(folders);int managerIndex=0;for(int i=0;i<managerRuns.size();i++)if(managerRuns.get(i).id.equals(selectedRun.id))managerIndex=i;
+        folders.clickPreview(250,186+managerIndex*25,0);folders.dragPreview(80,257);folders.releasePreview();render(folders,font,"replay-folder-moved");
+        if(!ReplayFolders.local().folderOf(selectedRun.id).equals(folderId))throw new AssertionError("Move replay button did not update its folder");
+        folders.clickPreview(80,257,0);render(folders,font,"library-folder");
+        if(((List<?>)managerRows.get(folders)).size()!=1)throw new AssertionError("Selecting a folder did not show its contents in the middle table");
+        IslandLibrary.save(new IslandTemplate("Practice island",1,1,1,0,64,0,Arrays.asList(new IslandTemplate.Block(0,0,0,"minecraft:sandstone",0))),"saved");
+        IslandScreen islands=new IslandScreen(library,selectedRun);render(islands,font,"island-scenery");
+        islands.clickPreview(490,428,0);render(islands,font,"island-rename");java.lang.reflect.Field renameText=IslandScreen.class.getDeclaredField("renameText");renameText.setAccessible(true);renameText.set(islands,"Renamed scenery");render(islands,font,"island-rename-edited");islands.clickPreview(500,305,0);render(islands,font,"island-renamed");
+        if(!IslandTemplate.read(IslandLibrary.list("saved").get(0)).name.equals("Renamed scenery"))throw new AssertionError("Rename island button did not save the new name");
+        islands.clickPreview(350,160,0);render(islands,font,"island-delete-confirm");islands.clickPreview(250,295,0);render(islands,font,"island-delete-cancel");if(IslandLibrary.list("saved").size()!=1)throw new AssertionError("Cancel deleted the island");
+        islands.clickPreview(350,160,0);render(islands,font,"island-delete-confirmed");islands.clickPreview(500,295,0);render(islands,font,"island-empty");if(!IslandLibrary.list("saved").isEmpty())throw new AssertionError("Delete island button did not remove the selected template");
+        islands.clickPreview(190,70,0);render(islands,font,"island-copy-from-replay");
+        render(new IslandCopyScreen(islands),font,"island-copy-selection");
+        java.lang.reflect.Field activeIsland=IslandOverlay.class.getDeclaredField("active"),islandParts=IslandOverlay.class.getDeclaredField("parts");activeIsland.setAccessible(true);islandParts.setAccessible(true);
+        IslandTemplate pairedScenery=new IslandTemplate("Paired scenery",22,1,1,0,64,0,Arrays.asList(new IslandTemplate.Block(0,0,0,"minecraft:stone",0),new IslandTemplate.Block(21,0,0,"minecraft:stone",0)),0,1,0,true);activeIsland.set(null,pairedScenery);islandParts.set(null,new IslandParts(pairedScenery));IslandOverlay.resetFinish();
+        IslandPlacementScreen placement=new IslandPlacementScreen(islands);render(placement,font,"island-placement-controls");placement.clickPreview(730,90,0);render(placement,font,"island-part-menu");placement.clickPreview(730,143,0);render(placement,font,"island-finish-controls");
+        placement.clickPreview(817,190,0);if(IslandOverlay.gap()!=21)throw new AssertionError("Finish gap plus button did not move the arrival island");
+        render(placement,font,"island-gap-adjusted");placement.clickPreview(760,190,0);render(placement,font,"island-gap-focused");java.lang.reflect.Method typed=BridgeScreen.class.getDeclaredMethod("m_29116903",char.class,int.class);typed.setAccessible(true);
+        typed.invoke(placement,'\0',14);typed.invoke(placement,'\0',14);render(placement,font,"island-gap-empty");typed.invoke(placement,'2',3);typed.invoke(placement,'8',9);render(placement,font,"island-gap-28");
+        if(IslandOverlay.gap()!=28)throw new AssertionError("Typing the finish distance did not apply it");placement.clickPreview(780,330,0);render(placement,font,"island-rotated");if(IslandOverlay.rotation()!=90)throw new AssertionError("Rotate island button did not change orientation");placement.clickPreview(730,90,0);render(placement,font,"island-start-menu");placement.clickPreview(730,163,0);render(placement,font,"island-start-controls");placement.clickPreview(817,227,0);if(IslandOverlay.startHeight()!=1||IslandOverlay.finishHeight()!=0)throw new AssertionError("Start height control also moved the finish island");render(placement,font,"island-start-moved");IslandOverlay.disable();
+        render(ReplayFolderScreen.home(),font,"replay-library-home");
+        ReplayFolderScreen successful=ReplayFolderScreen.home();render(successful,font,"replay-status-all");successful.clickPreview(410,116,0);render(successful,font,"replay-status-menu");successful.clickPreview(410,166,0);render(successful,font,"replay-status-success");
+        for(RunHistory.Run run:(List<RunHistory.Run>)managerRows.get(successful))if(!run.status.equals("SUCCESS"))throw new AssertionError("Successful-only filter contains a failed bridge");if(!BridgeConfig.replayStatus.equals("SUCCESS"))throw new AssertionError("Successful filter was not persisted");BridgeConfig.replayStatus="ALL";
+        BridgeTracker.history().importReplay(BridgeTracker.history().exportReplay(selectedRun));ReplayFolderScreen importedOnly=ReplayFolderScreen.home();render(importedOnly,font,"replay-source-all");importedOnly.clickPreview(550,116,0);render(importedOnly,font,"replay-source-menu");importedOnly.clickPreview(550,166,0);render(importedOnly,font,"replay-source-imported");List<RunHistory.Run> imports=(List<RunHistory.Run>)managerRows.get(importedOnly);if(imports.size()!=1||!imports.get(0).isImported())throw new AssertionError("Imported-only filter did not isolate the imported replay");if(!BridgeConfig.replaySource.equals("IMPORTED"))throw new AssertionError("Import filter was not persisted");BridgeConfig.replaySource="ALL";
+        render(new BridgeReplayDetailsScreen(folders,selectedRun),font,"expanded-bridge-coordinates");
+        IslandPresets.local().save("My bridge layout",pairedScenery,new IslandLayout(0,0,0,0,0,0,8,2,0,1,false));render(new IslandPresetsScreen(library),font,"island-presets");
+        Files.createDirectories(Paths.get("config"));Files.write(Paths.get("config","bridgetap-clips.properties"),new byte[]{102,112,115,61,92,117,88,88,88,88});
+        ClipScreen clips=new ClipScreen(library);render(clips,font,"video-clips");
+        if(ClipCapture.fps()!=15||ClipCapture.seconds()!=30||ClipCapture.height()!=720)throw new AssertionError("Malformed clip preferences did not fall back to defaults");
+        clips.clickPreview(350,185,0);render(clips,font,"video-buffer-on");if(!ClipCapture.enabled())throw new AssertionError("Video buffer toggle did not enable capture");
+        clips.clickPreview(350,185,0);if(ClipCapture.enabled())throw new AssertionError("Video buffer toggle did not stop capture");
+        render(clips,font,"video-buffer-off");clips.clickPreview(350,230,0);render(clips,font,"video-frame-rates");clips.clickPreview(350,349,0);
+        if(ClipCapture.fps()!=60)throw new AssertionError("60 FPS menu option did not change capture rate");
+        render(clips,font,"video-60fps");clips.clickPreview(350,230,0);render(clips,font,"video-frame-rates-120");clips.clickPreview(350,371,0);
+        if(ClipCapture.fps()!=120)throw new AssertionError("120 FPS menu option did not change capture rate");
+        render(clips,font,"video-120fps");
+        render(new PlacementAppearanceScreen(library),font,"block-appearance");
         UiPreview inputs=new UiPreview(font);inputs.rect(0,0,860,500,0xFF101722);ReplayInputOverlay.paint(new ScaledUiCanvas(inputs,50,30,3),0,0,new ReplayData.TickStats(1|4|16|256,0,0,0,0,0,0,0,0,0,0,0));inputs.save("inputs");
         System.out.println("PASS: real screen previews, filter/sort hit targets, color selection and HUD dragging without GL");
     }

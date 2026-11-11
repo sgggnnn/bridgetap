@@ -1,7 +1,8 @@
 param(
     [string]$JavaHome = $env:JAVA_HOME,
     [string]$Classpath = $env:BRIDGETAP_CLASSPATH,
-    [string]$Output = 'dist/BridgeTap-1.5.0.jar'
+    [string]$Output = 'dist/BridgeTap-1.6.0.jar',
+    [string]$Python = 'python'
 )
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
@@ -18,4 +19,7 @@ if (Test-Path -LiteralPath $destination) { throw "Output already exists: $destin
 New-Item -ItemType Directory -Force (Split-Path -Parent $destination) | Out-Null
 & $archiver cf $destination -C $classes . -C (Join-Path $projectRoot 'src/main/resources') .
 if ($LASTEXITCODE -ne 0) { throw 'JAR packaging failed' }
+$runtime = if ($JavaHome) { Join-Path $JavaHome 'bin/java.exe' } else { 'java' }
+& $Python (Join-Path $PSScriptRoot 'video_bundle.py') $destination --java $runtime
+if ($LASTEXITCODE -ne 0) { throw 'Video runtime packaging failed' }
 Write-Output "Built $destination"

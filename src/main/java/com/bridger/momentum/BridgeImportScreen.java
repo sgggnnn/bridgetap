@@ -7,8 +7,11 @@ import net.minecraft.unmapped.*;
 
 public final class BridgeImportScreen extends C_85740840 {
  private final BridgeHistoryScreen parent;
+ private final C_85740840 returnTo;
  private List<Path> files=new ArrayList<>();private int page;private String message="Copy .btreplay files into imports, then Refresh";
- public BridgeImportScreen(BridgeHistoryScreen parent){this.parent=parent;refresh();}
+ public BridgeImportScreen(BridgeHistoryScreen parent){this(parent,parent);}
+ public BridgeImportScreen(BridgeHistoryScreen parent,C_85740840 returnTo){this.parent=parent;this.returnTo=returnTo;refresh();}
+ private void back(){if(returnTo instanceof ReplayFolderScreen)((ReplayFolderScreen)returnTo).reload();Minecraft.m_20213497().m_52715402(returnTo);}
  private int pageSize(){return Math.max(1,(f_07021018-91)/20);}
  private void refresh(){try{
   Path folder=BridgeTracker.history().importsFolder();Files.createDirectories(folder);files=new ArrayList<>();
@@ -36,13 +39,13 @@ public final class BridgeImportScreen extends C_85740840 {
    if(mx>=8&&mx<90){try{message=BridgeFileActions.open(BridgeTracker.history().importsFolder());}catch(IOException|RuntimeException ex){message="Could not open folder - use Copy path";}}
    else if(mx>=94&&mx<156)refresh();
    else if(mx>=160&&mx<232){m_80874759(BridgeTracker.history().importsFolder().toAbsolutePath().toString());message="Imports path copied";}
-   else if(mx>=236&&mx<296)Minecraft.m_20213497().m_52715402(parent);
+   else if(mx>=236&&mx<296)back();
    return;
   }
   if(my>=f_07021018-20){if(mx>=8&&mx<66)page=Math.max(0,page-1);else if(mx>=70&&mx<128&&(page+1)*pageSize()<files.size())page++;return;}
   if(mx>=8&&mx<f_05230747-8&&my>=66){int index=page*pageSize()+(my-66)/20;
-   if(index<files.size()&&index<(page+1)*pageSize())try{RunHistory.Run run=BridgeTracker.history().importReplay(files.get(index));parent.imported(run);Minecraft.m_20213497().m_52715402(parent);}catch(IOException ex){message="Import failed: "+ex.getMessage();}
+   if(index<files.size()&&index<(page+1)*pageSize())try{RunHistory.Run run=BridgeTracker.history().importReplay(files.get(index));parent.imported(run);back();}catch(IOException ex){message="Import failed: "+ex.getMessage();}
   }
  }
- @Override protected void m_29116903(char c,int key){if(key==1)Minecraft.m_20213497().m_52715402(parent);}
+ @Override protected void m_29116903(char c,int key){if(key==1)back();}
 }

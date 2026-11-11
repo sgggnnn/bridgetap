@@ -9,7 +9,7 @@ public class PlacementHooks {
   beforeHit=world.m_77852500(hit).m_41958956();beforeAdjacent=world.m_77852500(adjacent).m_41958956();
  }
  public static void finish(C_34399650 world,C_57778754 player){
-  if(!BridgeTracker.isBridging()||ReplaySession.active()){hit=null;return;}
+  if(ReplaySession.active()){hit=null;return;}
   if(world==null||player==null||hit==null)return;
   C_81592558 after=world.m_77852500(hit).m_41958956(),afterAdjacent=world.m_77852500(adjacent).m_41958956();
   C_32594356 placed=null;
@@ -17,6 +17,9 @@ public class PlacementHooks {
   else if(afterAdjacent!=beforeAdjacent && afterAdjacent!=null && C_81592558.m_63461719(afterAdjacent)!=0)placed=adjacent;
   hit=null;
   if(placed!=null){
+   PlacementAppearance.track(placed,C_81592558.m_63461719(world.m_77852500(placed).m_41958956()));
+   IslandReplacement.allowPlacement(placed.m_32364273(),placed.m_62825721(),placed.m_23514936());
+   if(!BridgeTracker.isBridging())return;
    PlacementEvidence.record(BridgeTracker.bridgetap$getTick(),placed.m_32364273(),placed.m_23514936(),player.f_78826675,player.f_97691941);
    ReplayRecorder.placed(world,placed);
   }

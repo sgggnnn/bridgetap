@@ -4,6 +4,27 @@ History of versions available in [GitHub Releases](https://github.com/sgggnnn/br
 
 Some commits contain several intermediate versions. Those versions are tagged at the first commit archiving their binary, rather than at a dedicated source snapshot. The affected release notes explain this distinction.
 
+## [1.6.0](https://github.com/sgggnnn/bridgetap/releases/tag/v1.6.0) - Islands, clips and replay organization
+
+Final release of dev.11. Adds island copying and one-click presets, independent start/finish placement, Focus mode, readable island exports, a Windows hardware H.264/audio buffer, replay folders and filters, protected saves and optional failed-run cleanup. Fixes preset drift and parallelizes conversion for 120 FPS capture.
+
+See the [full release notes](docs/releases/v1.6.0.md) and [feature guide](docs/ISLANDS-AND-CLIPS.md).
+
+### Development history
+
+Development JARs were preserved without separate source snapshots. Tags for dev.1-dev.10 contain manifests and checksums only; their release assets are the original binaries. The final v1.6.0 tag contains the complete consolidated source.
+
+- [1.6.0-dev.10 - Hardware clip buffer, presets, Focus and protected saves](docs/releases/v1.6.0-dev.10.md)
+- [1.6.0-dev.9 - LWJGL GPU-fence compatibility](docs/releases/v1.6.0-dev.9.md)
+- [1.6.0-dev.8 - Reliable island masking, connected panes and server folders](docs/releases/v1.6.0-dev.8.md)
+- [1.6.0-dev.7 - Island rotation, capture recovery and server metadata](docs/releases/v1.6.0-dev.7.md)
+- [1.6.0-dev.6 - Finish-island positioning and island renaming](docs/releases/v1.6.0-dev.6.md)
+- [1.6.0-dev.5 - Async GPU capture and endpoint visibility fixes](docs/releases/v1.6.0-dev.5.md)
+- [1.6.0-dev.4 - Visual island copying and file-manager replay browser](docs/releases/v1.6.0-dev.4.md)
+- [1.6.0-dev.3 - Island previews and original-terrain replacement](docs/releases/v1.6.0-dev.3.md)
+- [1.6.0-dev.2 - Higher-quality clips, Windows audio and replay-island copying](docs/releases/v1.6.0-dev.2.md)
+- [1.6.0-dev.1 - Island scenery, silent clips and replay folders](docs/releases/v1.6.0-dev.1.md)
+
 ## [1.5.0](https://github.com/sgggnnn/bridgetap/releases/tag/v1.5.0) — Visual HUD studio, replay library and opening detection
 
 ### Added

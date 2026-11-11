@@ -6,6 +6,8 @@ import com.bridger.momentum.ReplaySession;
 import com.bridger.momentum.BridgeHistoryScreen;
 import com.bridger.momentum.BridgeTelemetry;
 import com.bridger.momentum.ReplayRecorder;
+import com.bridger.momentum.IslandOverlay;
+import com.bridger.momentum.ClipCapture;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.input.Keyboard;
 import net.minecraft.unmapped.*;
@@ -23,6 +25,7 @@ public class MinecraftMixin {
     private void bridgetap$onRunTick(CallbackInfo ci) {
         BridgeTelemetry.beginTick();
         ReplaySession.tickHead();
+        IslandOverlay.tick();
         BridgeHUD.onClientTick();
         BridgeTracker.onTick((Minecraft) (Object) this);
     }
@@ -64,10 +67,15 @@ public class MinecraftMixin {
 
     @Inject(method = "m_52715402", at = @At("HEAD"), cancellable = true)
     private void bridgetap$keepReplayOpen(C_85740840 screen,CallbackInfo ci) {
-        if (ReplaySession.active() && (screen instanceof C_55401126 || screen instanceof C_87711245)) {
+        // Keep the native pause menu available. Only the live inventory must be
+        // blocked: replay controls belong to the private replay camera inventory.
+        if (ReplaySession.active() && screen instanceof C_87711245) {
             ci.cancel();
         }
     }
+
+    @Inject(method="m_66101954",at=@At("HEAD"))
+    private void bridgetap$captureVideo(CallbackInfo ci){ClipCapture.capture();}
 
     @Inject(method = "m_49232044", at = @At("HEAD"))
     private void bridgetap$leaveWorld(C_34399650 world,String message,CallbackInfo ci) { ReplaySession.stop(); }

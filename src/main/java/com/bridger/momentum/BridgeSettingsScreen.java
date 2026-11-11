@@ -46,5 +46,5 @@ public class BridgeSettingsScreen extends BridgeScreen {
         button("Back to replays",706,442,134,26,true,true,this::back);
         footer("Changes are saved automatically  /  Esc: back");
     }
-    @Override protected void back(){BridgeConfig.save();open(parent==null?new BridgeHistoryScreen():parent);}
+    @Override protected void back(){BridgeConfig.save();open(parent==null?ReplayFolderScreen.home():parent);}
 }

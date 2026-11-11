@@ -17,9 +17,12 @@ public final class ReplayRecorder {
  private static int lastFrameTick=Integer.MIN_VALUE;
  private static long dayTime;
  private static ReplayData.Identity identity=ReplayData.Identity.unknown();
- public static void reset(){frames.clear();blocks.clear();scanned.clear();states.clear();placements.clear();truncated=false;lastX=Integer.MIN_VALUE;lastFrameTick=Integer.MIN_VALUE;}
+ private static String server="";
+ public static String serverAddress(){return server;}
+ public static void reset(){frames.clear();blocks.clear();scanned.clear();states.clear();placements.clear();truncated=false;lastX=Integer.MIN_VALUE;lastFrameTick=Integer.MIN_VALUE;server="";}
  public static void start(){
   reset();Minecraft mc=Minecraft.m_20213497();C_57778754 p=mc.f_28396371;
+  C_91543234 entry=mc.m_73689431();server=mc.m_10057689()?"Singleplayer":entry==null?"Unknown server":entry.f_01631523;
   GameProfile profile=p.m_37763343();String value="",signature="";
   C_97147141 info=mc.m_55181026().m_00890679(profile.getId());
   Collection<Property> textures=(info==null?profile:info.m_15269411()).getProperties().get("textures");
@@ -58,6 +61,7 @@ public final class ReplayRecorder {
   blocks.add(new ReplayData.Block(pos.m_32364273(),pos.m_62825721(),pos.m_23514936(),id,metadata,tick,placed));
  }
  public static void placed(C_34399650 world,C_32594356 pos){
+  IslandReplacement.allowPlacement(pos.m_32364273(),pos.m_62825721(),pos.m_23514936());
   if(frames.isEmpty()||ReplaySession.active()||!BridgeTracker.isBridging())return;
   int tick=BridgeTracker.bridgetap$getTick()==lastFrameTick?frames.size()-1:frames.size();
   if(tick>=ReplayData.MAX_FRAMES){truncated=true;return;}

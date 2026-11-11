@@ -13,8 +13,11 @@ import html
 import subprocess
 import urllib.request
 import uuid
+import sys
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
+sys.path.insert(0,str(Path(__file__).resolve().parent))
+from video_bundle import add_video
 
 ROOT = Path(__file__).resolve().parents[1]
 WORK = ROOT / 'build' / 'forge'
@@ -71,7 +74,7 @@ def main():
     parser.add_argument('--java-home', default=os.environ.get('JAVA_HOME'))
     parser.add_argument('--minecraft', type=Path, required=True, help='Original Mojang 1.8.9 client JAR')
     parser.add_argument('--classpath', default=os.environ.get('BRIDGETAP_CLASSPATH', ''), help='LWJGL, Authlib, Guava and other Minecraft libraries')
-    parser.add_argument('--output', type=Path, default=ROOT / 'dist' / 'BridgeTap-1.5.0-Forge-1.8.9.jar')
+    parser.add_argument('--output', type=Path, default=ROOT / 'dist' / 'BridgeTap-1.6.0-Forge-1.8.9.jar')
     args = parser.parse_args()
     if args.output.exists(): raise SystemExit('Output already exists: '+str(args.output))
     args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -133,7 +136,7 @@ def main():
     with ZipFile(args.output, 'x', ZIP_DEFLATED) as out:
         out.writestr('META-INF/MANIFEST.MF', manifest)
         out.writestr('bridgetap.forge.mixins.json', json.dumps(config, indent=2))
-        out.writestr('mcmod.info', json.dumps([{'modid':'bridgetap', 'name':'BridgeTap', 'version':'1.5.0', 'mcversion':'1.8.9', 'clientSideOnly':True, 'description':'Bridge recording, replay, free camera, POV and telemetry.', 'authorList':['Bridger']}]))
+        out.writestr('mcmod.info', json.dumps([{'modid':'bridgetap', 'name':'BridgeTap', 'version':'1.6.0', 'mcversion':'1.8.9', 'clientSideOnly':True, 'description':'Experimental island scenery, video clips and replay folders.', 'authorList':['Bridger']}]))
         for p in output_classes.rglob('*.class'): out.write(p, p.relative_to(output_classes).as_posix())
         for p in (ROOT/'src/main/resources/assets').rglob('*'):
             if p.is_file(): out.write(p, p.relative_to(ROOT/'src/main/resources').as_posix())
@@ -155,6 +158,7 @@ def main():
         asm_license = re.search(r'<pre[^>]*>(.*?)</pre>', asm_license, re.S).group(1)
         out.writestr('META-INF/licenses/asm-LICENSE.txt', html.unescape(re.sub(r'<[^>]+>', '', asm_license)))
         out.writestr('META-INF/licenses/guava-LICENSE.txt', fetch('guava-LICENSE.txt', 'https://raw.githubusercontent.com/google/guava/v21.0/COPYING').read_bytes())
+    add_video(args.output,java)
     print('Built', args.output, flush=True)
 
 

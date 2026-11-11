@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse, json, os, subprocess, tempfile
+from video_bundle import add_video
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
 root = Path(__file__).resolve().parents[1]
@@ -23,4 +24,6 @@ with tempfile.TemporaryDirectory() as tmp:
   for folder in (classes,root/'src/main/resources'):
    for p in sorted(folder.rglob('*')):
     if p.is_file(): z.write(p,p.relative_to(folder).as_posix())
+java = str(Path(args.java_home)/'bin'/('java.exe' if os.name=='nt' else 'java')) if args.java_home else 'java'
+add_video(out,java)
 print('Built',out)

@@ -4,12 +4,14 @@ A **Minecraft 1.8.9** client mod for analyzing your bridges: jump coordinates, r
 
 [Download the latest version](https://github.com/sgggnnn/bridgetap/releases/latest) · [All releases](https://github.com/sgggnnn/bridgetap/releases) · [Changelog](CHANGELOG.md) · [Report a bug](https://github.com/sgggnnn/bridgetap/issues)
 
+**1.6.0** promotes the tested dev.11 build to the final release. It adds island scenery and one-click presets, MP4 clips with Windows output audio, a replay file manager, protected saves, block appearance customization and Focus mode. See the [islands and clips guide](docs/ISLANDS-AND-CLIPS.md) for controls and limitations.
+
 ## Installation
 
-1. Open [release 1.5.0](https://github.com/sgggnnn/bridgetap/releases/tag/v1.5.0).
+1. Open [release 1.6.0](https://github.com/sgggnnn/bridgetap/releases/tag/v1.6.0).
 2. Download the file matching your setup:
-   - **Forge 1.8.9**: `BridgeTap-1.5.0-Forge-1.8.9.jar`.
-   - **Ornithe / Legacy Fabric 1.8.9**: `BridgeTap-1.5.0.jar`, for an environment using Ornithe mappings.
+   - **Forge 1.8.9**: `BridgeTap-1.6.0-Forge-1.8.9.jar`.
+   - **Ornithe / Legacy Fabric 1.8.9**: `BridgeTap-1.6.0.jar`, for an environment using Ornithe mappings.
 3. Place the JAR in your instance's `mods` folder, replacing the previous BridgeTap version.
 4. Launch Minecraft with **Java 8** and your chosen loader.
 
@@ -37,10 +39,10 @@ Use **Replay info: ON/OFF** to show or hide the replay information panel. The re
 
 ### Open and save a replay
 
-Press **B** to open the gallery. You can change the binding in Minecraft's controls. The **Settings** button opens the mod settings. Choose **Edit HUD layout** to move the bridge coordinates, replay information, and recorded-input overlays visually. Use the selector to switch between the normal-gameplay and replay layouts.
+Press **B** to open the gallery, including during playback. You can change the binding in Minecraft's controls. The **Settings** button opens the mod settings. Choose **Edit HUD layout** to move the bridge coordinates, replay information, and recorded-input overlays visually. During a replay, **F4** opens the editor with recorded inputs selected. Drag overlays anywhere on the screen, resize with the lower-right handle, and press **Tab** to hide or show the floating controls. **Escape** saves the layout and returns to the previous screen.
 
-- Click a card to inspect it, then **Watch** or **PLAY REPLAY** to start playback.
-- **Save** keeps a recent run.
+- Select a folder on the left and a recording in the middle table, then click **PLAY REPLAY** on the right.
+- **Save replay** protects a recording from optional failed-run cleanup.
 - Right-click a card to add or remove a favorite. Favoriting a recent run also saves it.
 - Use the **Sort** dropdown to choose Date, Run time, Name, or Jump count; the next button reverses the direction.
 - **Filters** combines axis, technique (including 5b/6b Late), playable replays or summaries, and inclusive time limits. The result filter is beside the search field.
@@ -59,7 +61,7 @@ Select a hotbar tool, then click to use it:
 
 The mouse wheel cycles through occupied slots. Use your Minecraft movement keys, **Jump** to move up, **Sneak** to move down, and **Sprint** to fly faster.
 
-**Left-click the recorded player** to enter their POV. Press **Sneak** to return to the free camera. **The barrier is the only replay exit control.** The library key and Escape do not leave playback. World disconnection still cleans up the replay automatically.
+**Left-click the recorded player** to enter their POV. Press **Sneak** to return to the free camera. **The barrier is the only replay exit control.** **B** opens the library and **Escape** opens Minecraft's pause menu without leaving playback. Playback holds its current position while a menu is open and resumes when you close it; an already paused replay stays paused. World disconnection still cleans up the replay automatically.
 
 ### Share a replay with a friend
 
@@ -78,6 +80,15 @@ These previews are rendered from the actual menu drawing code with sample record
 
 [Settings](docs/images/settings.png) · [Color editor](docs/images/overlay-colors.png) · [HUD layout studio](docs/images/hud-layout.png)
 
+## Islands, clips and replay organization
+
+- **B > Tools > Island scenery**: copy both islands from a replay, preview them, move start and finish independently, rotate, then confirm. Save a named preset and click **Apply** to restore it in one step.
+- **Focus mode** hides other map terrain and filters remote spatial sounds. Placed-block appearance can be changed through **Tools > Block appearance** without changing server collisions.
+- **B > Tools > Video clips**: enable the rolling buffer, choose duration, resolution and 60/120 FPS, then press **F9** to save an MP4. Windows x64 includes hardware H.264 encoding when supported and default-output audio; other platforms use the silent compatibility exporter. Actual captured FPS depends on game/rendering performance. The buffer starts OFF each launch.
+- The default replay browser has folders on the left, recordings in the middle and details on the right. It supports automatic server folders, **Successful only**, **Imported only**, search and sorting.
+- **Save replay** protects a recording. **Tools > Delete fails (2d)** optionally removes unprotected failed runs after 48 hours; cleanup defaults OFF.
+- Island exports use readable filenames. Legacy presets need to be positioned correctly and saved again once to use the fixed island anchor.
+
 ## Compatibility and validation
 
 BridgeTap targets Minecraft **1.8.9**. Older recordings remain readable with the information they originally contained; missing metrics are not recreated. Accurate platform measurements require placement markers from recording format 4; otherwise, they may display `N/A`.
@@ -90,7 +101,7 @@ A **1.0 Flat** is a 3-tick opening; **1.05 Flat** remains 4 ticks. A **5b Late**
 
 Version 1.4.5 fixes the Forge coordinates HUD and placed blocks remaining invisible during replays. Since 1.4.4, the missing arrival tick is also fixed: a **3.85-second** run correctly reaches **77 ticks**.
 
-Validation covers thirteen regression programs, all 34 native hooks, and a real Forge/LaunchWrapper startup test. The startup test also reproduces the synthetic-chunk notification issue and verifies rendering updates. Menu previews also check real filter/sort click targets, swatches, dragging, and tracker integration. These checks do not replace visual testing in Minecraft with the other mods in your instance.
+Validation covers replay, island, folder, retention and clip regressions, all 43 native hooks, and a real Forge/LaunchWrapper startup test. The startup test also reproduces the synthetic-chunk notification issue and verifies rendering updates. Menu previews also check real filter/sort click targets, swatches, dragging, and tracker integration. These checks do not replace visual testing in Minecraft with the other mods in your instance.
 
 ## Development
 
@@ -108,4 +119,4 @@ See [docs/BUILDING.md](docs/BUILDING.md) for build and test instructions, and [C
 
 Maintained at [sgggnnn/bridgetap](https://github.com/sgggnnn/bridgetap). Thanks to **pavelpuchika** for their help.
 
-BridgeTap uses Minecraft Forge, Ornithe, Fabric Loader, Mixin, and their mapping tools. Licenses for bundled libraries are included in Forge JARs under `META-INF/licenses/`.
+BridgeTap uses Minecraft Forge, Ornithe, Fabric Loader, Mixin, and their mapping tools. Licenses for bundled libraries are included in the JARs under `META-INF/licenses/`.
