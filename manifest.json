@@ -1,0 +1,18 @@
+{
+  "version": "1.6.0-dev.10",
+  "tag": "v1.6.0-dev.10",
+  "historical_binary_only": true,
+  "source_availability": "Original source snapshot unavailable; tag holds manifest only",
+  "assets": [
+    {
+      "name": "BridgeTap-1.6.0-dev.10.jar",
+      "bytes": 33327481,
+      "sha256": "66dd75da2cbaccd6192ff1f83f3d4c90221c7a4ac751e6ce54702d57cd2438d2"
+    },
+    {
+      "name": "BridgeTap-1.6.0-dev.10-Forge-1.8.9.jar",
+      "bytes": 37280918,
+      "sha256": "1e65fb902ae1bbc9eff7c39d84f09f5704f5408803d545438bf7c43d1dfe8850"
+    }
+  ]
+}
