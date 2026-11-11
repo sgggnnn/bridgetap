@@ -1,0 +1,2 @@
+6f89c2546cfaff7a5e2ed53bb01a9dd8e3ca1ff0b2d58dd8c85a0cb60e4655f8  BridgeTap-1.6.0-dev.8.jar
+9f99af564af2b2bc0ce7eaa6c0decfbd4daaa1f02ffa7b056d8a1cdf9b7d178d  BridgeTap-1.6.0-dev.8-Forge-1.8.9.jar
