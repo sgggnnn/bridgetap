@@ -1,0 +1,22 @@
+name: Announce release on Discord
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: discord-release-${{ github.event.release.id }}
+  cancel-in-progress: false
+
+jobs:
+  announce:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Post release additions and fixes
+        env:
+          DISCORD_UPDATE_WEBHOOK: ${{ secrets.DISCORD_UPDATE_WEBHOOK }}
+        run: python3 scripts/announce-discord.py

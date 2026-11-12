@@ -2,7 +2,7 @@
 
 A **Minecraft 1.8.9** client mod for analyzing your bridges: jump coordinates, run history, and replays with a free camera, a ghost player, and first-person playback.
 
-[Download the latest version](https://github.com/sgggnnn/bridgetap/releases/latest) · [All releases](https://github.com/sgggnnn/bridgetap/releases) · [Changelog](CHANGELOG.md) · [Report a bug](https://github.com/sgggnnn/bridgetap/issues)
+[Download the latest version](https://github.com/sgggnnn/bridgetap/releases/latest) · [All releases](https://github.com/sgggnnn/bridgetap/releases) · [Changelog](CHANGELOG.md) · [Report a bug](https://github.com/sgggnnn/bridgetap/issues) · [Discord: updates and support](https://discord.gg/KcNVrseH4C)
 
 **1.6.0** promotes the tested dev.11 build to the final release. It adds island scenery and one-click presets, MP4 clips with Windows output audio, a replay file manager, protected saves, block appearance customization and Focus mode. See the [islands and clips guide](docs/ISLANDS-AND-CLIPS.md) for controls and limitations.
 
