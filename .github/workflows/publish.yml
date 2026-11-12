@@ -28,10 +28,9 @@ jobs:
       GH_REPO: ${{ github.repository }}
       RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
     steps:
-      - name: Checkout release source
+      # Use the triggering revision for publishing tools; binaries always come from the release.
+      - name: Checkout publishing tools
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.release.tag_name || inputs.tag }}
 
       - name: Download the tested GitHub release artifacts
         run: |
