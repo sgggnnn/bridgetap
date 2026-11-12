@@ -1,0 +1,28 @@
+[
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.7.0",
+    "filename": "BridgeTap-1.7.0-Forge-1.8.9.jar",
+    "sha256": "36286b4cecc2560a651cc870f2546cc4e7c9cf758aa5f000f6413c0dc2144e2c",
+    "version_number": "1.7.0-forge",
+    "source": "Verified successful GitHub publication workflow"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.7.0",
+    "filename": "BridgeTap-1.7.0-OneClient.jar",
+    "sha256": "a84fbbc758399aba8ea0f15e2fb048c0390861f4c2146de3fea438149f781c56",
+    "version_number": "1.7.0-oneclient",
+    "source": "Verified successful GitHub publication workflow"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.4.5",
+    "filename": "BridgeTap-1.4.5.jar",
+    "sha256": "43da280c889ca0991d8bcbf963433024cadbaa8e9fb8731df666deba8ae5c7de",
+    "modrinth_sha256": "1dd6382152f511d57e4d41bab00fb76460847de861f6377fec4b421e98ac6062",
+    "modrinth_version": "Q2GapLcj",
+    "version_number": "1.4.5",
+    "source": "Existing Modrinth file has identical ZIP payloads; container metadata differs"
+  }
+]

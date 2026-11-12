@@ -1,0 +1,36 @@
+name: Import all GitHub releases to Modrinth
+
+on:
+  workflow_dispatch:
+    inputs:
+      project:
+        description: Existing Modrinth project ID
+        required: true
+        default: ueMpSLbl
+
+permissions:
+  contents: read
+
+concurrency:
+  group: modrinth-history-import
+  cancel-in-progress: false
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import original GitHub release JARs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN || secrets.BRIDGERTAP }}
+          MODRINTH_PROJECT: ${{ inputs.project }}
+        run: python3 scripts/publish-modrinth-history.py --project "$MODRINTH_PROJECT"
+      - name: Preserve verified import receipts, including partial progress
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: modrinth-import-receipts
+          path: build/modrinth-import-results.json
+          if-no-files-found: warn

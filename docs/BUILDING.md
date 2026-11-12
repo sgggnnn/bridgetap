@@ -103,3 +103,11 @@ Run `./gradlew build` with JDK 17 and Python 3. The Gradle Wrapper verifies its 
 Outputs in `build/libs`: both edition JARs and `BridgeTap-clip-tools-windows-x64.zip`. The executables are in the optional tools ZIP, never in either mod JAR. Run `scripts/test.ps1` on Windows for the regression suite; it installs the build's optional tools only into its isolated test directory.
 
 The Modrinth workflow downloads the already-tested GitHub release assets and verifies their release checksums. It publishes Forge and Ornithe/Fabric as separate loader-specific versions. Configure `MODRINTH_TOKEN` (or the legacy `BRIDGERTAP` secret) and `MODRINTH_PROJECT_ID`; the latter is the non-secret project ID. Manual workflow dispatch can retry an existing release without creating another GitHub release. The optional clip-tools ZIP remains available from GitHub and is linked in the Modrinth changelog.
+
+## Importing historical releases into Modrinth
+
+The manually triggered **Import all GitHub releases to Modrinth** workflow migrates every published release JAR without rebuilding or modifying historical binaries. It verifies GitHub SHA-256 digests before upload and the Modrinth response's file size/SHA-512 afterward. Release notes and original GitHub release dates are included in each changelog; development previews stay in the beta channel. Newly imported historical versions are not featured.
+
+`docs/modrinth-versions.json` records verified editions already present, including the existing 1.4.5 Ornithe build whose ZIP contents match despite different container timestamps. Preserve this ledger when retrying. Each workflow run uploads `modrinth-import-receipts`, including partial progress after errors; merge that JSON into the ledger before retrying interrupted imports. This avoids requiring private-project read scopes or duplicating uploads. The token needs version-creation permission for the target project.
+
+Use `python scripts/publish-modrinth-history.py --project ueMpSLbl --dry-run` to review the plan, and `python tests/test_modrinth_history.py` to verify multipart binary preservation, server-response validation and historical edition planning.
