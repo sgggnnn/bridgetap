@@ -16,7 +16,7 @@ public class BridgeSettingsScreen extends BridgeScreen {
         toggle("Hide while F3 is open",BridgeConfig.hideOnF3,36,154,368,()->BridgeConfig.hideOnF3=!BridgeConfig.hideOnF3);
         line(36,187,368);
         button("Edit HUD layout",36,199,368,30,true,true,()->open(new BridgeLayoutScreen(this)));
-        label("Drag coordinates, replay info and recorded inputs.",36,240);
+        toggle("Velo Z decimals (jump -1t)",BridgeConfig.showBridgeVelocity,36,233,368,()->BridgeConfig.showBridgeVelocity=!BridgeConfig.showBridgeVelocity);
         stepper("Scale",String.format(Locale.US,"%.1fx",BridgeConfig.hudScale),36,263,368,
             ()->BridgeConfig.hudScale=Math.max(.5,Math.round((BridgeConfig.hudScale-.1)*10)/10.0),
             ()->BridgeConfig.hudScale=Math.min(2,Math.round((BridgeConfig.hudScale+.1)*10)/10.0));

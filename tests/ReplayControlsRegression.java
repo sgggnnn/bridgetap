@@ -6,6 +6,8 @@ public class ReplayControlsRegression {
  static void near(double actual,double expected,String why){check(Math.abs(actual-expected)<.000001,why+": "+actual+" != "+expected);}
  public static void main(String[] args){
   List<ReplayData.Frame> frames=new ArrayList<>();for(int i=0;i<=60;i++)frames.add(new ReplayData.Frame(i,70,0));
+  check(ReplayControls.acceptAction(ReplayControls.BACK,true,1,1)&&ReplayControls.acceptAction(ReplayControls.FORWARD,true,2,1)&&ReplayControls.acceptAction(ReplayControls.FORWARD,false,2,2),"Sticks must not have a time cooldown");
+  check(!ReplayControls.acceptAction(ReplayControls.CENTER,false,999999999,0),"Holding pause must not toggle repeatedly");
   ReplayTimeline timeline=new ReplayTimeline(new ReplayData(frames,Collections.emptyList(),false));
   check(Arrays.equals(ReplayControls.slots(),new int[]{0,1,2,3,8}),"Navigation, center, speed and exit occupy slots");
   int occupied=0;for(int i=0;i<9;i++){if(ReplayControls.item(i,timeline)!=0)occupied++;check(ReplayControls.isTool(i)==(ReplayControls.item(i,timeline)!=0),"Unused slots cannot activate tools");}

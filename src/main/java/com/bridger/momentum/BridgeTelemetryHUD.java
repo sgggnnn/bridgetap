@@ -31,11 +31,13 @@ public final class BridgeTelemetryHUD {
   int lineHeight=fr.f_30706543+2;
   int height=lines.size()*lineHeight+8;
   float scale=(float)Math.min(BridgeConfig.replayHudScale,Math.min((window.m_39119333()-12f)/Math.max(1,width),(window.m_16103615()-8f)/height));
+  OneClientIntegration.recordSize(1,width,height);
   int scaledWidth=(int)Math.ceil(width*scale),scaledHeight=(int)Math.ceil(height*scale);
   int x=OverlayPlacement.clamp(BridgeConfig.replayHudX<0?(window.m_39119333()-scaledWidth)/2:BridgeConfig.replayHudX,scaledWidth,window.m_39119333());
   int y=OverlayPlacement.clamp(BridgeConfig.replayHudY<0?window.m_16103615()-88-scaledHeight:BridgeConfig.replayHudY,scaledHeight,window.m_16103615());
   GL11.glPushMatrix();GL11.glTranslatef(x,y,0);GL11.glScalef(scale,scale,1);
-  for(int i=0;i<lines.size();i++)fr.m_11445413(lines.get(i),(width-fr.m_09235706(lines.get(i)))/2,4+i*lineHeight,0xFFFFFF,BridgeConfig.textShadow);
+  if(OverlayStyle.backgroundShown(1))C_29058632.m_57734177(0,0,width,height,OverlayStyle.background(1));
+  for(int i=0;i<lines.size();i++)HudText.drawStyled(1,fr,OverlayStyle.styled(1,lines.get(i)),(width-fr.m_09235706(lines.get(i)))/2,4+i*lineHeight,0xFFFFFF);
   GL11.glPopMatrix();
  }
 }

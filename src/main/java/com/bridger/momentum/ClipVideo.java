@@ -64,7 +64,7 @@ public final class ClipVideo {
             Files.move(temp,target);
         }finally{if(process!=null&&process.isAlive())process.destroyForcibly();Files.deleteIfExists(temp);Files.deleteIfExists(log);}
     }
-    private static void configureQuality(Object sequence,int fps)throws Exception{
+    static void configureQuality(Object sequence,int fps)throws Exception{
         String pkg="com.bridger.momentum.shaded.jcodec.";
         // This is a pinned, privately bundled runtime. Its default rate control
         // raises P-frame quantization to 26; use a constant QP 16 for fine HUD text.

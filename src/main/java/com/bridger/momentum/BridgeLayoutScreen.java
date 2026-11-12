@@ -51,8 +51,8 @@ public final class BridgeLayoutScreen extends BridgeScreen {
         if(type==1)return Arrays.asList("Bridge replay 1.25 / 3.85s | Tick 25/77 | 1.00x | Pause","Ghost XYZ: 1.4366  66.1661  8.9902","Inputs: Back Left Jump RMB","Pressed: RMB | Released: Right","Clicks L/R/M: 0/1/0 | CPS: 0/19/0","Velocity X -0.0003  Y 0.0831  Z 0.2874","Platform gap: 28.00b | Height: +4.00b","Sticks: 1 tick | Left-click player: POV");
         List<JumpEntry> entries=Arrays.asList(new JumpEntry("1.0 Flat",.504,.504,Double.NaN,3,JumpEntry.EntryType.FLAT),new JumpEntry("5b Late",.460,.460,-.044,9,JumpEntry.EntryType.TAP),new JumpEntry("Turn",.216,.216,.475,15,JumpEntry.EntryType.TURN));
         List<String> result=new ArrayList<>();
-        if(BridgeConfig.displayMode.equals("ALL")||BridgeConfig.displayMode.equals("TIME"))result.add(BridgeConfig.color(7)+"Success 3.85s / 3 jumps / Axis Z");
-        if(!BridgeConfig.displayMode.equals("TIME"))result.addAll(EntryFormatter.lines(entries));
+        if(BridgeConfig.displayMode.equals("ALL")||BridgeConfig.displayMode.equals("TIME"))result.add(OverlayStyle.color(7)+"Success 3.85s / 3 jumps / Axis Z");
+        if(!BridgeConfig.displayMode.equals("TIME"))result.addAll(EntryFormatter.hudLines(entries));
         return result;
     }
     private void overlay(int type){
@@ -70,8 +70,8 @@ public final class BridgeLayoutScreen extends BridgeScreen {
         UiCanvas target=new ScaledUiCanvas(ui,sx,sy,scale*sceneScale);
         if(type==2)ReplayInputOverlay.paint(target,0,0,ReplaySession.active()?ReplaySession.recordedInputs():new ReplayData.TickStats(1|4|16|256,0,0,0,1,0,0,19,0,0,.08,.28));
         else{
-            if(type==0&&BridgeConfig.backgroundEnabled)target.rect(0,0,naturalWidth,naturalHeight,0xB0000000|BridgeConfig.rgb(8));
-            for(int i=0;i<lines.size();i++)target.text(lines.get(i),4,4+i*11,TEXT);
+            if(type==0&&BridgeConfig.backgroundEnabled)target.rect(0,0,naturalWidth,naturalHeight,OverlayStyle.background(0));
+            for(int i=0;i<lines.size();i++)target.text(OverlayStyle.styled(type,lines.get(i)),4,4+i*11,TEXT);
         }
         int color=selected==type?ACCENT:0x887C91AB;
         rect(sx-2,sy-2,sw+4,1,color);rect(sx-2,sy+sh+1,sw+4,1,color);rect(sx-2,sy-2,1,sh+4,color);rect(sx+sw+1,sy-2,1,sh+4,color);

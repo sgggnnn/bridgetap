@@ -30,16 +30,19 @@ public final class ReplayTimeline {
  public void restart(){tick=0;playing=true;}
  public void cycleSpeed(){double[] speeds={.25,.5,1,2,4};for(int i=0;i<speeds.length;i++)if(speed==speeds[i]){speed=speeds[(i+1)%speeds.length];return;}}
  public int skip(int direction){int step=playing?20:1;seek((playing?tick:Math.floor(tick))+(direction<0?-step:step));return step;}
- public ReplayData.Frame sample(){return data.frames.get(Math.min((int)tick,data.frames.size()-1));}
+ public static int eventFrameTick(ReplayData data,int tick){return data.formatVersion<5&&data.placementTags?Math.max(0,tick-1):tick;}
+ public static int eventTick(ReplayData data,ReplayData.Block block){return block.placed?eventFrameTick(data,block.tick):block.tick;}
+ private ReplayData.TickStats stats(int i){boolean legacy=data.formatVersion<5&&data.placementTags;ReplayData.TickStats stats=data.frames.get(Math.min(i+(legacy?1:0),data.frames.size()-1)).stats;return legacy&&i+1>=data.frames.size()&&stats!=null?stats.withoutEdges():stats;}
+ public ReplayData.Frame sample(){int i=Math.min((int)tick,data.frames.size()-1);ReplayData.Frame frame=data.frames.get(i);return data.formatVersion<5&&data.placementTags?frame.withStats(stats(i)):frame;}
  public ReplayData.Frame pose(){
   int i=Math.min((int)tick,data.frames.size()-1);ReplayData.Frame a=data.frames.get(i),b=data.frames.get(Math.min(i+1,data.frames.size()-1));double t=Math.min(1,tick-i);
-  return new ReplayData.Frame(lerp(a.x,b.x,t),lerp(a.y,b.y,t),lerp(a.z,b.z,t),angle(a.yaw,b.yaw,t),(float)lerp(a.pitch,b.pitch,t),angle(a.headYaw,b.headYaw,t),angle(a.bodyYaw,b.bodyYaw,t),a.sneaking,a.onGround,(float)lerp(a.swing,b.swing< a.swing?b.swing+1:b.swing,t)%1,(float)lerp(a.walkSpeed,b.walkSpeed,t),(float)lerp(a.walkProgress,b.walkProgress,t),a.itemId,a.itemDamage,a.stats);
+  return new ReplayData.Frame(lerp(a.x,b.x,t),lerp(a.y,b.y,t),lerp(a.z,b.z,t),angle(a.yaw,b.yaw,t),(float)lerp(a.pitch,b.pitch,t),angle(a.headYaw,b.headYaw,t),angle(a.bodyYaw,b.bodyYaw,t),a.sneaking,a.onGround,(float)lerp(a.swing,b.swing< a.swing?b.swing+1:b.swing,t)%1,(float)lerp(a.walkSpeed,b.walkSpeed,t),(float)lerp(a.walkProgress,b.walkProgress,t),a.itemId,a.itemDamage,stats(i));
  }
  private static double lerp(double a,double b,double t){return a+(b-a)*t;}
  private static float angle(float a,float b,double t){double d=(b-a)%360;if(d>180)d-=360;if(d< -180)d+=360;return (float)(a+d*t);}
  public Map<Long,ReplayData.Block> blocks(){
   Map<Long,ReplayData.Block> result=new LinkedHashMap<>();
-  for(ReplayData.Block b:data.blocks)if(b.tick<=tick)result.put(b.key(),b);
+  for(ReplayData.Block b:data.blocks)if(eventTick(data,b)<=tick)result.put(b.key(),b);
   return result;
  }
 }

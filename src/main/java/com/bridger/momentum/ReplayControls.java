@@ -4,6 +4,7 @@ package com.bridger.momentum;
 public final class ReplayControls {
  public static final int BACK=0,CENTER=1,FORWARD=2,SPEED=3,EXIT=8;
  public enum Center {PAUSE,PLAY,REPLAY}
+ public static boolean acceptAction(int slot,boolean fresh,long now,long previous){return slot==BACK||slot==FORWARD||(isTool(slot)&&fresh&&now-previous>=120000000L);}
  public static int[] slots(){return new int[]{BACK,CENTER,FORWARD,SPEED,EXIT};}
  public static boolean isTool(int slot){return slot==BACK||slot==CENTER||slot==FORWARD||slot==SPEED||slot==EXIT;}
  public static Center center(ReplayTimeline timeline){return timeline.finished()?Center.REPLAY:timeline.playing()?Center.PAUSE:Center.PLAY;}

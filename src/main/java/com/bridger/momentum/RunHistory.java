@@ -13,6 +13,10 @@ public class RunHistory {
   public final long created;
   public final List<String> details;
   public final ReplayData replay;
+  private volatile ServerMode.Measurement modeMeasurement;
+  public ServerMode.Mode mode(){return ServerMode.detect(server,modeMeasurement);}
+  public boolean modeReady(){return modeMeasurement!=null;}
+  void observeMode(ReplayData data){modeMeasurement=ServerMode.measure(data);}
   private String name="";
   private boolean protectedSave;
   public boolean isProtected(){return protectedSave;}
@@ -36,9 +40,12 @@ public class RunHistory {
    this.id=id; this.status=status; this.time=time; this.jumps=jumps; this.axis=axis; this.created=created;
    this.details=Collections.unmodifiableList(new ArrayList<>(details));
    this.replay=replay;
-   this.server=validServer(server);
+   this.server=validServer(server);if(!ServerMode.mcplay(this.server))modeMeasurement=ServerMode.UNAVAILABLE;else if(replay!=null)observeMode(replay);
   }
  }
+ private static final java.util.concurrent.ExecutorService MODE_WORKER=java.util.concurrent.Executors.newSingleThreadExecutor(r->{Thread t=new Thread(r,"BridgeTap replay mode index");t.setDaemon(true);return t;});
+ private final java.util.concurrent.ConcurrentMap<String,java.util.concurrent.CompletableFuture<ServerMode.Measurement>> modeIndex=new java.util.concurrent.ConcurrentHashMap<>();
+ public void indexModes(Collection<Run> runs){for(Run run:runs)if(!run.modeReady())modeIndex.computeIfAbsent(run.id,id->java.util.concurrent.CompletableFuture.supplyAsync(()->{try{return ServerMode.measure(replay(run));}catch(IOException|RuntimeException error){return ServerMode.UNAVAILABLE;}},MODE_WORKER)).thenAccept(measurement->run.modeMeasurement=measurement);}
  private final Path folder;
  private final List<Run> recent=new ArrayList<>();
  private Set<String> favorites;
@@ -95,6 +102,7 @@ public class RunHistory {
  private static String validServer(String server){if(server==null||server.length()>255)throw new IllegalArgumentException("Invalid server address");for(int i=0;i<server.length();i++)if(server.charAt(i)<32||server.charAt(i)==127||server.charAt(i)=='\u00a7')throw new IllegalArgumentException("Invalid server address");return server.trim();}
  private static Properties metadata(Run run){
   Properties p=new Properties();p.setProperty("id",run.id);p.setProperty("status",run.status);p.setProperty("time",String.valueOf(run.time));p.setProperty("jumps",String.valueOf(run.jumps));p.setProperty("axis",run.axis);p.setProperty("created",String.valueOf(run.created));p.setProperty("count",String.valueOf(run.details.size()));p.setProperty("name",run.name);
+  if(run.modeReady()){p.setProperty("mode.version","2");p.setProperty("mode",run.mode().name());p.setProperty("mode.measured",String.valueOf(run.modeMeasurement.available));if(run.modeMeasurement.available){p.setProperty("mode.gap",String.valueOf(run.modeMeasurement.gap));p.setProperty("mode.rise",String.valueOf(run.modeMeasurement.rise));}}
   p.setProperty("server",run.server);p.setProperty("protected",String.valueOf(run.protectedSave));p.setProperty("imported",String.valueOf(run.imported));for(int i=0;i<run.details.size();i++)p.setProperty("line."+i,run.details.get(i));return p;
  }
  private static Run parse(Properties p,ReplayData replay){
@@ -102,7 +110,7 @@ public class RunHistory {
   double time=Double.parseDouble(p.getProperty("time"));int jumps=Integer.parseInt(p.getProperty("jumps")),count=Integer.parseInt(p.getProperty("count","0"));long created=Long.parseLong(p.getProperty("created"));
   if((!"SUCCESS".equals(status)&&!"FAILED".equals(status))||(!"X".equals(axis)&&!"Z".equals(axis))||!Double.isFinite(time)||time<0||jumps<0||jumps>1000000||created<0||count<0||count>2000)throw new IllegalArgumentException("Invalid replay metadata");
   List<String> details=new ArrayList<>();for(int i=0;i<count;i++)details.add(p.getProperty("line."+i,"").replace("No Gay","No Gain"));
-  Run run=new Run(id,status,time,jumps,axis,created,details,replay,p.getProperty("server",""));run.name=validName(p.getProperty("name",""));run.protectedSave=!p.getProperty("protected","true").equals("false");run.imported=Boolean.parseBoolean(p.getProperty("imported","false"));return run;
+  Run run=new Run(id,status,time,jumps,axis,created,details,replay,p.getProperty("server",""));run.name=validName(p.getProperty("name",""));run.protectedSave=!p.getProperty("protected","true").equals("false");run.imported=Boolean.parseBoolean(p.getProperty("imported","false"));if(run.modeMeasurement==null&&"2".equals(p.getProperty("mode.version"))){try{run.modeMeasurement=Boolean.parseBoolean(p.getProperty("mode.measured","false"))?new ServerMode.Measurement(true,Double.parseDouble(p.getProperty("mode.gap")),Double.parseDouble(p.getProperty("mode.rise"))):ServerMode.UNAVAILABLE;}catch(IllegalArgumentException invalid){run.modeMeasurement=null;}}return run;
  }
  public void rename(Run run,String name)throws IOException{
   String value=validName(name);save(run);Properties p=metadata(run);p.setProperty("name",value);
@@ -133,10 +141,10 @@ public class RunHistory {
   imported.imported=true;save(imported);recent.add(0,imported);if(recent.size()>10)recent.remove(10);return imported;
  }
  public ReplayData replay(Run run)throws IOException {
-  if(run.replay!=null)return run.replay;
+  if(run.replay!=null){run.observeMode(run.replay);return run.replay;}
   UUID.fromString(run.id);
   Path file=folder.resolve(run.id+".btr");
-  return Files.exists(file)?ReplayData.read(file):null;
+  ReplayData data=Files.exists(file)?ReplayData.read(file):null;run.observeMode(data);return data;
  }
  public int deleteUnprotectedFailuresBefore(long cutoff)throws IOException{
   int deleted=0;Set<String> removed=new HashSet<>(),favorites=favoriteIds();

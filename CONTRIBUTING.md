@@ -21,6 +21,6 @@ Keep the sources compatible with Java 8. Replay changes must preserve older reco
 
 ## Binaries and releases
 
-Do not commit `.jar` files, `.class` files, build caches, or local Minecraft data. Build outputs belong in `dist/`, and caches in `build/`.
+Do not commit generated `.jar` files (the verified official `gradle/wrapper/gradle-wrapper.jar` is the sole build-bootstrap exception), `.class` files, build caches, or local Minecraft data. Build outputs belong in `dist/`, and caches in `build/`.
 
 Published JARs are attached to GitHub releases with a `SHA256SUMS.txt` file. The [changelog](CHANGELOG.md) and notes in `docs/releases/` describe each version. Historical binaries are preserved in their original form.

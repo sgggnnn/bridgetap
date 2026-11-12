@@ -20,6 +20,9 @@ public class JumpEntry {
     private final int ticksElapsed;
     private final EntryType type;
     private String gainType;
+    private double preJumpZ=Double.NaN;
+    public void setPreJumpZ(JumpVelocity.Sample sample){preJumpZ=sample==null?Double.NaN:sample.z;}
+    public double getPreJumpZ(){return preJumpZ;}
 
     public JumpEntry(String label, double coordinate, double decimal, double delta, int ticksElapsed, EntryType type) {
         this.label = label;

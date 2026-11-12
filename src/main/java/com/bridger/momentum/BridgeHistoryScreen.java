@@ -116,7 +116,7 @@ public class BridgeHistoryScreen extends BridgeScreen {
         label("ID",590,223);clipped(run.replayId(),616,223,208,MUTED);
         label(new SimpleDateFormat("MMM dd, yyyy  HH:mm:ss",Locale.US).format(new Date(run.created)),590,239);
         text(String.format(Locale.US,"%.3f seconds",run.time),590,255,TEXT);label(run.jumps+" jumps",748,255);
-        clipped("Server: "+run.serverLabel(),590,270,234,MUTED);
+        clipped("Server: "+run.serverLabel()+" / "+run.mode().label,590,270,234,MUTED);
         line(590,286,234);label("MAP INFO",590,297);
         BridgeGeometry.Result bridge=dimensions(run);
         text("Axis "+run.axis,590,315,TEXT);clipped(bridge.available?String.format(Locale.US,"Gap %.2fb",bridge.gap):"Gap N/A",674,315,150,TEXT);

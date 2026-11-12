@@ -33,7 +33,8 @@ public class MinecraftMixin {
     @Inject(method = "m_67975642", at = @At("RETURN"))
     private void bridgetap$afterTick(CallbackInfo ci) {
         ReplaySession.tickTail();
-        if(!ReplaySession.active() && BridgeTracker.isBridging())ReplayRecorder.sample();
+        BridgeTracker.onTickEnd((Minecraft)(Object)this);
+        if(!ReplaySession.active() && BridgeTracker.isBridging())ReplayRecorder.endTick();
     }
 
     @Inject(method="m_67975642",at=@At(value="INVOKE",target="Lorg/lwjgl/input/Mouse;getEventButton()I",ordinal=0))

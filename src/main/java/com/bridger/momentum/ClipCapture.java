@@ -62,6 +62,7 @@ public final class ClipCapture {
     public static boolean validRate(int value){return value==10||value==15||value==20||value==30||value==60||value==120;}
     public static void rate(int value){if(!validRate(value))throw new IllegalArgumentException("Invalid capture rate");fps=value;clear();settings();}
     public static void save(){
+        if(ReplayVideoExport.active()){message="Wait for the replay video export.";notices.add(message);return;}
         if(saving.get()){message="An MP4 export is already running.";notices.add(message);return;}
         if(stream!=null){saveStream();return;}
         java.util.List<ClipFrames.Frame> frames=buffer.snapshot(System.nanoTime());
@@ -88,6 +89,7 @@ public final class ClipCapture {
         }catch(Exception|LinkageError ex){prepared.cancel(false);Throwable cause=ex instanceof ExecutionException?ex.getCause():ex;message="Clip save failed: "+cause.getMessage();notices.add(message);diagnostic(cause);}finally{if(wave!=null)try{Files.deleteIfExists(wave);}catch(IOException ignored){}saving.set(false);}});
     }
     public static void capture(){
+        if(ReplayVideoExport.active()){ClipAudio.capture(false);ReplayVideoExport.capture();return;}
         Minecraft mc=Minecraft.m_20213497();
         if(mc.f_26407825!=world){world=mc.f_26407825;clear();}
         ClipAudio.capture(enabled&&sound&&mc.f_26407825!=null&&Display.isActive()&&Display.isVisible());
@@ -116,6 +118,11 @@ public final class ClipCapture {
             next=Math.max(next,now+(System.nanoTime()-now)*20);
         }catch(RuntimeException|LinkageError ex){captureFailed(ex,async,fast);}
     }
+    static final class VideoFrame {final byte[] rgb;final int width,height,outWidth,outHeight;VideoFrame(byte[] rgb,int w,int h,int ow,int oh){this.rgb=rgb;width=w;height=h;outWidth=ow;outHeight=oh;}}
+    static void exportError(Throwable error){diagnostic(error);}
+    static void beginReplayExport(){ClipAudio.capture(false);clear();releaseFramebuffer();inputW=inputH=outputW=outputH=0;}
+    static void endReplayExport(){clear();releaseFramebuffer();inputW=inputH=outputW=outputH=0;}
+    static VideoFrame replayFrame(int height){Minecraft mc=Minecraft.m_20213497();int w=mc.f_31800787,h=mc.f_74192110;if(w<2||h<2||w>8192||h>8192)throw new IllegalStateException("Invalid game window size");int[] out=ClipQuality.size(w,h,height);boolean fast=mode.framebuffer(GLContext.getCapabilities().OpenGL30);int rw=fast?out[0]:w,rh=fast?out[1]:h;int length=rw*rh*3;byte[] rgb=ClipRgbPool.acquire(length);if(rgb==null)return null;boolean delivered=false;try{if(pixels==null||pixels.capacity()!=length)pixels=BufferUtils.createByteBuffer(length);pixels.clear();readPixels(w,h,out[0],out[1],fast,pixels);pixels.get(rgb);delivered=true;return new VideoFrame(rgb,rw,rh,out[0],out[1]);}finally{if(!delivered)ClipRgbPool.release(rgb);}}
     private static void captureFailed(Throwable error,boolean async,boolean fast){diagnostic(error);clear();releaseFramebuffer();if(mode.failed(async,fast)){message="Capture compatibility fallback enabled. Buffer is still ON.";backend="Retrying with a compatible capture method";}else{enabled=false;message="Video capture failed: "+error.getClass().getSimpleName()+". See config/bridgetap/clip-capture.log";}notices.add(message);}
     private static synchronized void submit(long epoch,long time,byte[] rgb,int rw,int rh,int dw,int dh){
         if(epoch!=generation){ClipRgbPool.release(rgb);return;}

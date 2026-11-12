@@ -1,0 +1,20 @@
+plugins {
+    id 'base'
+    id 'java-base'
+}
+
+def python = providers.gradleProperty('pythonExecutable').orElse(System.getProperty('os.name').toLowerCase().contains('windows') ? 'python' : 'python3')
+def oneclientJdk = providers.gradleProperty('oneclientJavaHome')
+def compiler21 = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(21) }
+
+tasks.register('buildModJars', Exec) {
+    group = 'build'
+    description = 'Build Forge and OneClient/Fabric release JARs with pinned dependencies.'
+    inputs.files(fileTree('src'), fileTree('forge'), fileTree('integrations/oneclient/java'), fileTree('scripts') { include '**/*.py', '**/*.ps1' }, fileTree('native'), fileTree('third_party'), file('build.gradle'), file('settings.gradle'))
+    outputs.dir(layout.buildDirectory.dir('libs'))
+    doFirst {
+        def jdk21 = oneclientJdk.present ? oneclientJdk.get() : compiler21.get().metadata.installationPath.asFile.absolutePath
+        commandLine python.get(), 'scripts/build-all.py', '--java-home', System.getProperty('java.home'), '--oneclient-java-home', jdk21, '--python-executable', python.get()
+    }
+}
+tasks.named('assemble') { dependsOn 'buildModJars' }

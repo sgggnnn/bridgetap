@@ -50,7 +50,7 @@ public final class ReplaySession {
  private C_97866173 previousGui;
 
  private ReplaySession(Minecraft mc,RunHistory.Run run,ReplayData data){
-  this.data=data;this.run=run;timeline=new ReplayTimeline(data,run.time);source=mc.f_26407825;player=mc.f_28396371;
+  this.data=data;this.run=run;run.observeMode(data);timeline=new ReplayTimeline(data,run.time);source=mc.f_26407825;player=mc.f_28396371;
   world=new C_34399650(null,new C_06007608(0,C_06007608.C_36868821.f_11202516,false,false,C_61837504.f_74160535),data.dimension,C_57526564.f_55214254,mc.f_40149437);
   world.m_44107872(data.dayTime);world.m_04000603(0);world.m_29822868(0);
   camera=new ReplayCamera(mc,world,mc.m_55181026());
@@ -73,6 +73,18 @@ public final class ReplaySession {
   particles=new C_16190149(world,mc.m_65924382());gui=new C_97866173(mc);
  }
  private static C_88708284 tool(int id,String name){return new C_88708284(C_98888256.m_06629599(id)).m_12689347(name);}
+ public static Object token(){return current;}
+ public static String recordingId(){return current==null?"":current.run.id;}
+ public static int lastTick(){return current==null?0:current.timeline.lastTick();}
+ private int videoCameraMode=-1;
+ public static final class VideoState {final C_88708284[] hotbar;final double tick;final boolean playing,pov,hideGui,bobbing;final double x,y,z;final float yaw,pitch;VideoState(ReplaySession s){hotbar=java.util.Arrays.copyOf(s.camera.f_29439708.f_35249023,9);hideGui=Minecraft.m_20213497().f_58088711.f_06955029;bobbing=Minecraft.m_20213497().f_58088711.f_16743685;tick=s.timeline.tick();playing=s.timeline.playing();pov=s.followPov;x=s.camera.f_78826675;y=s.camera.f_31030949;z=s.camera.f_97691941;yaw=s.camera.f_80130373;pitch=s.camera.f_03549461;}}
+ public static VideoState beginVideo(boolean pov){return beginVideo(pov?0:2,false);}
+ public static VideoState beginVideo(int camera,boolean cleanHud){ReplaySession s=current;VideoState saved=new VideoState(s);java.util.Arrays.fill(s.camera.f_29439708.f_35249023,0,9,null);s.timeline.pause();s.timeline.seek(0);s.videoCameraMode=camera;Minecraft mc=Minecraft.m_20213497();if(cleanHud)mc.f_58088711.f_06955029=true;mc.f_58088711.f_16743685=false;if(camera==0)s.setPov(true);else if(camera==1){s.followPov=false;s.clearPose();s.positionCamera(1);}else s.videoOverview();return saved;}
+ public static ReplayData.Frame videoFrame(){return current==null?null:current.timeline.pose();}
+ public static double videoSeconds(){return current==null?0:current.timeline.seconds();}
+ public static void videoTick(double tick){if(current!=null){current.timeline.pause();current.timeline.seek(tick);}}
+ public static void inspectTick(double tick){videoTick(tick);}
+ public static void endVideo(VideoState saved){ReplaySession s=current;if(s==null)return;System.arraycopy(saved.hotbar,0,s.camera.f_29439708.f_35249023,0,9);s.videoCameraMode=-1;Minecraft mc=Minecraft.m_20213497();mc.f_58088711.f_06955029=saved.hideGui;mc.f_58088711.f_16743685=saved.bobbing;s.timeline.pause();s.timeline.seek(saved.tick);if(saved.playing)s.timeline.toggle();s.movement.reset(saved.x,saved.y,saved.z);s.camera.m_12877971(saved.x,saved.y,saved.z,saved.yaw,saved.pitch);s.setPov(saved.pov);s.lastFrame=System.nanoTime();}
  public static boolean active(){return current!=null;}
  public static Integer placedId(long key){return current==null||current.placedIds==null?null:current.placedIds.get(key);}
  public static ReplayData recording(){return current==null?null:current.data;}
@@ -93,7 +105,7 @@ public final class ReplaySession {
   stop();current=new ReplaySession(mc,run,data);current.lastActionSequence=BridgeTelemetry.actionSequence();mc.m_52715402(null);status("\u00a7aPlay");return true;
  }
  public static void stop(){
-  ReplaySession session=current;if(session==null)return;
+  ReplayVideoExport.cancel();ReplaySession session=current;if(session==null)return;
   endRender();current=null;
   ReplayRendererAccessor resources=(ReplayRendererAccessor)session.renderer;
   try{
@@ -120,7 +132,7 @@ public final class ReplaySession {
   s.player.f_29439708.f_13682807=s.sourceSlot;
   if(s==current){
    Minecraft mc=Minecraft.m_20213497();C_76792751 keys=mc.f_58088711;
-   if(mc.f_70816363==null&&mc.f_92501186){
+   if(mc.f_70816363==null&&mc.f_92501186&&!ReplayVideoExport.active()){
     s.selectHotbar(keys);
     boolean sneak=down(keys.f_89071996);
     if(s.followPov&&sneak&&!s.previousSneak){s.resetCamera();status("\u00a7bFree camera");}
@@ -142,8 +154,9 @@ public final class ReplaySession {
   ReplaySession s=current;if(s==null||s.rendering)return;Minecraft mc=Minecraft.m_20213497();
   if(mc.f_26407825!=s.source||mc.f_28396371!=s.player){stop();return;}
   long now=System.nanoTime();double dt=Math.min(.1,(now-s.lastFrame)/1e9);s.lastFrame=now;
-  if(mc.f_70816363==null&&mc.f_92501186)s.timeline.advance(dt);
-  s.updateCenter();
+  if(mc.f_70816363==null&&mc.f_92501186&&!ReplayVideoExport.active())s.timeline.advance(dt);
+  if(ReplayVideoExport.cleanHud())mc.f_58088711.f_06955029=true;
+  if(!ReplayVideoExport.active())s.updateCenter();
   s.positionCamera(partial);
   s.syncScene();ReplayData.Frame pose=s.timeline.pose();s.ghost.apply(pose);
   s.ensureChunk((int)Math.floor(pose.x)>>4,(int)Math.floor(pose.z)>>4);
@@ -174,6 +187,7 @@ public final class ReplaySession {
   for(int i:ReplayControls.slots())if(i<keys.f_81621289.length&&down(keys.f_81621289[i]))camera.f_29439708.f_13682807=i;
  }
  private void positionCamera(float partial){
+  if(videoCameraMode==1){double[] view=ReplayVideoCamera.follow(timeline.pose(),data.frames.get(0),data.frames.get(data.frames.size()-1));movement.reset(view[0],view[1],view[2]);camera.m_12877971(view[0],view[1],view[2],(float)view[3],(float)view[4]);}
   if(followPov){
    ReplayData.Frame f=timeline.pose();
    camera.m_12877971(f.x,f.y,f.z,f.yaw,f.pitch);camera.f_74900774=f.yaw;camera.f_45219594=f.pitch;
@@ -197,12 +211,12 @@ public final class ReplaySession {
   s.camera.f_29439708.f_13682807=ReplayControls.scroll(s.camera.f_29439708.f_13682807,delta);return true;
  }
  public static void action(boolean attack){
+  if(ReplayVideoExport.active())return;
   ReplaySession s=current;if(s==null)return;
   s.selectHotbar(Minecraft.m_20213497().f_58088711);
   int slot=s.camera.f_29439708.f_13682807;
   long sequence=BridgeTelemetry.actionSequence();boolean fresh=sequence!=s.lastActionSequence;
-  if(slot!=ReplayControls.BACK&&slot!=ReplayControls.FORWARD&&!fresh)return;
-  long now=System.nanoTime();if(now-s.lastAction<120000000)return;s.lastAction=now;s.lastActionSequence=sequence;
+  long now=System.nanoTime();if(!ReplayControls.acceptAction(slot,fresh,now,s.lastAction))return;s.lastAction=now;s.lastActionSequence=sequence;
   if(slot==ReplayControls.EXIT){exit();return;}
   if(attack&&fresh&&!s.followPov&&s.aimsAtGhost()){s.setPov(true);status("\u00a7bPOV - Sneak to return to free camera");return;}
   if(slot==ReplayControls.BACK||slot==ReplayControls.FORWARD){int step=s.timeline.skip(slot==ReplayControls.BACK?-1:1);status(String.format(Locale.US,"\u00a7e%s %+.2f seconds",slot==ReplayControls.BACK?"Backward":"Forward",(slot==ReplayControls.BACK?-step:step)/20.0));}
@@ -231,6 +245,7 @@ public final class ReplaySession {
   C_24654288 obstacle=world.m_82559274(origin,new C_94584382(x+dir[0]*(distance-.02),y+dir[1]*(distance-.02),z+dir[2]*(distance-.02)));
   return obstacle==null||(obstacle.f_94083482!=null&&origin.m_74339345(obstacle.f_94083482)>=distance-.03);
  }
+ private void videoOverview(){followPov=false;clearPose();double ax=Double.POSITIVE_INFINITY,az=ax,bx=Double.NEGATIVE_INFINITY,bz=bx,top=0;for(ReplayData.Frame f:data.frames){ax=Math.min(ax,f.x);az=Math.min(az,f.z);bx=Math.max(bx,f.x);bz=Math.max(bz,f.z);top=Math.max(top,f.y);}double cx=(ax+bx)/2,cz=(az+bz)/2,d=Math.max(8,Math.max(bx-ax,bz-az)*.9),px=cx+d,py=top+d*.8,pz=cz+d;float yaw=(float)Math.toDegrees(Math.atan2(-(cx-px),cz-pz)),pitch=(float)Math.toDegrees(Math.atan2(py-top,Math.hypot(cx-px,cz-pz)));camera.m_12877971(px,py,pz,yaw,pitch);movement.reset(px,py,pz);positionCamera(1);}
  private void resetCamera(){
   followPov=false;clearPose();
   ReplayData.Frame f=timeline.pose();double a=Math.toRadians(f.yaw+100),x=f.x+Math.cos(a)*7,z=f.z+Math.sin(a)*7;
@@ -269,20 +284,22 @@ public final class ReplaySession {
  }
  private void ensureChunk(int x,int z){long chunk=((long)x<<32)^(z&0xFFFFFFFFL);if(chunks.add(chunk))world.m_66086785(x,z,true);}
  public static void renderHud(){
+  if(!ReplayVideoExport.overlays())return;
   ReplaySession s=current;if(s==null||!s.rendering)return;
   if(BridgeConfig.showReplayInputs){
    Minecraft mc=Minecraft.m_20213497();C_43718703 window=new C_43718703(mc);
-   int height=ReplayInputOverlay.height(s.timeline.sample().stats);
+   int height=ReplayInputOverlay.height(s.timeline.sample().stats);OneClientIntegration.recordSize(2,76,height);
    float scale=(float)Math.min(BridgeConfig.inputHudScale,Math.min((window.m_39119333()-8f)/76,(window.m_16103615()-8f)/height));
    int x=OverlayPlacement.clamp(BridgeConfig.inputHudX,(int)Math.ceil(76*scale),window.m_39119333());
    int y=OverlayPlacement.clamp(BridgeConfig.inputHudY,(int)Math.ceil(height*scale),window.m_16103615());
-   ReplayInputOverlay.paint(new ScaledUiCanvas(new MinecraftUiCanvas(mc.f_21497584),x,y,scale),0,0,s.timeline.sample().stats);
+   ReplayInputOverlay.paint(new ScaledUiCanvas(new MinecraftUiCanvas(mc.f_21497584,2),x,y,scale),0,0,s.timeline.sample().stats);
   }
   if(!BridgeConfig.showReplayInfo)return;
   List<String> lines=new ArrayList<>();
   lines.add(String.format(Locale.US,"\u00a7b%s \u00a7f%.2f / %.2fs \u00a77| Tick %d/%d | %.2fx | %s",s.run.displayName(),s.timeline.seconds(),s.timeline.duration(),(int)s.timeline.tick(),s.timeline.lastTick(),s.timeline.speed(),s.timeline.playing()?"Play":"Paused"));
   ReplayData.Frame actor=s.timeline.sample();
   lines.addAll(BridgeTelemetryHUD.lines(actor.x,actor.y,actor.z,actor.stats,"Ghost"));
+  lines.add("\u00a77Server mode: \u00a7f"+s.run.mode().label);
   BridgeGeometry.Result dimensions=s.data.geometry();
   if(dimensions.available)lines.add(String.format(Locale.US,"\u00a77Platform gap: %.2fb | Height: %+.2fb",dimensions.gap,dimensions.rise));
   lines.add("\u00a77Sticks: "+(s.timeline.playing()?"1 second":"1 tick")+" | "+(s.followPov?"POV: Sneak to leave":"Left-click player: POV"));

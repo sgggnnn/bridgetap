@@ -31,7 +31,7 @@ public class TelemetryRegression {
   timeline.skip(-1);timeline.seek(.75);check(timeline.sample().stats==a&&timeline.pose().stats==a,"Metrics use the selected recorded tick, never interpolated input/click values");
   timeline.seek(1);check(timeline.sample().stats==b,"Seeking updates metrics to the newly selected tick");
   Path file=Files.createTempDirectory("bridgetap-telemetry-").resolve("run.btr");data.write(file);ReplayData read=ReplayData.read(file);
-  check(read.formatVersion==4,"Telemetry format version 4");ReplayData.TickStats s=read.frames.get(0).stats;
+  check(read.formatVersion==5,"Telemetry format version 5");ReplayData.TickStats s=read.frames.get(0).stats;
   check(s.held==a.held&&s.pressed==a.pressed&&s.released==a.released&&s.leftClicks==2&&s.rightClicks==1&&s.middleClicks==1&&s.leftCps==2&&s.rightCps==1&&s.middleCps==1,"All telemetry fields survive disk round trip");
   near(s.vx,.2,"Velocity X round trip");near(s.vy,-.0784,"Velocity Y round trip");near(s.vz,-.3,"Velocity Z round trip");
   Path legacy=file.resolveSibling("version2.btr");

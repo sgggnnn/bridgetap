@@ -30,6 +30,12 @@ public class BridgeTracker {
 
     private static int startTick = 0;
     private static int currentTick = 0;
+    private static final JumpVelocity jumpVelocity=new JumpVelocity();private static Object velocityWorld;private static JumpVelocity.Sample preJumpVelocity;
+    public static JumpVelocity.Sample preJumpVelocity(){return preJumpVelocity;}
+    public static void onTickEnd(Minecraft mc){if(ReplaySession.active()||mc==null||mc.f_26407825==null||mc.f_28396371==null){jumpVelocity.clear();preJumpVelocity=null;velocityWorld=null;return;}
+        if(velocityWorld!=mc.f_26407825){jumpVelocity.clear();preJumpVelocity=null;velocityWorld=mc.f_26407825;}
+        if(hasPositionSnapshot(currentTick)){int i=Math.floorMod(currentTick,POSITION_HISTORY_SIZE);jumpVelocity.record(currentTick,positionHistoryX[i],positionHistoryY[i],positionHistoryZ[i]);}
+    }
     private static final RunStartCooldown restartCooldown=new RunStartCooldown();
     private static final RunHistory HISTORY = new RunHistory(java.nio.file.Paths.get("config", "bridgetap", "saved"));
     private static boolean historyCaptured = true;
@@ -37,7 +43,7 @@ public class BridgeTracker {
     private static void captureFinishedRun() {
         if (historyCaptured || isBridging || pendingPlateSample || !pendingJumps.isEmpty() || (status != RunStatus.SUCCESS && status != RunStatus.FAILED)) return;
         java.util.List<String> lines = new java.util.ArrayList<>();
-        for (JumpEntry entry : entries) lines.add(entry.getFormattedLine());
+        for (JumpEntry entry : entries) lines.add(EntryFormatter.format(entry));
         HISTORY.add(status.name(), currentBridgeTime, getJumpCount(), currentAxis, lines, ReplayRecorder.snapshot(),ReplayRecorder.serverAddress());
         try{ReplayFolders.local().fileByServer(HISTORY,HISTORY.recent().get(0));}catch(java.io.IOException|IllegalArgumentException ex){System.err.println("[BridgeTap] Server folder: "+ex.getMessage());}
         if (BridgeConfig.chatOutput) for (String line : EntryFormatter.lines(entries)) {
@@ -143,6 +149,7 @@ public class BridgeTracker {
         restartCooldown.reset();
         ReplayRecorder.reset();
         PlacementEvidence.reset();
+        jumpVelocity.clear();preJumpVelocity=null;velocityWorld=null;
         status = RunStatus.IDLE;
         isBridging = false;
         currentBridgeTime = 0.0;
@@ -269,6 +276,7 @@ public class BridgeTracker {
         historyCaptured = false;
         PlacementEvidence.reset();
         entries.clear();
+        preJumpVelocity=null;
         jumpCount = 0;
         openingTicks = 0;
         pendingJumps.clear();
@@ -307,6 +315,7 @@ public class BridgeTracker {
             return;
         }
 
+        if(velocityWorld!=mc.f_26407825){jumpVelocity.clear();preJumpVelocity=null;velocityWorld=mc.f_26407825;}
         currentTick++;
         C_57778754 player = mc.f_28396371;
         double currentY = player.f_31030949;
@@ -460,6 +469,7 @@ public class BridgeTracker {
         // In that case it is a chained flat, not a turn.
         bridgetap$undoFalseTurn();
         int jumpTick = currentTick;
+        preJumpVelocity=jumpVelocity.beforeJump(jumpTick);
         lastJumpSignalTick = jumpTick;
         C_76792751 settings = mc.f_58088711;
         int inputIndex = Math.floorMod(jumpTick, POSITION_HISTORY_SIZE);
@@ -519,6 +529,7 @@ public class BridgeTracker {
             if (!PlacementEvidence.qualifies(startTick, jumpTick, startCoord, currentCoord, currentAxis.equals("X"), ticks >= 11 && ticks <= 12 ? 4 : 1)) label = "Jump";
             JumpEntry flatEntry = new JumpEntry(label, currentCoord, decimal, Double.NaN, ticks, JumpEntry.EntryType.FLAT);
             if (hasJumpInput(jumpTick)) flatEntry.setGainType(jumpInputHistory[Math.floorMod(jumpTick, POSITION_HISTORY_SIZE)]);
+            flatEntry.setPreJumpZ(jumpVelocity.beforeJump(jumpTick));
             entries.add(flatEntry);
 
             lastJumpTick = jumpTick;
@@ -557,6 +568,7 @@ public class BridgeTracker {
                         currentCoord, currentAxis.equals("X"), 2));
             if (late != null) label = late;
             JumpEntry tapEntry = new JumpEntry(label, currentCoord, decimal, delta, ticksElapsed, JumpEntry.EntryType.TAP);
+            tapEntry.setPreJumpZ(jumpVelocity.beforeJump(jumpTick));
             entries.add(tapEntry);
             if (hasJumpInput(jumpTick)) tapEntry.setGainType(jumpInputHistory[Math.floorMod(jumpTick, POSITION_HISTORY_SIZE)]);
 

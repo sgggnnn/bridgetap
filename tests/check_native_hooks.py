@@ -113,7 +113,9 @@ for kind in ('ReplayCamera','ReplayGhost'):
  assert any(n=='m_13836848' and desc=='()Z' for n,desc,_ in cls.methods),'Replay entity still inherits the live spectator mode: '+kind
 assert session.calls('net/minecraft/unmapped/C_61390454','m_60634394','()V'),'Replay chunk GPU buffers are not released'
 after_tick=next(a for n,_,a in mc_mixin.methods if n=='bridgetap$afterTick')
-assert mc_mixin.has_call(after_tick,mc_mixin.calls('com/bridger/momentum/ReplayRecorder','sample','()V')),'Recording is not sampled after the tick inputs/physics'
+assert mc_mixin.has_call(after_tick,mc_mixin.calls('com/bridger/momentum/ReplayRecorder','endTick','()V')),'Tick-boundary recording is not finalized after inputs/physics'
+assert mc_mixin.has_call(after_tick,mc_mixin.calls('com/bridger/momentum/BridgeTracker','onTickEnd','(Lnet/minecraft/client/Minecraft;)V')),'Pre-jump motion is not sampled at tick end'
+assert session.calls('com/bridger/momentum/ReplayControls','acceptAction','(IZJJ)Z'),'Replay actions bypass the navigation-specific input gate'
 assert 'com/bridger/momentum/BridgeHotbarReplay.class' not in mod.namelist(),'Live slot-2 replay shortcut is still packaged'
 assert 'LastBridgeHotbarMixin' not in config['client'],'Live inventory renderer is still intercepted'
 hud=Class(mod.read('com/bridger/momentum/BridgeHUD.class'))

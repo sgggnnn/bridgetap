@@ -21,14 +21,15 @@ public class BridgeConfig {
     public static boolean showGainType = false;
     public static boolean chatOutput = false;
     public static boolean showReplayInfo = true;
+    public static boolean showBridgeVelocity = false;
     public static boolean showReplayInputs = true;
     public static boolean useNoGayLabel = false;
     public static String replaySort="NEWEST";
     public static String replayQuery="", replayStatus="ALL", replayAxis="ALL", replayTechnique="ALL", replayContent="ALL";
-    public static String replaySource="ALL";
+    public static String replaySource="ALL",replayMode="ALL";
     public static String replayMinTime="", replayMaxTime="";
-    public static final String[] COLOR_NAMES = {"Labels", "Coordinates", "Positive delta", "Negative delta", "Ticks", "Gain", "No Gain", "Header", "Background", "Border"};
-    public static final String[] colors = {"b", "e", "a", "c", "7", "a", "e", "b", "0", "7"};
+    public static final String[] COLOR_NAMES = {"Labels", "Coordinates", "Positive delta", "Negative delta", "Ticks", "Gain", "No Gain", "Header", "Background", "Border", "Velo"};
+    public static final String[] colors = {"b", "e", "a", "c", "7", "a", "e", "b", "0", "7", "7"};
     public static String color(int part) { return "\u00a7" + colors[part]; }
     public static int rgb(int part) {
         int[] palette={0x000000,0x0000AA,0x00AA00,0x00AAAA,0xAA0000,0xAA00AA,0xFFAA00,0xAAAAAA,0x555555,0x5555FF,0x55FF55,0x55FFFF,0xFF5555,0xFF55FF,0xFFFF55,0xFFFFFF};
@@ -63,6 +64,7 @@ public class BridgeConfig {
             textShadow = Boolean.parseBoolean(props.getProperty("textShadow", "true"));
             showGainType = Boolean.parseBoolean(props.getProperty("showGainType", "false"));
             chatOutput = Boolean.parseBoolean(props.getProperty("chatOutput", "false"));
+            showBridgeVelocity = Boolean.parseBoolean(props.getProperty("showBridgeVelocity", "false"));
             showReplayInfo = Boolean.parseBoolean(props.getProperty("showReplayInfo", "true"));
             showReplayInputs = Boolean.parseBoolean(props.getProperty("showReplayInputs", "true"));
             useNoGayLabel = Boolean.parseBoolean(props.getProperty("useNoGayLabel", "false"));
@@ -70,6 +72,7 @@ public class BridgeConfig {
             replayQuery=props.getProperty("replayQuery", "");
             replayStatus=props.getProperty("replayStatus", "ALL");
             replaySource=props.getProperty("replaySource","ALL");
+            replayMode=props.getProperty("replayMode","ALL");
             replayAxis=props.getProperty("replayAxis", "ALL");
             replayTechnique=props.getProperty("replayTechnique", "ALL");
             replayContent=props.getProperty("replayContent", "ALL");
@@ -113,6 +116,7 @@ public class BridgeConfig {
                 props.setProperty("textShadow", String.valueOf(textShadow));
                 props.setProperty("showGainType", String.valueOf(showGainType));
                 props.setProperty("chatOutput", String.valueOf(chatOutput));
+                props.setProperty("showBridgeVelocity",String.valueOf(showBridgeVelocity));
                 props.setProperty("showReplayInfo", String.valueOf(showReplayInfo));
                 props.setProperty("showReplayInputs", String.valueOf(showReplayInputs));
                 props.setProperty("useNoGayLabel", String.valueOf(useNoGayLabel));
@@ -120,6 +124,7 @@ public class BridgeConfig {
                 props.setProperty("replayQuery",replayQuery);
                 props.setProperty("replayStatus",replayStatus);
                 props.setProperty("replaySource",replaySource);
+                props.setProperty("replayMode",replayMode);
                 props.setProperty("replayAxis",replayAxis);
                 props.setProperty("replayTechnique",replayTechnique);
                 props.setProperty("replayContent",replayContent);

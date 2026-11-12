@@ -20,8 +20,9 @@ public final class IslandOverlay {
     private static IslandParts parts;
     private static final C_93396801.C_25517371[] meshes=new C_93396801.C_25517371[2];
     private static long lastDraw,maskRefreshAt;
-    private static void moved(){lastDraw=0;maskRefreshAt=System.nanoTime()+200000000L;}
+    private static void moved(){lastDraw=0;maskRefreshAt=System.nanoTime()+200000000L;rememberEdit();}
     private static Backup backup;
+    private static int editBaseX,editBaseY,editBaseZ;private static IslandEditHistory edits;private static boolean restoringEdit;
     private static Path libraryFile;
     private static IslandReplacement.Mask target=IslandReplacement.EMPTY;
     private static IslandReplacement.Mask originalMask=IslandReplacement.EMPTY;
@@ -49,9 +50,10 @@ public final class IslandOverlay {
         return new IslandLayout(x-bx,y-by,z-bz,startX,startY,startZ,finishX,finishY,finishZ,rotation,IslandReplacement.focus());
     }
     public static void applyPreset(IslandTemplate template,IslandLayout layout){
+        IslandReplacement.Mask presetTarget=IslandStartAnchors.resolve(template,layout);
         Backup previous=new Backup();boolean oldFocus=IslandReplacement.focus();
         try{
-            beginPreview(template);
+            beginPreview(template,presetTarget);
             if(layout.stableAnchor&&!originalMask.empty()){
                 x=originalMask.presetX-template.anchorX;
                 y=originalMask.presetY-template.anchorY;
@@ -76,7 +78,17 @@ public final class IslandOverlay {
     public static void renameLabel(Path path,String name){if(isFrom(path)&&active!=null)active=new IslandTemplate(name,active.width,active.height,active.depth,active.originX,active.originY,active.originZ,active.blocks,active.anchorX,active.anchorY,active.anchorZ,active.bothIslands);}
     public static boolean previewing(){return preview;}
     public static boolean drawn(){return active!=null&&System.nanoTime()-lastDraw<1000000000L;}
-    public static void beginPreview(IslandTemplate template){Backup previous=new Backup();target=IslandReplacement.captureScene();originalMask=target;show(template,false);backup=previous;preview=true;if(!target.empty())replaceHere();}
+    public static void beginPreview(IslandTemplate template){beginPreview(template,IslandReplacement.captureScene());}
+    private static void beginPreview(IslandTemplate template,IslandReplacement.Mask detected){ServerPresets.manual();edits=null;Backup previous=new Backup();target=detected;originalMask=target;show(template,false);backup=previous;preview=true;if(!target.empty())replaceHere();editBaseX=x;editBaseY=y;editBaseZ=z;edits=new IslandEditHistory(editLayout());}
+    private static IslandLayout editLayout(){if(!originalMask.empty())return layout();return new IslandLayout(x-editBaseX,y-editBaseY,z-editBaseZ,startX,startY,startZ,finishX,finishY,finishZ,rotation,IslandReplacement.focus());}
+    public static void rememberEdit(){if(preview&&edits!=null&&!restoringEdit)edits.record(editLayout());}
+    public static void beginEditDrag(){if(edits!=null)edits.begin();}
+    public static void endEditDrag(){if(edits!=null)edits.end(editLayout());}
+    public static boolean canUndo(){return edits!=null&&edits.canUndo();}
+    public static boolean canRedo(){return edits!=null&&edits.canRedo();}
+    public static void undo(){if(canUndo())restoreEdit(edits.undo());}
+    public static void redo(){if(canRedo())restoreEdit(edits.redo());}
+    private static void restoreEdit(IslandLayout saved){restoringEdit=true;try{int bx=originalMask.empty()?editBaseX:originalMask.presetX-active.anchorX,by=originalMask.empty()?editBaseY:originalMask.presetY-active.anchorY,bz=originalMask.empty()?editBaseZ:originalMask.presetZ-active.anchorZ;x=bx+saved.x;y=by+saved.y;z=bz+saved.z;startX=saved.startX;startY=saved.startY;startZ=saved.startZ;finishX=saved.finishX;finishY=saved.finishY;finishZ=saved.finishZ;rotation=saved.rotation;if(IslandReplacement.focus()!=saved.focus)IslandReplacement.toggleFocus();moved();}finally{restoringEdit=false;}}
     public static boolean canReplace(){return !target.empty();}
     public static void detectReplacement(){IslandReplacement.Mask detected=IslandReplacement.captureScene();if(!detected.empty()){originalMask=target=detected;IslandReplacement.set(target);moved();}}
     public static boolean replacing(){return !IslandReplacement.current().empty();}

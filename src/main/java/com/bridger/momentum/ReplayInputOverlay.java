@@ -16,9 +16,9 @@ public final class ReplayInputOverlay {
         if(stats==null)canvas.text("No input data",x,y+99,0xFF94A4BA);
     }
     private static void key(UiCanvas c,int x,int y,int w,int h,boolean held,int icon){
-        c.rect(x,y,w,h,held?0xE0275665:0xC0080F18);
-        if(held)c.rect(x,y+h-1,w,1,0xFF7AE2E3);
-        int color=held?0xFFF1FFFF:0xFFABB2B9;
+        c.rect(x,y,w,h,OverlayStyle.backgroundShown(2)?(held?OverlayStyle.pressedBackground:OverlayStyle.background(2)):0x00000000);
+        if(held)c.rect(x,y+h-1,w,1,OverlayStyle.accent);
+        int color=held?OverlayStyle.pressedText:OverlayStyle.text[2];
         if(icon==4){c.rect(x+(w-24)/2,y+8,24,2,color);return;}
         if(icon>=5){String text=icon==5?"LMB":"RMB";c.text(text,x+(w-c.width(text))/2,y+8,color);return;}
         int cx=x+w/2,cy=y+h/2;

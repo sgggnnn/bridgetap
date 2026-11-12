@@ -1,0 +1,194 @@
+diff --git a/packages/oneclient_app/Cargo.toml b/packages/oneclient_app/Cargo.toml
+index e2429bf..adc1f75 100644
+--- a/packages/oneclient_app/Cargo.toml
++++ b/packages/oneclient_app/Cargo.toml
+@@ -96,10 +96,10 @@ windows = { version = "=0.62.2", features = [
+ winresource = "=0.1.31"
+ 
+ [package.metadata.packager]
+-product-name = "OneClient"
+-identifier = "org.polyfrost.OneClient"
++product-name = "BridgeTap Client"
++identifier = "org.bridgetap.Client"
+ category = "Game"
+-publisher = "Polyfrost Inc."
++publisher = "BridgeTap local edition (unofficial)"
+ copyright = "© 2026 Polyfrost Inc."
+ homepage = "https://polyfrost.org/projects/oneclient"
+ long-description = "Next-generation open source Minecraft launcher"
+@@ -136,14 +136,6 @@ timestamp-url = "https://timestamp.digicert.com"
+ 
+ [package.metadata.packager.nsis]
+ preinstall-section = """
+-Section "-OneClientTauriMigration"
+-  ; Stale Tauri root start-menu shortcut (this build only writes the sub-folder one).
+-  Delete "$SMPROGRAMS\\${PRODUCTNAME}.lnk"
+-  ; Old Tauri main binary (renamed OneClient.exe -> oneclient_app.exe). Locked while
+-  ; the outdated app is running during an auto-update, so fall back to reboot removal.
+-  Delete /REBOOTOK "$INSTDIR\\OneClient.exe"
+-SectionEnd
+-
+ ; >>> VC_REDIST_SECTION >>>
+ Section "-VCRedist"
+   SetRegView 64
+diff --git a/packages/oneclient_app/src/components/navbar/app_navbar.rs b/packages/oneclient_app/src/components/navbar/app_navbar.rs
+index f95b98c..b6d0766 100644
+--- a/packages/oneclient_app/src/components/navbar/app_navbar.rs
++++ b/packages/oneclient_app/src/components/navbar/app_navbar.rs
+@@ -171,6 +171,12 @@ fn navbar_center(is_small: bool) -> impl IntoElement {
+             nav_label: t("oneclient.components.navbar.browse"),
+             over_art,
+         })
++        .child(NavLink {
++            active: route == Route::BridgeTap {},
++            target: NavTarget::Route(Route::BridgeTap {}),
++            nav_label: "BridgeTap",
++            over_art,
++        })
+         .child(NavLink {
+             active: route == Route::Wardrobe {},
+             target: NavTarget::Route(Route::Wardrobe {}),
+diff --git a/packages/oneclient_app/src/constants.rs b/packages/oneclient_app/src/constants.rs
+index 0bfe606..f8203db 100644
+--- a/packages/oneclient_app/src/constants.rs
++++ b/packages/oneclient_app/src/constants.rs
+@@ -1,5 +1,5 @@
+-pub const WINDOW_APP_ID: &str = "oneclient_app";
+-pub const WINDOW_TITLE: &str = "OneClient";
++pub const WINDOW_APP_ID: &str = "bridgetap_oneclient_local";
++pub const WINDOW_TITLE: &str = "BridgeTap Client (OneClient Local Edition)";
+ 
+ pub const UPDATER_PUBKEY: &str = "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDFGODk3MkMyMjg0MjFDMDUKUldRRkhFSW93bktKSHpkWjNEMXNzaDVINVpCTU8xSnhuK2RnV0dTZ2FkcFJWbG1zUkhGYTNjaUkK";
+ pub const UPDATER_ENDPOINT: &str =
+diff --git a/packages/oneclient_app/src/ipc.rs b/packages/oneclient_app/src/ipc.rs
+index 459f312..8cb57d1 100644
+--- a/packages/oneclient_app/src/ipc.rs
++++ b/packages/oneclient_app/src/ipc.rs
+@@ -180,9 +180,9 @@ mod imp {
+     use tokio::sync::mpsc::UnboundedSender;
+ 
+     #[cfg(not(debug_assertions))]
+-    const ENDPOINT: &str = r"\\.\pipe\org.polyfrost.OneClient.ipc";
++    const ENDPOINT: &str = r"\\.\pipe\org.bridgetap.Client.ipc";
+     #[cfg(debug_assertions)]
+-    const ENDPOINT: &str = r"\\.\pipe\org.polyfrost.OneClient-dev.ipc";
++    const ENDPOINT: &str = r"\\.\pipe\org.bridgetap.Client-dev.ipc";
+ 
+     const ERROR_ACCESS_DENIED: i32 = 5;
+     const ERROR_PIPE_BUSY: i32 = 231;
+diff --git a/packages/oneclient_app/src/main.rs b/packages/oneclient_app/src/main.rs
+index 6730911..c0f4006 100644
+--- a/packages/oneclient_app/src/main.rs
++++ b/packages/oneclient_app/src/main.rs
+@@ -208,15 +208,7 @@ fn main() {
+         tracing::warn!("no single-instance endpoint, a second launcher can start: {reason}");
+     }
+ 
+-    match oneclient_app::shortcut::launcher_exe()
+-        .and_then(|exe| oneclient_app::protocol::register(&exe))
+-    {
+-        Ok(()) => {}
+-        Err(err) => tracing::warn!(
+-            "could not register the {}:// handler: {err:#}",
+-            oneclient_app::protocol::SCHEME
+-        ),
+-    }
++    // Local edition leaves the official OneClient protocol handler unchanged.
+ 
+     if let Some(dir) = abandoned_move {
+         tracing::error!(
+diff --git a/packages/oneclient_app/src/routes.rs b/packages/oneclient_app/src/routes.rs
+index 9b67b75..70788e3 100644
+--- a/packages/oneclient_app/src/routes.rs
++++ b/packages/oneclient_app/src/routes.rs
+@@ -11,7 +11,7 @@ use crate::layout::SettingsShell;
+ use crate::view::{
+     NotFound, Relocating, Startup,
+     app::{
+-        Clusters, Debug, Home, Stats, Wardrobe,
++        BridgeTap, Clusters, Debug, Home, Stats, Wardrobe,
+         browser::{Browser, BrowserPackage},
+         cluster::{
+             ClusterDataPacks, ClusterLogs, ClusterMods, ClusterOverview, ClusterScreenshots,
+@@ -100,6 +100,8 @@ pub enum Route {
+             },
+             #[route("/app/wardrobe")]
+             Wardrobe {},
++            #[route("/app/bridgetap")]
++            BridgeTap {},
+             #[route("/app/stats")]
+             Stats {},
+             #[route("/app/debug")]
+diff --git a/packages/oneclient_app/src/updater.rs b/packages/oneclient_app/src/updater.rs
+index e8a8c8d..63118b6 100644
+--- a/packages/oneclient_app/src/updater.rs
++++ b/packages/oneclient_app/src/updater.rs
+@@ -27,7 +27,12 @@ fn update_prompt(version: &str) -> Prompt<UpdateAnswer> {
+ 
+ const PROGRESS_STEP: u64 = 256 * 1024;
+ 
+-pub fn spawn_update_check(auto_install: bool, events: EventBus) {
++pub fn spawn_update_check(_auto_install: bool, _events: EventBus) {
++    // Local fork must not replace itself with an upstream binary.
++}
++
++#[allow(dead_code)]
++fn upstream_update_check(auto_install: bool, events: EventBus) {
+     tokio::spawn(async move {
+         if let Err(err) = run_check(auto_install, events).await {
+             tracing::warn!("update check failed: {err:#}");
+diff --git a/packages/oneclient_app/src/view/app/mod.rs b/packages/oneclient_app/src/view/app/mod.rs
+index 9356b2e..fe7417a 100644
+--- a/packages/oneclient_app/src/view/app/mod.rs
++++ b/packages/oneclient_app/src/view/app/mod.rs
+@@ -3,6 +3,8 @@ mod clusters;
+ mod debug;
+ mod home;
+ mod stats;
++mod bridgetap;
++pub use bridgetap::BridgeTap;
+ mod wardrobe;
+ 
+ pub mod browser;
+diff --git a/packages/oneclient_common/src/paths.rs b/packages/oneclient_common/src/paths.rs
+index 6c653ae..05e9a3b 100644
+--- a/packages/oneclient_common/src/paths.rs
++++ b/packages/oneclient_common/src/paths.rs
+@@ -9,10 +9,10 @@ const QUALIFIER: &str = "org";
+ const ORGANIZATION: &str = "Polyfrost";
+ 
+ #[cfg(not(debug_assertions))]
+-const APPLICATION: &str = "OneClient";
++const APPLICATION: &str = "BridgeTapClient";
+ 
+ #[cfg(debug_assertions)]
+-const APPLICATION: &str = "OneClient-dev";
++const APPLICATION: &str = "BridgeTapClient-dev";
+ 
+ pub const SETTINGS_FILE: &str = "settings.json";
+ pub const DATABASE_FILE: &str = "user_data.db";
+diff --git a/packages/oneclient_core/src/game/launch.rs b/packages/oneclient_core/src/game/launch.rs
+index d43beb2..5f74efa 100644
+--- a/packages/oneclient_core/src/game/launch.rs
++++ b/packages/oneclient_core/src/game/launch.rs
+@@ -380,6 +380,8 @@ async fn start(
+         tracing::warn!(cluster_id, error = %err, "failed to materialize cluster content");
+     }
+ 
++    crate::bridgetap::install(&cluster, &cwd, mods_in_cluster).await?;
++
+     if !dedicated {
+         crate::game::link_cluster_logs(&cluster, &cwd).await;
+     }
+diff --git a/packages/oneclient_core/src/lib.rs b/packages/oneclient_core/src/lib.rs
+index 63a67f0..96f1346 100644
+--- a/packages/oneclient_core/src/lib.rs
++++ b/packages/oneclient_core/src/lib.rs
+@@ -4,6 +4,7 @@
+ pub mod dev;
+ 
+ pub mod bisect;
++pub mod bridgetap;
+ pub mod changelog;
+ pub mod clusters;
+ pub mod disable_warnings;

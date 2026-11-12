@@ -15,3 +15,7 @@ __pycache__/
 *.iml
 .DS_Store
 Thumbs.db
+
+# Gradle bootstrap (the wrapper is infrastructure, not a mod artifact)
+/.gradle/
+!gradle/wrapper/gradle-wrapper.jar

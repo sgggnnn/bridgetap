@@ -6,14 +6,17 @@ A **Minecraft 1.8.9** client mod for analyzing your bridges: jump coordinates, r
 
 **1.6.0** promotes the tested dev.11 build to the final release. It adds island scenery and one-click presets, MP4 clips with Windows output audio, a replay file manager, protected saves, block appearance customization and Focus mode. See the [islands and clips guide](docs/ISLANDS-AND-CLIPS.md) for controls and limitations.
 
+**1.7.0** adds OneClient HUD integration and RGB colors, per-speed Velo Z decimals with a dedicated color, per-server/shareable island presets, replay MP4 export, fail analysis and McPlay mode folders. Native clip tools are now a separate optional download. See the [1.7.0 release notes](docs/releases/v1.7.0.md).
+
 ## Installation
 
-1. Open [release 1.6.0](https://github.com/sgggnnn/bridgetap/releases/tag/v1.6.0).
+1. Open [release 1.7.0](https://github.com/sgggnnn/bridgetap/releases/tag/v1.7.0).
 2. Download the file matching your setup:
-   - **Forge 1.8.9**: `BridgeTap-1.6.0-Forge-1.8.9.jar`.
-   - **Ornithe / Legacy Fabric 1.8.9**: `BridgeTap-1.6.0.jar`, for an environment using Ornithe mappings.
+   - **Forge 1.8.9**: `BridgeTap-1.7.0-Forge-1.8.9.jar`.
+   - **OneClient / Ornithe Fabric 1.8.9**: `BridgeTap-1.7.0-OneClient.jar`, for an environment using Ornithe mappings.
 3. Place the JAR in your instance's `mods` folder, replacing the previous BridgeTap version.
-4. Launch Minecraft with **Java 8** and your chosen loader.
+4. Launch Minecraft with **Java 8+** and your chosen loader. Native OneClient/OneConfig integration requires **Java 21+**.
+5. For Windows clips/audio, extract the optional tools pack from the release into the game directory containing `mods`, then enable the buffer. See the [tools installation instructions](docs/releases/v1.7.0.md#downloads-and-upgrade).
 
 Keep only one BridgeTap edition installed per instance. The Forge edition bundles its Mixin runtime, so no additional Mixin loader is required. The Forge version used for testing is **11.15.1.2318**.
 
@@ -105,6 +108,19 @@ Validation covers replay, island, folder, retention and clip regressions, all 43
 
 ## Development
 
+Build both release editions with the checked-in Gradle Wrapper:
+
+```sh
+./gradlew build
+# Windows: .\gradlew.bat build
+```
+
+Use JDK 17+ and Python 3.10+. Gradle provisions JDK 21 for the optional OneClient adapter; `-PoneclientJavaHome=/path/to/jdk21-or-newer` can select an existing JDK. Set `-PpythonExecutable=/path/to/python` when needed. Linux release builds also need a .NET SDK to cross-compile the bundled Windows audio helper (the Ubuntu GitHub-hosted runner includes it).
+
+Outputs are `build/libs/BridgeTap-<version>-OneClient.jar` and `build/libs/BridgeTap-<version>-Forge-1.8.9.jar`. The build downloads pinned public compile dependencies and remaps Minecraft from the official 1.8.9 client; no local launcher installation is required. Neither Minecraft nor OneConfig is bundled in the mod.
+
+**Pre-jump velocity:** enable `Pre-jump velocity (tick -1)` in HUD settings. During a bridge, the HUD displays X/Y/Z and horizontal velocity from the completed tick immediately before the latest jump, in blocks per tick. It stays frozen until the next jump, ignores jump-coordinate offsets and never substitutes a later/current tick if the previous sample is unavailable.
+
 See [docs/BUILDING.md](docs/BUILDING.md) for build and test instructions, and [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 
 - `src/main/`: shared Java sources, mixins, and resources.
@@ -120,3 +136,5 @@ See [docs/BUILDING.md](docs/BUILDING.md) for build and test instructions, and [C
 Maintained at [sgggnnn/bridgetap](https://github.com/sgggnnn/bridgetap). Thanks to **pavelpuchika** for their help.
 
 BridgeTap uses Minecraft Forge, Ornithe, Fabric Loader, Mixin, and their mapping tools. Licenses for bundled libraries are included in the JARs under `META-INF/licenses/`.
+
+Replay tick navigation now has no stick cooldown: paused sticks move one tick per action, while playing sticks still skip one second. New v5 recordings keep the initial pose and align block placement and recorded inputs with the start of each tick. v4 recordings with placement provenance are corrected at playback without rewriting their source files; older provenance-free recordings keep their original timing.

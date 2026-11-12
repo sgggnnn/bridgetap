@@ -23,8 +23,11 @@ public class BridgeHUD {
     public static void onClientTick() {
         Minecraft mc = Minecraft.m_20213497();
         if (mc == null || mc.f_58088711 == null) return;
+        OneClientIntegration.tick();
         IslandReplacement.refreshTerrain();
         PlacementAppearance.tick();
+        ServerPresets.tick();
+        ReplayVideoExport.tick();
         long now=System.currentTimeMillis();if(now>=nextCleanup){nextCleanup=now+60000;try{ReplayFolders.local().cleanupDue(BridgeTracker.history(),now);}catch(java.io.IOException ex){System.err.println("[BridgeTap] Replay cleanup: "+ex.getMessage());}}
 
         if (!keyBindingRegistered) {
@@ -59,6 +62,7 @@ public class BridgeHUD {
 
     public static void render(C_97866173 gui) {
         Minecraft mc = Minecraft.m_20213497();
+        if(OneClientIntegration.editing()){OneClientIntegration.renderEditor();return;}
         if (mc != null && mc.f_70816363 instanceof BridgeLayoutScreen) return;
         if (ReplaySession.active()) { ReplaySession.renderHud(); return; }
         if (mc == null || mc.f_28396371 == null || mc.f_26407825 == null) return;
@@ -94,14 +98,15 @@ public class BridgeHUD {
             header = String.format(Locale.US, "\u00a7eBridging %.2fs %d jumps, axis: %s", time, jumpCount, axis);
         }
 
+        if(BridgeConfig.chatOutput)header="";
         List<String> displayLines = new java.util.ArrayList<>();
-        if (!displayMode.equals("TIME")) displayLines.addAll(EntryFormatter.lines(entries));
+        if (!BridgeConfig.chatOutput&&!displayMode.equals("TIME")) displayLines.addAll(EntryFormatter.hudLines(entries));
         if (header.isEmpty() && displayLines.isEmpty()) return;
 
         // Calculate box dimensions
         int maxWidth = header.isEmpty() ? 0 : fr.m_09235706(header);
         for (String line : displayLines) {
-            int w = fr.m_09235706(line);
+            int w = HudText.width(fr,line);
             if (w > maxWidth) maxWidth = w;
         }
 
@@ -116,6 +121,7 @@ public class BridgeHUD {
         int x = OverlayPlacement.clamp(BridgeConfig.hudX,(int)Math.ceil(totalWidth*scale),window.m_39119333());
         int y = OverlayPlacement.clamp(BridgeConfig.hudY,(int)Math.ceil(totalHeight*scale),window.m_16103615());
 
+        OneClientIntegration.recordSize(0,totalWidth,totalHeight);
         // Anchor at the configured position, then scale the complete HUD layout.
         GL11.glPushMatrix();
         GL11.glTranslatef((float) x, (float) y, 0.0F);
@@ -125,8 +131,8 @@ public class BridgeHUD {
         C_37925375.m_55305366(); // GlStateManager.enableBlend()
 
         if (BridgeConfig.backgroundEnabled) {
-            C_29058632.m_57734177(0, 0, totalWidth, totalHeight, (0xA0000000 | BridgeConfig.rgb(8)));
-            int borderColor = 0x80000000 | BridgeConfig.rgb(9);
+            C_29058632.m_57734177(0, 0, totalWidth, totalHeight, OverlayStyle.background(0));
+            int borderColor = OverlayStyle.part(9);
             C_29058632.m_57734177(0, 0, totalWidth, 1, borderColor);
             C_29058632.m_57734177(0, totalHeight - 1, totalWidth, totalHeight, borderColor);
             C_29058632.m_57734177(0, 0, 1, totalHeight, borderColor);
@@ -137,12 +143,12 @@ public class BridgeHUD {
         int textX = padding;
         int textY = padding;
         if (!header.isEmpty()) {
-            fr.m_11445413(BridgeConfig.color(7) + header.replaceAll("\u00a7[0-9a-f]", ""), textX, textY, 0xFFFFFF, BridgeConfig.textShadow);
+            HudText.drawStyled(0,fr,OverlayStyle.styled(0,OverlayStyle.color(7) + header.replaceAll("\u00a7[0-9a-f]", "")), textX, textY, 0xFFFFFF);
             textY += lineHeight;
         }
 
         for (String line : displayLines) {
-            fr.m_11445413(line, textX, textY, 0xFFFFFF, BridgeConfig.textShadow);
+            HudText.drawStyled(0,fr,OverlayStyle.styled(0,line), textX, textY, 0xFFFFFF);
             textY += lineHeight;
         }
 

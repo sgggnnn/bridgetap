@@ -6,8 +6,9 @@ import java.nio.file.Path;
 
 /** Copy editor mirrors placement: visible bounds, drag, resize, save or cancel. */
 public final class IslandCopyScreen extends BridgeScreen {
-    private final IslandScreen parent;private String name="",message="Drag to move. Right-drag to look around.";private boolean dragging,looking,picking;private int dragX,dragY,lookX,lookY;private C_32594356 first;
-    public IslandCopyScreen(IslandScreen parent){this.parent=parent;ReplaySession.freeCopyCamera();IslandCopySelection.begin();}
+    private final IslandScreen parent;private final Runnable returnNative;private String name="",message="Drag to move. Right-drag to look around.";private boolean dragging,looking,picking;private int dragX,dragY,lookX,lookY;private C_32594356 first;
+    public IslandCopyScreen(IslandScreen parent){this.parent=parent;this.returnNative=null;ReplaySession.freeCopyCamera();IslandCopySelection.begin();}
+    public IslandCopyScreen(Runnable returnNative){this.parent=null;this.returnNative=returnNative;ReplaySession.freeCopyCamera();IslandCopySelection.begin();}
     @Override protected int backgroundColor(){return 0;}
     @Override protected int backdropColor(){return 0;}
     @Override protected void paint(){
@@ -23,7 +24,7 @@ public final class IslandCopyScreen extends BridgeScreen {
         rect(12,HEIGHT-34,588,22,0xCC101722);text("Drag: move / Right-drag: look / Scroll: distance / Enter: save",22,HEIGHT-27,TEXT);
     }
     private void pick(){float s=scale();C_32594356 hit=IslandCopySelection.pick((mouseX+originX(s))*s,(mouseY+originY(s))*s,f_05230747>0?f_05230747:WIDTH,f_07021018>0?f_07021018:HEIGHT);if(hit==null){message="No block here. Right-drag to aim.";return;}if(first==null){first=hit;IslandCopySelection.corners(hit,hit);message="Now click the opposite corner.";}else{IslandCopySelection.corners(first,hit);picking=false;first=null;message="Selection ready. Drag or resize it.";}}
-    private void save(){try{IslandBox box=IslandCopySelection.box();if(box==null||!box.valid())throw new IllegalArgumentException("Selection too large: resize the box");IslandTemplate island=IslandOverlay.copyBox(name.trim().isEmpty()?"My island":name,box);Path file=IslandLibrary.save(island,"saved");parent.copiedFile(file,"Island saved. Select Place when you want to paste it.");IslandCopySelection.end();open(parent);}catch(Exception ex){message=ex.getMessage()==null?"Could not copy island":ex.getMessage();}}
+    private void save(){try{IslandBox box=IslandCopySelection.box();if(box==null||!box.valid())throw new IllegalArgumentException("Selection too large: resize the box");IslandTemplate island=IslandOverlay.copyBox(name.trim().isEmpty()?"My island":name,box);Path file=IslandLibrary.save(island,"saved");if(parent!=null)parent.copiedFile(file,"Island saved. Select Place when you want to paste it.");IslandCopySelection.end();if(returnNative!=null)returnNative.run();else open(parent);}catch(Exception ex){message=ex.getMessage()==null?"Could not copy island":ex.getMessage();}}
     @Override public void dragPreview(int x,int y){super.dragPreview(x,y);if(!dragging)return;int dx=(x-dragX)/10,dy=(y-dragY)/10;if(dx!=0||dy!=0){IslandCopySelection.move(dx,-dy,0);dragX+=dx*10;dragY+=dy*10;}}
     @Override public void releasePreview(){dragging=false;}
     @Override protected void rightClick(int x,int y){if(x<610){looking=true;lookX=x;lookY=y;}}
@@ -31,6 +32,6 @@ public final class IslandCopyScreen extends BridgeScreen {
     @Override protected void m_47537840(int x,int y,int button){if(button==1)looking=false;else super.m_47537840(x,y,button);}
     @Override protected void scroll(int x,int y,int direction){IslandCopySelection.move(0,0,direction);}
     @Override protected void key(int key){if(key==28||key==156)save();if(key==203)IslandCopySelection.move(-1,0,0);if(key==205)IslandCopySelection.move(1,0,0);if(key==200)IslandCopySelection.move(0,1,0);if(key==208)IslandCopySelection.move(0,-1,0);}
-    @Override protected void back(){IslandCopySelection.end();open(parent);}
+    @Override protected void back(){IslandCopySelection.end();if(returnNative!=null)returnNative.run();else open(parent);}
     @Override public void m_47002234(){IslandCopySelection.end();}
 }

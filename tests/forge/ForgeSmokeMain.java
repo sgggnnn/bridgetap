@@ -25,7 +25,7 @@ public final class ForgeSmokeMain {
             hooks+=count;
             System.out.println("PASS Forge transformed "+target+" ("+count+" BridgeTap methods)");
         }
-        for(String name:Arrays.asList("ReplaySession","ReplayCamera","ReplayGhost","BridgeHistoryScreen","BridgeSettingsScreen","BridgeColorsScreen","BridgeLayoutScreen","BridgeScreen","ReplayInputOverlay","ReplayRecorder","IslandOverlay","IslandScreen","ClipCapture","ClipScreen","ReplayFolderScreen")) {
+        for(String name:Arrays.asList("ReplaySession","ReplayCamera","ReplayGhost","BridgeHistoryScreen","BridgeSettingsScreen","BridgeColorsScreen","BridgeLayoutScreen","BridgeScreen","ReplayInputOverlay","ReplayRecorder","IslandOverlay","IslandScreen","ClipCapture","ClipScreen","ReplayFolderScreen","ReplayVideoExport","ReplayVideoExportScreen","ReplayFailureScreen","ServerPresets")) {
             Class<?> type=Class.forName("com.bridger.momentum."+name,false,Launch.classLoader);
             type.getDeclaredMethods();type.getDeclaredConstructors();
         }
@@ -59,6 +59,14 @@ public final class ForgeSmokeMain {
         Object mc=allocate.invoke(unsafe,minecraft),world=allocate.invoke(unsafe,worldType),viewer=allocate.invoke(unsafe,playerType);
         Field instance=minecraft.getDeclaredField("field_71432_P");instance.setAccessible(true);Object previous=instance.get(null);instance.set(null,mc);
         set(mc,"field_71441_e",world);set(mc,"field_71439_g",viewer);set(viewer,"field_70165_t",10.0);set(viewer,"field_70163_u",70.0);set(viewer,"field_70161_v",20.0);set(viewer,"field_70177_z",0f);
+        Class<?> tracker=Class.forName("com.bridger.momentum.BridgeTracker",true,Launch.classLoader);
+        Field tick=tracker.getDeclaredField("currentTick"),velocity=tracker.getDeclaredField("jumpVelocity");tick.setAccessible(true);velocity.setAccessible(true);
+        tick.setInt(null,41);set(viewer,"field_70159_w",.125);set(viewer,"field_70181_x",-.08);set(viewer,"field_70179_y",-.25);
+        Method snapshot=tracker.getDeclaredMethod("savePositionSnapshot",playerType,int.class);snapshot.setAccessible(true);snapshot.invoke(null,viewer,41);tracker.getMethod("onTickEnd",minecraft).invoke(null,mc);Object ring=velocity.get(null);Object previousTick=ring.getClass().getMethod("beforeJump",int.class).invoke(ring,42);
+        if(previousTick==null||previousTick.getClass().getField("x").getDouble(previousTick)!=10.0||previousTick.getClass().getField("z").getDouble(previousTick)!=20.0)throw new AssertionError("End-of-tick sampler did not capture native player position");
+        tick.setInt(null,42);set(viewer,"field_70159_w",.9);set(viewer,"field_70181_x",.42);tracker.getMethod("onTickEnd",minecraft).invoke(null,mc);
+        Object beforeJump=ring.getClass().getMethod("beforeJump",int.class).invoke(ring,42);if(beforeJump.getClass().getField("x").getDouble(beforeJump)!=10.0)throw new AssertionError("Pre-jump position used the current tick");
+        tracker.getMethod("reset").invoke(null);System.out.println("PASS: native tick-start positions are retained at tick end and pre-jump velocity uses the previous tick");
         Class<?> session=Class.forName("com.bridger.momentum.ReplaySession",true,Launch.classLoader);Object replay=allocate.invoke(unsafe,session);set(replay,"source",world);set(replay,"camera",viewer);
         Field current=session.getDeclaredField("current");current.setAccessible(true);current.set(null,replay);
         Class<?> scenery=Class.forName("com.bridger.momentum.IslandOverlay",true,Launch.classLoader);
@@ -165,6 +173,16 @@ public final class ForgeSmokeMain {
                 for(String fieldName:new String[]{"x","y","z","width","height","depth"})if(!boxType.getField(fieldName).get(before).equals(boxType.getField(fieldName).get(after)))throw new AssertionError("Preset drift after camera/run movement: "+fieldName);
             }
             System.out.println("PASS: exact preset voxel positions survive repeated application, one-block run/camera changes and finish-island viewing");
+            Object finishOnly=recording.getConstructor(java.util.List.class,java.util.List.class,boolean.class).newInstance(Arrays.asList(f,endFrame),Arrays.asList(finish),false);set(replay,"data",finishOnly);set(viewer,"field_70165_t",40.5);try{scenery.getMethod("applyPreset",template,layoutType).invoke(null,pairTemplate,fixedLayout);throw new AssertionError("Preset silently used the finish island when the start was missing");}catch(java.lang.reflect.InvocationTargetException expected){if(!(expected.getCause() instanceof IllegalArgumentException))throw expected;}set(replay,"data",wide);
+            System.out.println("PASS: missing start island blocks preset placement instead of anchoring on the nearby finish");
+
+            scenery.getMethod("beginPreview",template).invoke(null,pairTemplate);Object initialBounds=scenery.getMethod("copyBounds").invoke(null);scenery.getMethod("moveStart",int.class,int.class,int.class).invoke(null,0,3,0);scenery.getMethod("rotate").invoke(null);scenery.getMethod("undo").invoke(null);if((Integer)scenery.getMethod("rotation").invoke(null)!=0)throw new AssertionError("Undo did not restore rotation");scenery.getMethod("undo").invoke(null);if((Integer)scenery.getMethod("startHeight").invoke(null)!=0)throw new AssertionError("Undo did not restore start position");scenery.getMethod("redo").invoke(null);if((Integer)scenery.getMethod("startHeight").invoke(null)!=3)throw new AssertionError("Redo did not restore edited start height");scenery.getMethod("cancel").invoke(null);
+            System.out.println("PASS: native island editor undo/redo restores independent position and rotation");
+            Object placedBlock=recordedBlock.getConstructor(int.class,int.class,int.class,int.class,int.class,int.class,boolean.class).newInstance(11,65,20,24,2,0,true);Object videoData=recording.getConstructor(java.util.List.class,java.util.List.class,boolean.class).newInstance(Arrays.asList(f),Arrays.asList(placedBlock),false);Class<?> videoHud=Class.forName("com.bridger.momentum.ReplayVideoHud",true,Launch.classLoader);Object videoStack=videoHud.getMethod("blockStack",recording,double.class).invoke(null,videoData,0.0);if(videoStack==null||videoStack.getClass().getField("field_77994_a").getInt(videoStack)!=64||(Integer)videoStack.getClass().getMethod("func_77960_j").invoke(videoStack)!=2)throw new AssertionError("Video hotbar lost the recorded construction block stack or variant");System.out.println("PASS: native video hotbar creates a 64-block construction stack with recorded metadata");
+
+            try{Class<?> blur=Class.forName("eu.midnightdust.blur.BlurRenderer",true,Launch.classLoader),guiScreen=Class.forName("net.minecraft.client.gui.GuiScreen",true,Launch.classLoader),placementScreen=Class.forName("com.bridger.momentum.IslandPlacementScreen",true,Launch.classLoader);Object editor=allocate.invoke(unsafe,placementScreen);set(mc,"field_71462_r",editor);int calls=blur.getField("calls").getInt(null);blur.getMethod("render").invoke(null);Object background=blur.getMethod("renderBackground",guiScreen).invoke(null,editor);if(blur.getField("calls").getInt(null)!=calls||!Boolean.FALSE.equals(background))throw new AssertionError("Island placement still receives GUI blur or gradient");set(mc,"field_71462_r",null);blur.getMethod("render").invoke(null);if(blur.getField("calls").getInt(null)!=calls+1)throw new AssertionError("Blur remained disabled outside the island editor");System.out.println("PASS: optional LegacyGuiBlur is suppressed only in world-editing screens");}catch(ClassNotFoundException absent){}
+
+
             set(mc,"field_71441_e",allocate.invoke(unsafe,worldType));scenery.getMethod("tick").invoke(null);if((Boolean)scenery.getMethod("enabled").invoke(null))throw new AssertionError("Scenery survived a world change");
             System.out.println("PASS: native sandstone scenery paste during replay, camera placement and source-world lifecycle");
         }finally{scenery.getMethod("disable").invoke(null);current.set(null,null);instance.set(null,previous);}

@@ -1,0 +1,8 @@
+import com.bridger.momentum.*;
+import java.nio.file.*;
+import java.util.*;
+
+public final class PresetServersRegression {
+    private static void check(boolean b,String why){if(!b)throw new AssertionError(why);}
+    public static void main(String[] args)throws Exception{Path file=Files.createTempDirectory("preset-servers-").resolve("links.properties");PresetServers map=new PresetServers(file);String first=UUID.randomUUID().toString(),second=UUID.randomUUID().toString();map.assign(" PLAY.Example.net.:25565 ",first);check(new PresetServers(file).preset("play.example.net").equals(first),"Address normalization or persistence failed");map.assign("play.example.net:25566",second,new PresetServers.Appearance("minecraft:glass",3,true));check(new PresetServers(file).appearance("play.example.net:25566").variant==3,"Server appearance snapshot was not persisted");check(map.preset("play.example.net").equals(first),"Different ports shared a preset");map.setAnchor("play.example.net",new PresetServers.Anchor(10,64,20));check(new PresetServers(file).anchor("PLAY.EXAMPLE.NET:25565").x==10,"Known start anchor was not persisted");map.assign("play.example.net",second);check(new PresetServers(file).preset("PLAY.EXAMPLE.NET:25565").equals(second),"Replacing server preset failed");map.assign("play.example.net","");check(new PresetServers(file).preset("play.example.net").isEmpty(),"Unlink failed");try{map.assign("Unknown server",first);throw new AssertionError("Unknown server accepted");}catch(java.io.IOException expected){}check(map.preset("play.example.net:25566").equals(second),"Unlink affected another binding");System.out.println("PASS: server preset persistence, replacement, unlinking and canonical address isolation");}
+}

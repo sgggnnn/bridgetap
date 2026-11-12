@@ -11,6 +11,7 @@ public final class ReplayData {
  public static final class TickStats {
   public final int held,pressed,released,leftClicks,rightClicks,middleClicks,leftCps,rightCps,middleCps;
   public final double vx,vy,vz;
+  public TickStats withoutEdges(){return new TickStats(held,0,0,0,0,0,leftCps,rightCps,middleCps,vx,vy,vz);}
   public TickStats(int held,int pressed,int released,int leftClicks,int rightClicks,int middleClicks,int leftCps,int rightCps,int middleCps,double vx,double vy,double vz){
    if((held|pressed|released)<0||((held|pressed|released)&~1023)!=0)throw new IllegalArgumentException("Invalid input mask");
    for(int count:new int[]{leftClicks,rightClicks,middleClicks,leftCps,rightCps,middleCps})if(count<0||count>1000000)throw new IllegalArgumentException("Invalid click count");
@@ -25,6 +26,7 @@ public final class ReplayData {
   public final boolean sneaking,onGround;
   public final int itemId,itemDamage;
   public final TickStats stats;
+  public Frame withStats(TickStats stats){return new Frame(x,y,z,yaw,pitch,headYaw,bodyYaw,sneaking,onGround,swing,walkSpeed,walkProgress,itemId,itemDamage,stats);}
   public Frame(double x,double y,double z){this(x,y,z,0,0,0,0,false,false,0,0,0,0,0);}
   public Frame(double x,double y,double z,float yaw,float pitch,float headYaw,float bodyYaw,boolean sneaking,boolean onGround,float swing,float walkSpeed,float walkProgress,int itemId,int itemDamage){
    this(x,y,z,yaw,pitch,headYaw,bodyYaw,sneaking,onGround,swing,walkSpeed,walkProgress,itemId,itemDamage,null);
@@ -75,8 +77,8 @@ public final class ReplayData {
  public final boolean truncated;
  public final boolean placementTags;
  private BridgeGeometry.Result geometry;
- public ReplayData(List<Frame> frames,List<Block> blocks,boolean truncated){this(frames,blocks,truncated,Identity.unknown(),0,6000,4,true);}
- public ReplayData(List<Frame> frames,List<Block> blocks,boolean truncated,Identity identity,int dimension,long dayTime){this(frames,blocks,truncated,identity,dimension,dayTime,4,true);}
+ public ReplayData(List<Frame> frames,List<Block> blocks,boolean truncated){this(frames,blocks,truncated,Identity.unknown(),0,6000,5,true);}
+ public ReplayData(List<Frame> frames,List<Block> blocks,boolean truncated,Identity identity,int dimension,long dayTime){this(frames,blocks,truncated,identity,dimension,dayTime,5,true);}
  private ReplayData(List<Frame> frames,List<Block> blocks,boolean truncated,Identity identity,int dimension,long dayTime,int version,boolean placementTags){
   if(frames.isEmpty()||frames.size()>MAX_FRAMES||blocks.size()>MAX_BLOCKS)throw new IllegalArgumentException("Invalid recording size");
   for(Block b:blocks)if(b.tick>=frames.size())throw new IllegalArgumentException("Block outside recording");
@@ -87,7 +89,7 @@ public final class ReplayData {
  public BridgeGeometry.Result geometry(){if(geometry==null)geometry=BridgeGeometry.measure(this);return geometry;}
  public void write(Path file)throws IOException {
   try(DataOutputStream out=new DataOutputStream(new GZIPOutputStream(Files.newOutputStream(file,StandardOpenOption.CREATE_NEW)))){
-   out.writeInt(0x42545250);out.writeInt(4);out.writeBoolean(truncated);out.writeInt(frames.size());out.writeInt(blocks.size());out.writeBoolean(placementTags);
+   out.writeInt(0x42545250);out.writeInt(formatVersion>=5?5:4);out.writeBoolean(truncated);out.writeInt(frames.size());out.writeInt(blocks.size());out.writeBoolean(placementTags);
    out.writeUTF(identity.uuid);out.writeUTF(identity.name);out.writeUTF(identity.displayName);out.writeUTF(identity.textureValue);out.writeUTF(identity.textureSignature);out.writeUTF(identity.model);
    out.writeInt(identity.modelParts);
    out.writeInt(dimension);out.writeLong(dayTime);
@@ -108,7 +110,7 @@ public final class ReplayData {
   if(Files.size(file)>8*1024*1024)throw new IOException("Replay too large");
   try(DataInputStream in=new DataInputStream(new GZIPInputStream(Files.newInputStream(file)))){
    if(in.readInt()!=0x42545250)throw new IOException("Invalid replay header");
-   int version=in.readInt();if(version<1||version>4)throw new IOException("Unsupported replay version");
+   int version=in.readInt();if(version<1||version>5)throw new IOException("Unsupported replay version");
    boolean truncated=in.readBoolean();int nf=in.readInt(),nb=in.readInt();
    if(nf<1||nf>MAX_FRAMES||nb<0||nb>MAX_BLOCKS)throw new IOException("Invalid replay counts");
    boolean tags=version>=4&&in.readBoolean();

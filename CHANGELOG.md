@@ -4,6 +4,12 @@ History of versions available in [GitHub Releases](https://github.com/sgggnnn/br
 
 Some commits contain several intermediate versions. Those versions are tagged at the first commit archiving their binary, rather than at a dedicated source snapshot. The affected release notes explain this distinction.
 
+## [1.7.0](https://github.com/sgggnnn/bridgetap/releases/tag/v1.7.0) - OneClient styles, server presets and replay video
+
+Adds native OneClient HUD colors including an independent Velo color, per-speed previous-tick Z decimals, per-server/shareable island presets, island undo/redo, replay MP4 exports with recorded keystrokes/hotbar/final time, fail analysis, McPlay modes and mode subfolders. Fixes replay block/input alignment and removes stick navigation cooldowns. Native clip executables move into a separate, explicit-install tools pack.
+
+See the [full release notes](docs/releases/v1.7.0.md) for installation, compatibility, validation and remaining limits.
+
 ## [1.6.0](https://github.com/sgggnnn/bridgetap/releases/tag/v1.6.0) - Islands, clips and replay organization
 
 Final release of dev.11. Adds island copying and one-click presets, independent start/finish placement, Focus mode, readable island exports, a Windows hardware H.264/audio buffer, replay folders and filters, protected saves and optional failed-run cleanup. Fixes preset drift and parallelizes conversion for 120 FPS capture.

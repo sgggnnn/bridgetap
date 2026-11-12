@@ -95,3 +95,11 @@ Build the Ornithe edition first. The preview runner executes the real Java menu 
 ```
 
 Use the full Minecraft runtime libraries, including Log4j and Guava, in addition to the Ornithe intermediary client. The original client JAR supplies the font texture to this local test; that texture is not bundled in the mod. PNG previews and isolated fixture data are written under `build/ui-preview-<id>/`. This does not test the live world, GL state, or other mods.
+
+## Portable release build
+
+Run `./gradlew build` with JDK 17 and Python 3. The Gradle Wrapper verifies its distribution; the build provisions JDK 21 for the optional OneConfig adapter. Override the Python executable with `-PpythonExecutable=/path/to/python` or the adapter JDK with `-PoneclientJavaHome=/path/to/jdk21` when needed. Linux packaging also requires a .NET SDK to compile the optional Windows audio helper.
+
+Outputs in `build/libs`: both edition JARs and `BridgeTap-clip-tools-windows-x64.zip`. The executables are in the optional tools ZIP, never in either mod JAR. Run `scripts/test.ps1` on Windows for the regression suite; it installs the build's optional tools only into its isolated test directory.
+
+The Modrinth workflow downloads the already-tested GitHub release assets and verifies their release checksums. It publishes Forge and Ornithe/Fabric as separate loader-specific versions. Configure `MODRINTH_TOKEN` (or the legacy `BRIDGERTAP` secret) and `MODRINTH_PROJECT_ID`; the latter is the non-secret project ID. Manual workflow dispatch can retry an existing release without creating another GitHub release. The optional clip-tools ZIP remains available from GitHub and is linked in the Modrinth changelog.

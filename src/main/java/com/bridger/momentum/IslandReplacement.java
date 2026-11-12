@@ -34,7 +34,7 @@ public final class IslandReplacement {
     public static Mask extend(Mask base,List<IslandBox> expected){
         List<IslandMaskArea> areas=new ArrayList<>(base.areas);Set<Long> visible=new HashSet<>(base.visible);visible.addAll(current.visible);Map<Long,ReplayData.Block> cells=new HashMap<>();
         for(long key:base.blocks)cells.put(key,new ReplayData.Block((int)(key>>38),(int)(key&4095),(int)(key<<26>>38),1,0,0,false));
-        ReplayData data=ReplaySession.recording();if(data==null)data=ReplayRecorder.snapshot();if(data!=null)for(ReplayData.Block b:data.blocks)if(b.placed)visible.add(b.key());
+        ReplayData data=sceneData();if(data!=null)for(ReplayData.Block b:data.blocks)if(b.placed)visible.add(b.key());
         for(IslandBox box:expected){
             if(box.y>255||box.y+box.height<=0)continue;
             int cx=box.x+box.width/2,cz=box.z+box.depth/2;Mask found=captureAt(cx,Math.min(255,box.y+box.height-1),cz);
@@ -48,13 +48,16 @@ public final class IslandReplacement {
         Minecraft mc=Minecraft.m_20213497();C_57778754 viewer=ReplaySession.viewer();if(mc==null||viewer==null)return EMPTY;
         return captureAt((int)Math.floor(viewer.f_78826675),(int)Math.floor(viewer.f_31030949)-1,(int)Math.floor(viewer.f_97691941));
     }
-    private static Mask captureAt(int px,int py,int pz){
+    public static Mask captureStartAt(int px,int py,int pz){return captureAt(px,py,pz,true);}
+    private static Mask captureAt(int px,int py,int pz){return captureAt(px,py,pz,false);}
+    private static Mask captureAt(int px,int py,int pz,boolean strict){
         Minecraft mc=Minecraft.m_20213497();if(mc==null)return EMPTY;
         ReplayData data=ReplaySession.recording();Set<Long> excluded=new HashSet<>();Map<Long,ReplayData.Block> recorded=new HashMap<>();
-        ReplayData recent=data!=null?data:ReplayRecorder.snapshot();if(recent!=null)for(ReplayData.Block b:recent.blocks)if(b.placed)excluded.add(b.key());
+        ReplayData recent=data!=null?data:sceneData();if(recent!=null)for(ReplayData.Block b:recent.blocks)if(b.placed)excluded.add(b.key());
         if(data!=null)for(ReplayData.Block b:data.blocks)if(!b.placed&&b.id>0&&!excluded.contains(b.key()))recorded.put(b.key(),b);
         ReplayData.Block seed=null;double score=Double.MAX_VALUE;
-        for(int dx=-12;dx<=12;dx++)for(int dz=-12;dz<=12;dz++)for(int dy=-24;dy<=3;dy++){
+        int radius=strict?4:12,depth=strict?6:24;
+        for(int dx=-radius;dx<=radius;dx++)for(int dz=-radius;dz<=radius;dz++)for(int dy=-depth;dy<=3;dy++){
             ReplayData.Block b=cell(mc,recorded,data!=null,excluded,px+dx,py+dy,pz+dz);if(b==null)continue;double distance=dx*dx+dz*dz+dy*dy*1.5;if(distance<score){score=distance;seed=b;}
         }
         if(seed==null)return EMPTY;List<ReplayData.Block> result=new ArrayList<>();Deque<ReplayData.Block> pending=new ArrayDeque<>();Set<Long> seen=new HashSet<>();pending.add(seed);seen.add(seed.key());
@@ -62,8 +65,14 @@ public final class IslandReplacement {
         while(!pending.isEmpty()&&result.size()<IslandTemplate.MAX_BLOCKS){ReplayData.Block b=pending.removeFirst();result.add(b);for(int[] d:directions){int x=b.x+d[0],y=b.y+d[1],z=b.z+d[2];if(Math.abs(x-seed.x)>32||Math.abs(z-seed.z)>32||Math.abs(y-seed.y)>40)continue;long key=key(x,y,z);if(!seen.add(key))continue;ReplayData.Block next=cell(mc,recorded,data!=null,excluded,x,y,z);if(next!=null)pending.addLast(next);}}
         Mask mask=new Mask(result,seed.y+1);mask.attachX=seed.x;mask.attachZ=seed.z;return mask;
     }
+    public static Mask presetScene(Mask start){
+        ReplayData data=sceneData();Mask scene=start;
+        if(data!=null){ReplayData.Frame first=data.frames.get(0);if(first.x>=start.minX-2&&first.x<=start.maxX+3&&first.z>=start.minZ-2&&first.z<=start.maxZ+3)scene=captureScene();}
+        List<ReplayData.Block> cells=new ArrayList<>();for(long key:scene.blocks)cells.add(new ReplayData.Block((int)(key>>38),(int)(key&4095),(int)(key<<26>>38),1,0,0,false));
+        Mask result=new Mask(cells,start.surface,scene.areas,scene.visible);result.attachX=start.attachX;result.attachZ=start.attachZ;result.presetX=start.presetX;result.presetY=start.presetY;result.presetZ=start.presetZ;return result;
+    }
     public static Mask captureScene(){
-        Mask nearby=capture();ReplayData data=ReplaySession.recording();if(data==null)data=ReplayRecorder.snapshot();if(data==null)return nearby.empty()?current:nearby;
+        Mask nearby=capture();ReplayData data=sceneData();if(data==null)return nearby.empty()?current:nearby;
         try{java.util.function.Predicate<ReplayData.Block> supported=b->{C_81592558 block=C_81592558.m_64320102(b.id);return block!=null&&block.m_43136364()==3;};
             List<ReplayData.Block> cells;
             try{cells=ReplayIslandSelection.both(data,supported);}catch(IllegalArgumentException missing){cells=new ArrayList<>();for(boolean finish:new boolean[]{false,true})try{cells.addAll(ReplayIslandSelection.select(data,finish,supported));}catch(IllegalArgumentException ignored){}}
@@ -85,6 +94,7 @@ public final class IslandReplacement {
             Mask scene=new Mask(cells,nearby.empty()?(int)Math.round(data.frames.get(0).y):nearby.surface);scene.attachX=nearby.empty()?(int)Math.floor(data.frames.get(0).x):nearby.attachX;scene.attachZ=nearby.empty()?(int)Math.floor(data.frames.get(0).z):nearby.attachZ;Mask reference=start.empty()?nearby:start;if(!reference.empty()){scene.presetX=reference.presetX;scene.presetY=reference.presetY;scene.presetZ=reference.presetZ;}return scene;
         }catch(IllegalArgumentException ex){return nearby.empty()?current:nearby;}
     }
+    private static ReplayData sceneData(){ReplayData replay=ReplaySession.recording();if(replay!=null)return replay;String live=PresetServers.canonical(ServerPresets.address());return !live.isEmpty()&&live.equals(PresetServers.canonical(ReplayRecorder.serverAddress()))?ReplayRecorder.snapshot():null;}
     private static ReplayData.Block cell(Minecraft mc,Map<Long,ReplayData.Block> recorded,boolean replay,Set<Long> excluded,int x,int y,int z){
         if(y<0||y>255||excluded.contains(key(x,y,z)))return null;
         if(replay)return recorded.get(key(x,y,z));

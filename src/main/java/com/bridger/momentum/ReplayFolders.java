@@ -12,7 +12,7 @@ public final class ReplayFolders {
     private Map<String,String> names=new LinkedHashMap<>(),members=new HashMap<>();
     private boolean autoServers=true;
     private boolean cleanupFailures;private long lastCleanup;
-    private final Map<String,String> serverFolders=new HashMap<>();
+    private final Map<String,String> serverFolders=new HashMap<>(),parents=new HashMap<>(),modeFolders=new HashMap<>();
     public static synchronized ReplayFolders local()throws IOException{if(local==null)local=new ReplayFolders(Paths.get("config","bridgetap","replay-folders.properties"));return local;}
     public ReplayFolders(Path file)throws IOException{this.file=file;
         if(!Files.exists(file))return;if(Files.size(file)>4*1024*1024)throw new IOException("Replay folders file is too large");
@@ -31,31 +31,53 @@ public final class ReplayFolders {
         }
         if(members.size()>100000)throw new IOException("Too many folder entries");
         for(String key:p.stringPropertyNames())if(key.startsWith("server.")&&names.containsKey(p.getProperty(key)))serverFolders.put(key.substring(7),p.getProperty(key));
+        for(String key:p.stringPropertyNames())if(key.startsWith("parent.")){String child=key.substring(7),parent=p.getProperty(key);if(names.containsKey(child)&&names.containsKey(parent)&&!child.equals(parent))parents.put(child,parent);}
+        for(String child:parents.keySet()){Set<String> seen=new HashSet<>();String at=child;while(parents.containsKey(at)){if(!seen.add(at))throw new IOException("Cyclic replay folders");at=parents.get(at);}}
+        for(String key:p.stringPropertyNames())if(key.startsWith("modeFolder.")&&parents.containsKey(p.getProperty(key)))modeFolders.put(key.substring(11),p.getProperty(key));
     }
-    public synchronized Map<String,String> folders(){List<Map.Entry<String,String>> list=new ArrayList<>(names.entrySet());list.sort(Comparator.comparing(Map.Entry<String,String>::getValue,String.CASE_INSENSITIVE_ORDER).thenComparing(Map.Entry::getKey));Map<String,String> result=new LinkedHashMap<>();for(Map.Entry<String,String> e:list)result.put(e.getKey(),e.getValue());return Collections.unmodifiableMap(result);}
+    public synchronized String parentOf(String id){return parents.getOrDefault(id,ALL);}
+    public synchronized int depth(String id){int depth=0;while(parents.containsKey(id)){depth++;id=parents.get(id);}return depth;}
+    public synchronized String pathLabel(String id){String result=label(id);while(parents.containsKey(id)){id=parents.get(id);result=label(id)+" / "+result;}return result;}
+    private void appendTree(String parent,List<Map.Entry<String,String>> sorted,Map<String,String> result){for(Map.Entry<String,String> e:sorted)if(parentOf(e.getKey()).equals(parent)){result.put(e.getKey(),e.getValue());appendTree(e.getKey(),sorted,result);}}
+    public synchronized Map<String,String> folders(){List<Map.Entry<String,String>> list=new ArrayList<>(names.entrySet());list.sort(Comparator.comparing(Map.Entry<String,String>::getValue,String.CASE_INSENSITIVE_ORDER).thenComparing(Map.Entry::getKey));Map<String,String> result=new LinkedHashMap<>();appendTree(ALL,list,result);return Collections.unmodifiableMap(result);}
     public synchronized String label(String id){return id.equals(ALL)?"All folders":id.equals(UNFILED)?"Unfiled":names.getOrDefault(id,"Missing folder");}
     public synchronized String folderOf(String replay){return members.getOrDefault(replay,UNFILED);}
-    public synchronized boolean matches(String replay,String filter){return filter.equals(ALL)||folderOf(replay).equals(filter);}
+    public synchronized boolean matches(String replay,String filter){if(filter.equals(ALL))return true;String at=folderOf(replay);while(true){if(at.equals(filter))return true;if(!parents.containsKey(at))return false;at=parents.get(at);}}
     public synchronized boolean autoServers(){return autoServers;}
     public synchronized boolean cleanupFailures(){return cleanupFailures;}
     public synchronized void toggleCleanupFailures()throws IOException{cleanupFailures=!cleanupFailures;lastCleanup=0;store(new LinkedHashMap<>(names),new HashMap<>(members));}
     public synchronized int cleanupDue(RunHistory history,long now)throws IOException{if(!cleanupFailures||now-lastCleanup<3600000L)return 0;int deleted=history.deleteUnprotectedFailuresBefore(now-2L*24*60*60*1000);if(deleted>0){Set<String> existing=new HashSet<>();for(RunHistory.Run run:history.saved())existing.add(run.id);for(RunHistory.Run run:history.recent())existing.add(run.id);Map<String,String> retained=new HashMap<>(members);retained.keySet().retainAll(existing);store(new LinkedHashMap<>(names),retained);}lastCleanup=now;return deleted;}
     public synchronized void toggleAutoServers()throws IOException{autoServers=!autoServers;store(new LinkedHashMap<>(names),new HashMap<>(members));}
     public synchronized void fileByServer(RunHistory history,RunHistory.Run run)throws IOException{
-        if(!autoServers||run.server.isEmpty()||run.server.equals("Unknown server")||!folderOf(run.id).equals(UNFILED))return;
-        String server=run.server.toLowerCase(Locale.ROOT);if(server.endsWith(":25565"))server=server.substring(0,server.length()-6);if(server.endsWith("."))server=server.substring(0,server.length()-1);
+        if(!autoServers||run.server.isEmpty()||run.server.equals("Unknown server"))return;
+        boolean mcplay=ServerMode.mcplay(run.server);String server=mcplay?"mcplayhd.net":PresetServers.canonical(run.server);
+        String current=folderOf(run.id),root=serverFolders.get(server);
+        if(root!=null&&!names.containsKey(root))root=null;
         String label=server.equals("singleplayer")?"Singleplayer":server;if(label.length()>64)label=label.substring(0,48)+"-"+Integer.toHexString(server.hashCode());
-        String destination=serverFolders.get(server);if(destination!=null&&!names.containsKey(destination))destination=null;
-        if(destination==null)for(Map.Entry<String,String> e:names.entrySet())if(e.getValue().equalsIgnoreCase(label)){destination=e.getKey();break;}
-        if(destination==null)destination=create(label);history.saveAutomatic(run);serverFolders.put(server,destination);move(run.id,destination);
+        if(root==null)for(Map.Entry<String,String> e:names.entrySet())if(parentOf(e.getKey()).isEmpty()&&e.getValue().equalsIgnoreCase(label)){root=e.getKey();break;}
+        // Preserve explicit moves to personal folders; migrate old server-root entries.
+        if(!current.equals(UNFILED)&&!current.equals(root)&&!modeFolders.containsValue(current))return;
+        if(root==null)root=create(label);serverFolders.put(server,root);
+        String destination=root;boolean createdModes=false;
+        if(mcplay){
+            for(ServerMode.Mode mode:ServerMode.Mode.values()){
+                String key=root+"."+mode.name(),child=modeFolders.get(key);
+                if(child==null||!names.containsKey(child)){child=createChild(root,mode.label);modeFolders.put(key,child);createdModes=true;}
+            }
+            if(run.modeReady())destination=modeFolders.get(root+"."+run.mode().name());
+        }
+        if(!current.equals(destination)){history.saveAutomatic(run);move(run.id,destination);}else if(createdModes)store(new LinkedHashMap<>(names),new HashMap<>(members));
     }
     private static String validName(String value){if(value==null||value.trim().isEmpty()||value.length()>64||value.matches(".*[\\p{Cntrl}].*"))throw new IllegalArgumentException("Use 1-64 printable characters");return value.trim();}
-    private void checkName(String value,String except){for(Map.Entry<String,String> e:names.entrySet())if(!e.getKey().equals(except)&&e.getValue().equalsIgnoreCase(value))throw new IllegalArgumentException("A folder with that name already exists");}
+    private void checkName(String value,String except,String parent){for(Map.Entry<String,String> e:names.entrySet())if(!e.getKey().equals(except)&&parentOf(e.getKey()).equals(parent)&&e.getValue().equalsIgnoreCase(value))throw new IllegalArgumentException("A folder with that name already exists");}
     public synchronized String create(String value)throws IOException{
-        value=validName(value);checkName(value,"");if(names.size()>=200)throw new IllegalArgumentException("Maximum 200 folders");String id=UUID.randomUUID().toString();Map<String,String> next=new LinkedHashMap<>(names);next.put(id,value);store(next,new HashMap<>(members));return id;
+        return createChild(ALL,value);
     }
-    public synchronized void rename(String id,String value)throws IOException{require(id);value=validName(value);checkName(value,id);Map<String,String> next=new LinkedHashMap<>(names);next.put(id,value);store(next,new HashMap<>(members));}
-    public synchronized void delete(String id)throws IOException{require(id);Map<String,String> next=new LinkedHashMap<>(names),assigned=new HashMap<>(members);next.remove(id);assigned.values().removeIf(id::equals);store(next,assigned);}
+    private String createChild(String parent,String value)throws IOException{
+        value=validName(value);checkName(value,"",parent);if(names.size()>=200)throw new IllegalArgumentException("Maximum 200 folders");String id=UUID.randomUUID().toString();Map<String,String> next=new LinkedHashMap<>(names);next.put(id,value);if(!parent.isEmpty())parents.put(id,parent);try{store(next,new HashMap<>(members));}catch(IOException ex){parents.remove(id);throw ex;}return id;
+    }
+    public synchronized void rename(String id,String value)throws IOException{require(id);value=validName(value);checkName(value,id,parentOf(id));Map<String,String> next=new LinkedHashMap<>(names);next.put(id,value);store(next,new HashMap<>(members));}
+    public synchronized void delete(String id)throws IOException{require(id);Map<String,String> next=new LinkedHashMap<>(names),assigned=new HashMap<>(members);Set<String> removed=new HashSet<>();for(String candidate:names.keySet()){String at=candidate;while(true){if(at.equals(id)){removed.add(candidate);break;}if(!parents.containsKey(at))break;at=parents.get(at);}}next.keySet().removeAll(removed);assigned.values().removeIf(removed::contains);store(next,assigned);parents.keySet().removeAll(removed);modeFolders.values().removeIf(removed::contains);}
     public synchronized void move(String replay,String id)throws IOException{
         if(replay==null||replay.isEmpty()||replay.length()>128)throw new IllegalArgumentException("Invalid replay ID");
         if(!id.equals(UNFILED))require(id);Map<String,String> next=new HashMap<>(members);if(id.equals(UNFILED))next.remove(replay);else next.put(replay,id);
@@ -67,6 +89,8 @@ public final class ReplayFolders {
         p.setProperty("autoServers",String.valueOf(autoServers));
         p.setProperty("cleanupFailures",String.valueOf(cleanupFailures));
         for(Map.Entry<String,String> e:serverFolders.entrySet())if(next.containsKey(e.getValue()))p.setProperty("server."+e.getKey(),e.getValue());
+        for(Map.Entry<String,String> e:parents.entrySet())if(next.containsKey(e.getKey())&&next.containsKey(e.getValue()))p.setProperty("parent."+e.getKey(),e.getValue());
+        for(Map.Entry<String,String> e:modeFolders.entrySet())if(next.containsKey(e.getValue()))p.setProperty("modeFolder."+e.getKey(),e.getValue());
         Path target=file.toAbsolutePath();Files.createDirectories(target.getParent());Path temp=Files.createTempFile(target.getParent(),"folders-",".part");
         try{try(OutputStream out=Files.newOutputStream(temp)){p.store(out,"BridgeTap replay folders");}try{Files.move(temp,target,StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.ATOMIC_MOVE);}catch(AtomicMoveNotSupportedException ex){Files.move(temp,target,StandardCopyOption.REPLACE_EXISTING);}names=next;members=assigned;}finally{Files.deleteIfExists(temp);}
     }

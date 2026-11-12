@@ -34,10 +34,14 @@ public final class IslandLibrary {
         Path root=folder("exports"),temp=root.resolve(UUID.randomUUID()+".part");
         try{template.write(temp);return moveNamed(temp,root,template.name);}finally{Files.deleteIfExists(temp);}
     }
-    private static Path moveNamed(Path source,Path root,String title)throws IOException{
+    static String safeFileName(String title){
         String name=title.replaceAll("[<>:\"/\\\\|?*\\p{Cntrl}]","_").replaceAll("[ .]+$","").trim();
         if(name.isEmpty())name="Island";
         if(name.matches("(?i)(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\\..*)?"))name="_"+name;
+        return name;
+    }
+    private static Path moveNamed(Path source,Path root,String title)throws IOException{
+        String name=safeFileName(title);
         for(int n=1;n<=10000;n++){
             Path target=root.resolve(name+(n==1?"":" ("+n+")")+".btisland");
             try{Files.move(source,target);return target;}catch(FileAlreadyExistsException duplicate){}
