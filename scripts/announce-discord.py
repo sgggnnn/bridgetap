@@ -16,7 +16,7 @@ def main():
     release=json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text(encoding='utf-8'))['release']
     if release.get('draft'): raise ValueError('Draft announcements are disabled')
     data=json.dumps(payload(release)).encode()
-    webhook=os.environ.get('DISCORD_UPDATE_WEBHOOK','')
+    webhook=os.environ.get('DISCORD_UPDATE_WEBHOOK','').strip()
     if not webhook.startswith('https://discord.com/api/webhooks/') or '?' in webhook:
         raise ValueError('Configure DISCORD_UPDATE_WEBHOOK in repository secrets')
     for attempt in range(3):
