@@ -9,6 +9,11 @@ on:
         description: Existing GitHub release tag to publish
         required: true
         default: v1.7.0
+      edition:
+        description: Edition to publish (use oneclient to retry only that edition)
+        type: choice
+        options: [all, forge, oneclient]
+        default: all
       project:
         description: Modrinth project ID or slug (optional if configured or auto-detected)
         required: false
@@ -58,6 +63,7 @@ jobs:
         run: python3 scripts/resolve-modrinth.py
 
       - name: Publish Forge edition
+        if: inputs.edition != 'oneclient'
         uses: Kira-NT/mc-publish@c23376546a97f5ba7984e94445da359459b14419 # v3.3.2
         with:
           modrinth-id: ${{ steps.modrinth.outputs.project }}
@@ -72,6 +78,7 @@ jobs:
           changelog-file: release-notes.md
 
       - name: Publish OneClient and Ornithe Fabric edition
+        if: inputs.edition != 'forge'
         uses: Kira-NT/mc-publish@c23376546a97f5ba7984e94445da359459b14419 # v3.3.2
         with:
           modrinth-id: ${{ steps.modrinth.outputs.project }}
@@ -80,9 +87,7 @@ jobs:
           name: BridgeTap ${{ steps.release.outputs.version }} - OneClient / Ornithe
           version: ${{ steps.release.outputs.version }}-oneclient
           version-type: ${{ steps.release.outputs.type }}
-          loaders: |
-            fabric
-            ornithe
+          loaders: ornithe
           game-versions: 1.8.9
           environment: client
           changelog-file: release-notes.md
