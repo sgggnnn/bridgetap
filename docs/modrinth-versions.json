@@ -24,5 +24,338 @@
     "modrinth_version": "Q2GapLcj",
     "version_number": "1.4.5",
     "source": "Existing Modrinth file has identical ZIP payloads; container metadata differs"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.0.0",
+    "filename": "BridgeTap-1.0.0.jar",
+    "sha256": "b4c35f18600827328ba2d622ca777a10f7913bd7397cb16f7409b2970c42b3ae",
+    "modrinth_version": "Q6W1QMcm",
+    "version_number": "1.0.0-ornithe",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.1.0",
+    "filename": "BridgeTap-1.1.0.jar",
+    "sha256": "a1295463c8b0e0f202dc6d4648c9b7a394be8538c389fd2538cce8ce723b4ad9",
+    "modrinth_version": "LPfkOsRL",
+    "version_number": "1.1.0-ornithe",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.2.0",
+    "filename": "BridgeTap-1.2.0.jar",
+    "sha256": "16c53861ee91f834bc3d7ffc53146d1b36b2ae2b14b09e930149a8dfd6f935ad",
+    "modrinth_version": "mE0U2nX2",
+    "version_number": "1.2.0-ornithe",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.2.1",
+    "filename": "BridgeTap-1.2.1.jar",
+    "sha256": "0e77378b12cbf57cf2105987d2df9dc264d8347e01a31efc4bfeec5487af4a05",
+    "modrinth_version": "RTS7pCof",
+    "version_number": "1.2.1-ornithe",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.2.2",
+    "filename": "BridgeTap-1.2.2.jar",
+    "sha256": "f97d28a28160846ecb4dc22faade88a2a1d53842e8d59992b0e523ee89d0de3c",
+    "modrinth_version": "NBD7Q06U",
+    "version_number": "1.2.2-ornithe",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.3.0",
+    "filename": "BridgeTap-1.3.0.jar",
+    "sha256": "ba9695c612bdbe4f15f254c691c770b04086e44bcf8da517078347e030d8a4c4",
+    "modrinth_version": "6D0buZcr",
+    "version_number": "1.3.0-ornithe",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.4.0",
+    "filename": "BridgeTap-1.4.0.jar",
+    "sha256": "c0c9fe676f7d3a7c7070c8f1b5eb639890d91ad4995ef93c0f5e44785d947703",
+    "modrinth_version": "8XKgzRvR",
+    "version_number": "1.4.0-ornithe",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.4.1",
+    "filename": "BridgeTap-1.4.1.jar",
+    "sha256": "47cea27add6d4fde8e116ce5b3fc1826c1fb5e8b5c6d6488bdc5df205ab2b6de",
+    "modrinth_version": "izAFfNto",
+    "version_number": "1.4.1-ornithe",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.4.2",
+    "filename": "BridgeTap-1.4.2.jar",
+    "sha256": "b4e2074d13689f6d17d68779fc51f8c60bddc568c896bf2adfff600a505a5a88",
+    "modrinth_version": "Bj8fYG2J",
+    "version_number": "1.4.2-ornithe",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.4.3",
+    "filename": "BridgeTap-1.4.3.jar",
+    "sha256": "bf9efd03f09bd4faedcccbe86f35e4c6f2517d1e2378109ce5e673c7327ced99",
+    "modrinth_version": "N5LubaFR",
+    "version_number": "1.4.3-ornithe",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.4.4",
+    "filename": "BridgeTap-1.4.4-Forge-1.8.9.jar",
+    "sha256": "28d92699c2fcfd08cfff8a4c49f7f796aba04bab14a1483c1508767c627695eb",
+    "modrinth_version": "xXpkx51U",
+    "version_number": "1.4.4-forge",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.4.4",
+    "filename": "BridgeTap-1.4.4.jar",
+    "sha256": "d0d652c967aa28388985d713de191655df5f6a2cc6002ba6e820a1b70e84a04c",
+    "modrinth_version": "OCf6SIv1",
+    "version_number": "1.4.4-ornithe",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.4.5",
+    "filename": "BridgeTap-1.4.5-Forge-1.8.9.jar",
+    "sha256": "8d690499d3575b16d7276415093675f727bbb6c62b934c194fff07d2db5640bd",
+    "modrinth_version": "ujNDdP09",
+    "version_number": "1.4.5-forge",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.5.0",
+    "filename": "BridgeTap-1.5.0-Forge-1.8.9.jar",
+    "sha256": "5609fcfc7742bfeb904a5667899c40565ababce068292a94202f8719ed28c479",
+    "modrinth_version": "xOM0t4V8",
+    "version_number": "1.5.0-forge",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.5.0",
+    "filename": "BridgeTap-1.5.0.jar",
+    "sha256": "f51070c28959492c18ec9bf9748a62a0f97ba76794dc796bf2e6ef2c6c145a33",
+    "modrinth_version": "N3rVXTk9",
+    "version_number": "1.5.0-ornithe",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.6.0-dev.1",
+    "filename": "BridgeTap-1.6.0-dev.1-Forge-1.8.9.jar",
+    "sha256": "9fbb9ce5a3c6e9fdc098a5bed664d87fbc2bc75ba5cd779cdbb86794d9329360",
+    "modrinth_version": "zr0suD7j",
+    "version_number": "1.6.0-dev.1-forge",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.6.0-dev.1",
+    "filename": "BridgeTap-1.6.0-dev.1.jar",
+    "sha256": "640ac4819216736ba2f6ec4d3a8d2488b6e2c10fc3e1e69f3efcd3e9d04498c4",
+    "modrinth_version": "aoPWb4DU",
+    "version_number": "1.6.0-dev.1-ornithe",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.6.0-dev.2",
+    "filename": "BridgeTap-1.6.0-dev.2-Forge-1.8.9.jar",
+    "sha256": "eace841a85c9139785bc791e013a9a9465056d70d617de05390386ad55036c61",
+    "modrinth_version": "M1GTmXqm",
+    "version_number": "1.6.0-dev.2-forge",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.6.0-dev.2",
+    "filename": "BridgeTap-1.6.0-dev.2.jar",
+    "sha256": "2991ae503bfcf0f2acbebc051a97031ca4b3ce5c9dad1d9d130d583e225ca39e",
+    "modrinth_version": "WvnoVSUW",
+    "version_number": "1.6.0-dev.2-ornithe",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.6.0-dev.3",
+    "filename": "BridgeTap-1.6.0-dev.3-Forge-1.8.9.jar",
+    "sha256": "b2fac7bd86b7becfdd96c0dc5f96cf5201fb02bc51e8f12b2e14b97e7905d5f9",
+    "modrinth_version": "FDQBkyUd",
+    "version_number": "1.6.0-dev.3-forge",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.6.0-dev.3",
+    "filename": "BridgeTap-1.6.0-dev.3.jar",
+    "sha256": "544130c64f56c91c998a8475f50c6d4d3ee4308cf3f33e51436ad6011856820e",
+    "modrinth_version": "etQU33pB",
+    "version_number": "1.6.0-dev.3-ornithe",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.6.0-dev.4",
+    "filename": "BridgeTap-1.6.0-dev.4-Forge-1.8.9.jar",
+    "sha256": "4b3da626b987dabe4ea7279e9109107401638323799dbd77f2c4ca13f07224f6",
+    "modrinth_version": "g7t6oejX",
+    "version_number": "1.6.0-dev.4-forge",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.6.0-dev.4",
+    "filename": "BridgeTap-1.6.0-dev.4.jar",
+    "sha256": "47d3d8e43a73a3920d1dba661d886c86cba8f61f3983a5bb689f7746c67e528c",
+    "modrinth_version": "ssccDEfE",
+    "version_number": "1.6.0-dev.4-ornithe",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.6.0-dev.5",
+    "filename": "BridgeTap-1.6.0-dev.5-Forge-1.8.9.jar",
+    "sha256": "e70a4c2baecbc6f22ecb45c68e6faf15ff7af25c33a8d262cd51bd03f39b1233",
+    "modrinth_version": "VICY5yAK",
+    "version_number": "1.6.0-dev.5-forge",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.6.0-dev.5",
+    "filename": "BridgeTap-1.6.0-dev.5.jar",
+    "sha256": "010e7c328fc93937e9b252e1dd933c6568cf7e5c5628d1062408ed0d81a74fbc",
+    "modrinth_version": "DZ7ASKYE",
+    "version_number": "1.6.0-dev.5-ornithe",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.6.0-dev.6",
+    "filename": "BridgeTap-1.6.0-dev.6-Forge-1.8.9.jar",
+    "sha256": "38d4890f5592b7d9dc0ee73c81131218e9308731da3acc1b3136abbf6b9ee42c",
+    "modrinth_version": "P5LNBKvB",
+    "version_number": "1.6.0-dev.6-forge",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.6.0-dev.6",
+    "filename": "BridgeTap-1.6.0-dev.6.jar",
+    "sha256": "de259a860d39e12bd821b2a6ad45ff46e716d202fdcc7408338a74e61271f05a",
+    "modrinth_version": "iSlXt0TD",
+    "version_number": "1.6.0-dev.6-ornithe",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.6.0-dev.7",
+    "filename": "BridgeTap-1.6.0-dev.7-Forge-1.8.9.jar",
+    "sha256": "e029c3629c1a5805356bf5c8368d0d7f78eaacba16486e148c3dade1c01b9c0d",
+    "modrinth_version": "YojwfHIq",
+    "version_number": "1.6.0-dev.7-forge",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.6.0-dev.7",
+    "filename": "BridgeTap-1.6.0-dev.7.jar",
+    "sha256": "911e8931dc152ea7462d719c898f750cd789cdb6681fffeecb2f3ca58dc1dc59",
+    "modrinth_version": "jSpvXNG3",
+    "version_number": "1.6.0-dev.7-ornithe",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.6.0-dev.8",
+    "filename": "BridgeTap-1.6.0-dev.8-Forge-1.8.9.jar",
+    "sha256": "9f99af564af2b2bc0ce7eaa6c0decfbd4daaa1f02ffa7b056d8a1cdf9b7d178d",
+    "modrinth_version": "KrQFW4ya",
+    "version_number": "1.6.0-dev.8-forge",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.6.0-dev.8",
+    "filename": "BridgeTap-1.6.0-dev.8.jar",
+    "sha256": "6f89c2546cfaff7a5e2ed53bb01a9dd8e3ca1ff0b2d58dd8c85a0cb60e4655f8",
+    "modrinth_version": "rP9ev3XS",
+    "version_number": "1.6.0-dev.8-ornithe",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.6.0-dev.9",
+    "filename": "BridgeTap-1.6.0-dev.9-Forge-1.8.9.jar",
+    "sha256": "371f4b3cd3b5636f96de13897ec5c5ddb018581c829eba4acf030363ab0a9776",
+    "modrinth_version": "VAR2Xp5C",
+    "version_number": "1.6.0-dev.9-forge",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.6.0-dev.9",
+    "filename": "BridgeTap-1.6.0-dev.9.jar",
+    "sha256": "e94d839210b35ae0b0c5380aa136b7d963a384dc298f22ea7ecf58aa0ef11b46",
+    "modrinth_version": "jBpCYwP1",
+    "version_number": "1.6.0-dev.9-ornithe",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.6.0-dev.10",
+    "filename": "BridgeTap-1.6.0-dev.10-Forge-1.8.9.jar",
+    "sha256": "1e65fb902ae1bbc9eff7c39d84f09f5704f5408803d545438bf7c43d1dfe8850",
+    "modrinth_version": "sFwsf9Az",
+    "version_number": "1.6.0-dev.10-forge",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.6.0-dev.10",
+    "filename": "BridgeTap-1.6.0-dev.10.jar",
+    "sha256": "66dd75da2cbaccd6192ff1f83f3d4c90221c7a4ac751e6ce54702d57cd2438d2",
+    "modrinth_version": "ozjj2RLs",
+    "version_number": "1.6.0-dev.10-ornithe",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.6.0",
+    "filename": "BridgeTap-1.6.0-Forge-1.8.9.jar",
+    "sha256": "b7c45c2e7c68015695f41adb8bb98c9d69fa83ef18a13d519577d17bd113e802",
+    "modrinth_version": "kyX5p1XD",
+    "version_number": "1.6.0-forge",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
+  },
+  {
+    "project": "ueMpSLbl",
+    "tag": "v1.6.0",
+    "filename": "BridgeTap-1.6.0.jar",
+    "sha256": "86bdc147339684994f632c514992863805a63187fc12c9008fc1e586ad7aef08",
+    "modrinth_version": "fz2m0Euv",
+    "version_number": "1.6.0-ornithe",
+    "source": "Original GitHub release asset; uploaded SHA-512 and size verified"
   }
 ]
