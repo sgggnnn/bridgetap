@@ -1,6 +1,6 @@
 """Resolve the existing Modrinth project without exposing the publishing token."""
 import json, os, re, urllib.request, urllib.error
-TOKEN=os.environ.get("MODRINTH_TOKEN", "")
+TOKEN=os.environ.get("MODRINTH_TOKEN", "").strip()
 if not TOKEN:raise SystemExit("Missing MODRINTH_TOKEN (or legacy BRIDGERTAP) repository secret")
 def get(path):
     request=urllib.request.Request("https://api.modrinth.com/v2/"+path,headers={"Authorization":TOKEN,"User-Agent":"BridgeTap-publish/1.7 (github.com/sgggnnn/bridgetap)"})
@@ -26,4 +26,9 @@ except urllib.error.HTTPError as error:
         print("Accessible BridgeTap projects:",matches)
     except urllib.error.HTTPError as auth:
         print("Token identity/project-list check: HTTP",auth.code)
+        try:
+            detail=json.loads(auth.read(4096))
+            reason=str(detail.get("description",detail.get("error",""))).replace(TOKEN,"[redacted]")
+            print("Authentication reason:",reason[:300])
+        except (ValueError,UnicodeError):pass
     raise SystemExit("Modrinth project lookup failed (HTTP "+str(error.code)+"). Check the repository secret and project access.")
