@@ -3,6 +3,7 @@
   "id": "bridgetap",
   "version": "1.7.0",
   "name": "BridgeTap",
+  "license": "GPL-3.0-only",
   "description": "Named and shareable Minecraft bridge replays with sorting, platform measurements, per-tick telemetry and continuous POV.",
   "authors": [
     "sggn"

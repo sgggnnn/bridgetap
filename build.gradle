@@ -10,7 +10,7 @@ def compiler21 = javaToolchains.launcherFor { languageVersion = JavaLanguageVers
 tasks.register('buildModJars', Exec) {
     group = 'build'
     description = 'Build Forge and OneClient/Fabric release JARs with pinned dependencies.'
-    inputs.files(fileTree('src'), fileTree('forge'), fileTree('integrations/oneclient/java'), fileTree('scripts') { include '**/*.py', '**/*.ps1' }, fileTree('native'), fileTree('third_party'), file('build.gradle'), file('settings.gradle'))
+    inputs.files(fileTree('src'), fileTree('forge'), fileTree('integrations/oneclient/java'), fileTree('scripts') { include '**/*.py', '**/*.ps1' }, fileTree('native'), fileTree('third_party'), file('build.gradle'), file('settings.gradle'), file('LICENSE'), file('LICENSING.md'))
     outputs.dir(layout.buildDirectory.dir('libs'))
     doFirst {
         def jdk21 = oneclientJdk.present ? oneclientJdk.get() : compiler21.get().metadata.installationPath.asFile.absolutePath

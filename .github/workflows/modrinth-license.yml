@@ -1,0 +1,21 @@
+name: Update Modrinth license
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  license:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set BridgeTap GPL-3.0-only license
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN || secrets.BRIDGERTAP }}
+        run: |
+          python3 - <<'PY'
+          import json,os,urllib.request
+          body=json.dumps({'license_id':'GPL-3.0-only','license_url':'https://github.com/sgggnnn/bridgetap/blob/main/LICENSE'}).encode()
+          request=urllib.request.Request('https://api.modrinth.com/v2/project/ueMpSLbl',data=body,method='PATCH',headers={'Authorization':os.environ['MODRINTH_TOKEN'].strip(),'Content-Type':'application/json','User-Agent':'BridgeTap-license/1.0 (github.com/sgggnnn/bridgetap)'})
+          with urllib.request.urlopen(request,timeout=60) as response:
+              assert response.status==204
+          print('Modrinth license updated to GPL-3.0-only')
+          PY

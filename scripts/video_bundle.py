@@ -16,7 +16,13 @@ def fetch(name,url,sha):
     if hashlib.sha256(file.read_bytes()).hexdigest()!=sha: raise RuntimeError('Dependency checksum mismatch: '+name)
     return file
 
+def add_project_license(jar):
+    with ZipFile(jar,'a',ZIP_DEFLATED) as target:
+        target.writestr('META-INF/licenses/BridgeTap-GPL-3.0-only.txt',(ROOT/'LICENSE').read_bytes())
+        target.writestr('META-INF/licenses/BridgeTap-LICENSING.md',(ROOT/'LICENSING.md').read_bytes())
+
 def add_video(jar,java):
+    add_project_license(jar)
     dependencies=[fetch('jcodec-0.2.5.jar','https://repo.maven.apache.org/maven2/org/jcodec/jcodec/0.2.5/jcodec-0.2.5.jar','890329dad124e8b739c1d6602a59a53c8a474daddff265c2561e21c498496c81'),
         fetch('jcodec-javase-0.2.5.jar','https://repo.maven.apache.org/maven2/org/jcodec/jcodec-javase/0.2.5/jcodec-javase-0.2.5.jar','8a72ff7560bce1c89c1d815816d1304383bb4048afeeb91f200b7a1e213ab6ae')]
     runtime=DEPS/'jcodec-private-0.2.5.jar'
