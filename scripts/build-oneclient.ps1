@@ -4,7 +4,7 @@ param(
     [Parameter(Mandatory=$true)][string]$OneConfigJar,
     [string]$KotlinJar='',
     [string]$Python='python',
-    [string]$Output='dist/BridgeTap-1.7.0-OneClient.jar'
+    [string]$Output='dist/BridgeTap-1.7.3-OneClient.jar'
 )
 $ErrorActionPreference='Stop'
 $root=Split-Path -Parent $PSScriptRoot

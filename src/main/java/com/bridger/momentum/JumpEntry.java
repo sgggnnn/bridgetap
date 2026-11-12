@@ -20,9 +20,17 @@ public class JumpEntry {
     private final int ticksElapsed;
     private final EntryType type;
     private String gainType;
-    private double preJumpZ=Double.NaN;
-    public void setPreJumpZ(JumpVelocity.Sample sample){preJumpZ=sample==null?Double.NaN:sample.z;}
+    private double preJumpX=Double.NaN,preJumpZ=Double.NaN;
+    private double sampledX=Double.NaN,sampledZ=Double.NaN;
+    public void setHorizontalCoordinates(double x,double z){sampledX=x;sampledZ=z;}
+    public double getSampledX(){return sampledX;}
+    public double getSampledZ(){return sampledZ;}
+    public double getPreJumpX(){return preJumpX;}
+    public void setPreJumpZ(JumpVelocity.Sample sample){preJumpX=sample==null?Double.NaN:sample.x;preJumpZ=sample==null?Double.NaN:sample.z;}
     public double getPreJumpZ(){return preJumpZ;}
+    private double jumpYaw=Double.NaN;
+    public void setJumpYaw(double yaw){jumpYaw=Double.isFinite(yaw)?((yaw+180)%360+360)%360-180:Double.NaN;}
+    public double getJumpYaw(){return jumpYaw;}
 
     public JumpEntry(String label, double coordinate, double decimal, double delta, int ticksElapsed, EntryType type) {
         this.label = label;
@@ -93,7 +101,7 @@ public class JumpEntry {
 
             case FAIL_TAP:
                 // » Fail Tap: .680 -.011 (9t)
-                sb.append("\u00a7c\u00bb \u00a7cFail Tap: ")
+                sb.append("\u00a7c\u00bb \u00a7c").append(label).append(": ")
                   .append(decStr).append(" ")
                   .append(formatDelta(delta)).append(" \u00a77(")
                   .append(ticksElapsed).append("t)");

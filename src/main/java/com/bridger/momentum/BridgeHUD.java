@@ -23,6 +23,7 @@ public class BridgeHUD {
     public static void onClientTick() {
         Minecraft mc = Minecraft.m_20213497();
         if (mc == null || mc.f_58088711 == null) return;
+        UpdateManager.tick(mc);
         OneClientIntegration.tick();
         IslandReplacement.refreshTerrain();
         PlacementAppearance.tick();

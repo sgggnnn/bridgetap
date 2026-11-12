@@ -20,7 +20,8 @@ public final class IslandLibrary {
     }
     public static Path folder(String kind)throws IOException{Path p=Paths.get("config","bridgetap","islands",kind);Files.createDirectories(p);return p;}
     public static List<Path> list(String kind)throws IOException{
-        List<Path> result=new ArrayList<>();try(DirectoryStream<Path> stream=Files.newDirectoryStream(folder(kind),"*.btisland")){
+        Path root=folder(kind);if(kind.equals("defaults"))DefaultIslands.install(root);
+        List<Path> result=new ArrayList<>();try(DirectoryStream<Path> stream=Files.newDirectoryStream(root,"*.btisland")){
             for(Path file:stream)if(Files.isRegularFile(file,LinkOption.NOFOLLOW_LINKS)){result.add(file);if(result.size()>=1000)break;}
         }
         result.sort(Comparator.comparing(p->p.getFileName().toString()));return result;

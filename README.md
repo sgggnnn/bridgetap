@@ -8,9 +8,11 @@ A **Minecraft 1.8.9** client mod for analyzing your bridges: jump coordinates, r
 
 **1.7.0** adds OneClient HUD integration and RGB colors, per-speed Velo Z decimals with a dedicated color, per-server/shareable island presets, replay MP4 export, fail analysis and McPlay mode folders. Native clip tools are now a separate optional download. See the [1.7.0 release notes](docs/releases/v1.7.0.md).
 
+**1.7.3:** adds adjacent coordinate/velo values, optional X/Z coordinates with their difference, optional per-jump yaw and 9t/12t Fail Tap/4b coordinates. It also adds confirmed, checksum-verified updates with deferred JAR replacement and supported OneClient restart. See the [update guide](docs/UPDATES.md). It also includes Default, Halloween, Summer, Winter, Fall Island and Speedcubing scenery in the new **Defaults** island tab. Each model includes both endpoints. Personal copies, placement and presets use the existing tools.
+
 ## Installation
 
-1. Open [release 1.7.0](https://github.com/sgggnnn/bridgetap/releases/tag/v1.7.0).
+1. Open [release 1.7.3](https://github.com/sgggnnn/bridgetap/releases/tag/v1.7.3).
 2. Download the file matching your setup:
    - **Forge 1.8.9**: `BridgeTap-1.7.0-Forge-1.8.9.jar`.
    - **OneClient / Ornithe Fabric 1.8.9**: `BridgeTap-1.7.0-OneClient.jar`, for an environment using Ornithe mappings.

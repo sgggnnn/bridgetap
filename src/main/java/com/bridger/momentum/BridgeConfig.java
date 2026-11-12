@@ -22,6 +22,8 @@ public class BridgeConfig {
     public static boolean chatOutput = false;
     public static boolean showReplayInfo = true;
     public static boolean showBridgeVelocity = false;
+    public static boolean showJumpAngle = false;
+    public static boolean showBothAxes = false;
     public static boolean showReplayInputs = true;
     public static boolean useNoGayLabel = false;
     public static String replaySort="NEWEST";
@@ -65,6 +67,8 @@ public class BridgeConfig {
             showGainType = Boolean.parseBoolean(props.getProperty("showGainType", "false"));
             chatOutput = Boolean.parseBoolean(props.getProperty("chatOutput", "false"));
             showBridgeVelocity = Boolean.parseBoolean(props.getProperty("showBridgeVelocity", "false"));
+            showJumpAngle = Boolean.parseBoolean(props.getProperty("showJumpAngle", "false"));
+            showBothAxes = Boolean.parseBoolean(props.getProperty("showBothAxes", "false"));
             showReplayInfo = Boolean.parseBoolean(props.getProperty("showReplayInfo", "true"));
             showReplayInputs = Boolean.parseBoolean(props.getProperty("showReplayInputs", "true"));
             useNoGayLabel = Boolean.parseBoolean(props.getProperty("useNoGayLabel", "false"));
@@ -117,6 +121,8 @@ public class BridgeConfig {
                 props.setProperty("showGainType", String.valueOf(showGainType));
                 props.setProperty("chatOutput", String.valueOf(chatOutput));
                 props.setProperty("showBridgeVelocity",String.valueOf(showBridgeVelocity));
+                props.setProperty("showJumpAngle",String.valueOf(showJumpAngle));
+                props.setProperty("showBothAxes",String.valueOf(showBothAxes));
                 props.setProperty("showReplayInfo", String.valueOf(showReplayInfo));
                 props.setProperty("showReplayInputs", String.valueOf(showReplayInputs));
                 props.setProperty("useNoGayLabel", String.valueOf(useNoGayLabel));

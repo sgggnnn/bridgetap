@@ -1,12 +1,17 @@
 param(
     [string]$JavaHome = $env:JAVA_HOME,
     [string]$Classpath = $env:BRIDGETAP_CLASSPATH,
-    [string]$Output = 'dist/BridgeTap-1.7.0.jar',
+    [string]$Output = 'dist/BridgeTap-1.7.3.jar',
     [string]$Python = 'python'
 )
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 if (-not $Classpath) { throw 'Set BRIDGETAP_CLASSPATH to Minecraft intermediary, Fabric Loader, Mixin, LWJGL 2, Authlib and Guava JARs (semicolon-separated on Windows).' }
+$gsonRoot = Join-Path $projectRoot 'build/gradle-bootstrap/libraries/com/google/code/gson'
+if (Test-Path -LiteralPath $gsonRoot) {
+    $gsonJar = Get-ChildItem -LiteralPath $gsonRoot -Recurse -Filter '*.jar' | Select-Object -First 1 -ExpandProperty FullName
+    if ($gsonJar) { $Classpath += ";$gsonJar" }
+}
 $compiler = if ($JavaHome) { Join-Path $JavaHome 'bin/javac.exe' } else { 'javac' }
 $archiver = if ($JavaHome) { Join-Path $JavaHome 'bin/jar.exe' } else { 'jar' }
 $classes = Join-Path $projectRoot ('build/classes-' + [guid]::NewGuid().ToString('N'))

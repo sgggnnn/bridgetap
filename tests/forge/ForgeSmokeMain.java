@@ -52,6 +52,33 @@ public final class ForgeSmokeMain {
         if((Boolean)capture.getMethod("enabled").invoke(null))throw new AssertionError("Final capture failure must be reported instead of pretending to record");
         System.out.println("PASS: reproduced NoSuchMethodError recovery, buffer stays ON through GPU fallbacks and reports final failures");
     }
+    private static void testJumpDetails(Class<?> tracker,Class<?> minecraft,Object mc,Class<?> playerType,Object player,Method snapshot,Field tick)throws Exception{
+        Class<?> config=Class.forName("com.bridger.momentum.BridgeConfig",true,Launch.classLoader);
+        config.getField("tickOffset").setInt(null,1);config.getField("preferredAxis").set(null,"Z");
+        set(player,"field_70161_v",23.289);tick.setInt(null,100);snapshot.invoke(null,player,100);tracker.getMethod("onTickEnd",minecraft).invoke(null,mc);
+        tick.setInt(null,101);set(player,"field_70177_z",541f);
+        Field active=tracker.getDeclaredField("isBridging");active.setAccessible(true);active.setBoolean(null,true);
+        tracker.getMethod("onJump",Class.forName("net.minecraft.entity.Entity",false,Launch.classLoader)).invoke(null,player);
+        tick.setInt(null,102);set(player,"field_70161_v",23.584);set(player,"field_70177_z",90f);snapshot.invoke(null,player,102);
+        Method pending=tracker.getDeclaredMethod("processPendingSamples");pending.setAccessible(true);pending.invoke(null);
+        java.util.List<?> entries=(java.util.List<?>)tracker.getMethod("getEntries").invoke(null);Object first=entries.get(0);Class<?> entry=first.getClass();
+        if(Math.abs((Double)entry.getMethod("getJumpYaw").invoke(first)+179)>1e-6||Math.abs((Double)entry.getMethod("getPreJumpZ").invoke(first)-23.289)>1e-6)throw new AssertionError("Delayed coordinates changed jump yaw or prior-tick Z");
+        if(Math.abs((Double)entry.getMethod("getSampledX").invoke(first)-10.0)>1e-6||Math.abs((Double)entry.getMethod("getSampledZ").invoke(first)-23.584)>1e-6)throw new AssertionError("Both axes did not use the same offset-adjusted sample");
+        for(int t:new int[]{111,114}){set(player,"field_70161_v",t==111?-24.123:-25.456);snapshot.invoke(null,player,t);}
+        tick.setInt(null,115);Method fail=tracker.getDeclaredMethod("onFailSpeed",double.class,String.class,double.class);fail.setAccessible(true);fail.invoke(null,0.0,"Test",-1.0);
+        entries=(java.util.List<?>)tracker.getMethod("getEntries").invoke(null);
+        if(entries.size()!=3)throw new AssertionError("Expected both fail timing samples");
+        for(int n=1;n<=2;n++){
+            Object e=entries.get(n);int expected=n==1?9:12;double coordinate=n==1?-24.123:-25.456;
+            if(!"Fail Tap/4b".equals(entry.getMethod("getLabel").invoke(e))||(Integer)entry.getMethod("getTicksElapsed").invoke(e)!=expected||Math.abs((Double)entry.getMethod("getCoordinate").invoke(e)-coordinate)>1e-6)throw new AssertionError("Wrong fail coordinate/timing at "+expected);
+        }
+        active.setBoolean(null,true);tick.setInt(null,111);fail.invoke(null,0.0,"Test",-1.0);
+        entries=(java.util.List<?>)tracker.getMethod("getEntries").invoke(null);
+        if(entries.size()!=4||(Integer)entry.getMethod("getTicksElapsed").invoke(entries.get(3))!=9)throw new AssertionError("Unavailable 12-tick fail was fabricated");
+        fail.invoke(null,0.0,"Duplicate",-1.0);if(((java.util.List<?>)tracker.getMethod("getEntries").invoke(null)).size()!=4)throw new AssertionError("Repeated fail duplicated samples");
+        tracker.getMethod("reset").invoke(null);config.getField("tickOffset").setInt(null,0);config.getField("preferredAxis").set(null,"AUTO");
+        System.out.println("PASS: jump-event yaw survives delayed sampling; fail coordinates use exact offset-adjusted 9t and 12t snapshots");
+    }
     private static void testReplaySceneryPaste()throws Exception{
         Class<?> unsafeType=Class.forName("sun.misc.Unsafe");Field singleton=unsafeType.getDeclaredField("theUnsafe");singleton.setAccessible(true);Object unsafe=singleton.get(null);Method allocate=unsafeType.getMethod("allocateInstance",Class.class);
         Class.forName("net.minecraft.init.Bootstrap",true,Launch.classLoader).getMethod("func_151354_b").invoke(null);
@@ -67,6 +94,8 @@ public final class ForgeSmokeMain {
         tick.setInt(null,42);set(viewer,"field_70159_w",.9);set(viewer,"field_70181_x",.42);tracker.getMethod("onTickEnd",minecraft).invoke(null,mc);
         Object beforeJump=ring.getClass().getMethod("beforeJump",int.class).invoke(ring,42);if(beforeJump.getClass().getField("x").getDouble(beforeJump)!=10.0)throw new AssertionError("Pre-jump position used the current tick");
         tracker.getMethod("reset").invoke(null);System.out.println("PASS: native tick-start positions are retained at tick end and pre-jump velocity uses the previous tick");
+        testJumpDetails(tracker,minecraft,mc,playerType,viewer,snapshot,tick);
+        set(viewer,"field_70161_v",20.0);set(viewer,"field_70177_z",0f);
         Class<?> session=Class.forName("com.bridger.momentum.ReplaySession",true,Launch.classLoader);Object replay=allocate.invoke(unsafe,session);set(replay,"source",world);set(replay,"camera",viewer);
         Field current=session.getDeclaredField("current");current.setAccessible(true);current.set(null,replay);
         Class<?> scenery=Class.forName("com.bridger.momentum.IslandOverlay",true,Launch.classLoader);

@@ -1,8 +1,9 @@
 param(
     [string]$JavaHome = $env:JAVA_HOME,
     [string]$RuntimeJavaHome = $JavaHome,
-    [string]$Jar = 'dist/BridgeTap-1.7.0.jar',
+    [string]$Jar = 'dist/BridgeTap-1.7.3.jar',
     [string]$MinecraftJar,
+    [string]$GsonJar,
     [string]$Python = 'python',
     [switch]$Forge
 )
@@ -22,7 +23,7 @@ $clipTools = Join-Path $projectRoot 'build/libs/BridgeTap-clip-tools-windows-x64
 if (Test-Path -LiteralPath $clipTools) { Expand-Archive -LiteralPath $clipTools -DestinationPath $work }
 Push-Location $work
 try {
-    foreach ($test in @('ConfigRegression', 'HistoryRegression', 'ReplayRegression', 'DisplayRegression', 'ReplayTimelineRegression','ReplayCaptureRegression', 'ReplayCameraRegression', 'TelemetryRegression','JumpVelocityRegression', 'BridgeGeometryRegression','ServerModeRegression', 'ReplayLibraryRegression', 'ReplayControlsRegression', 'BridgeDetectionRegression', 'ReplayQueryRegression', 'OverlayPlacementRegression','OverlayStyleRegression', 'IslandRegression','IslandPresetsRegression','FocusAudioRegression','PresetServersRegression','PresetArchiveRegression','IslandEditorRegression','FailureAnalysisRegression','ReplayVideoRegression','ReplayVideoPresentationRegression', 'ReplayFoldersRegression','ReplayRetentionRegression', 'ClipRegression','NativeClipToolsRegression','ClipStreamRegression')) {
+    foreach ($test in @('ConfigRegression', 'HistoryRegression', 'ReplayRegression', 'DisplayRegression', 'ReplayTimelineRegression','ReplayCaptureRegression', 'ReplayCameraRegression', 'TelemetryRegression','JumpVelocityRegression','BothAxesRegression', 'BridgeGeometryRegression','ServerModeRegression', 'ReplayLibraryRegression', 'ReplayControlsRegression', 'BridgeDetectionRegression', 'ReplayQueryRegression', 'OverlayPlacementRegression','OverlayStyleRegression', 'IslandRegression','IslandPresetsRegression','FocusAudioRegression','PresetServersRegression','PresetArchiveRegression','IslandEditorRegression','FailureAnalysisRegression','ReplayVideoRegression','ReplayVideoPresentationRegression', 'ReplayFoldersRegression','ReplayRetentionRegression', 'ClipRegression','NativeClipToolsRegression','ClipStreamRegression','DefaultIslandsRegression','UpdateRegression')) {
         & $runtime -cp "$artifact;$classes" $test
         if ($LASTEXITCODE -ne 0) { throw "Regression failed: $test" }
     }
@@ -34,4 +35,13 @@ if ($MinecraftJar) {
     & $Python (Join-Path $projectRoot $checker) $MinecraftJar $artifact
     if ($LASTEXITCODE -ne 0) { throw 'Native hook checks failed' }
 }
+if (-not $GsonJar) {
+    $gsonRoot = Join-Path $projectRoot 'build/gradle-bootstrap/libraries/com/google/code/gson'
+    if (Test-Path -LiteralPath $gsonRoot) { $GsonJar = Get-ChildItem -LiteralPath $gsonRoot -Recurse -Filter '*.jar' | Select-Object -First 1 -ExpandProperty FullName }
+}
+if (-not $GsonJar) { throw 'Supply -GsonJar for the update metadata tests, or build once with Gradle.' }
+& $compiler --release 8 -proc:none -encoding UTF-8 -cp "$artifact;$GsonJar" -d $classes (Join-Path $projectRoot 'tests/update/UpdateMetadataRegression.java')
+if ($LASTEXITCODE -ne 0) { throw 'Update metadata test compilation failed' }
+& $runtime -cp "$classes;$artifact;$GsonJar" UpdateMetadataRegression
+if ($LASTEXITCODE -ne 0) { throw 'Update metadata regression failed' }
 Write-Output 'All requested checks passed.'

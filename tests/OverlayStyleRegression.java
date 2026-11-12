@@ -17,7 +17,7 @@ public final class OverlayStyleRegression {
   check(OverlayStyle.background(0)==0x60102030&&OverlayStyle.pressedBackground==0x70405060&&OverlayStyle.shadowColor[1]==0x90123456,"ARGB or shadow persistence failed");
   BridgeConfig.showBridgeVelocity=true;OverlayStyle.text(0,0xFFFFFFFF);OverlayStyle.part(10,0xFF13579B);
   JumpVelocity history=new JumpVelocity();history.record(1,0,70,-23.123);entries.get(0).setPreJumpZ(history.beforeJump(2));
-  check(EntryFormatter.hudLines(entries).get(0).contains("§#13579B[Velo Z (-1t): .123]"),"Velo RGB is not independent");
+  check(EntryFormatter.hudLines(entries).get(0).contains("§#13579B/123"),"Velo RGB is not independent");
   check(!OverlayStyle.customText[0]&&!EntryFormatter.lines(entries).get(0).contains("§#"),"Velo picker did not restore component coloring or leaked RGB to chat");
   OverlayStyle.save();OverlayStyle.resetPart(10);OverlayStyle.part(10,0xFF13579B);OverlayStyle.load();check(OverlayStyle.part(10)==0xFF13579B,"Velo RGB not persisted");
   BridgeConfig.showBridgeVelocity=false;

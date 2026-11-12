@@ -4,6 +4,33 @@ History of versions available in [GitHub Releases](https://github.com/sgggnnn/br
 
 Some commits contain several intermediate versions. Those versions are tagged at the first commit archiving their binary, rather than at a dedicated source snapshot. The affected release notes explain this distinction.
 
+## [1.7.3](https://github.com/sgggnnn/bridgetap/releases/tag/v1.7.3) - Jump details, default islands and confirmed updates
+
+- Adds **Both axes + X-Z difference**, showing both sampled horizontal decimals and their signed difference, with independent previous-tick X/Z decimals when Velo is enabled.
+- Moves the existing previous-tick Z decimal next to each jump coordinate when Velo is enabled, using `coordinate/velo` and retaining its independent color.
+- Adds an optional viewing angle (yaw in degrees) captured at each actual jump, independent of the coordinate offset.
+- Renames failed tap entries to Fail Tap/4b and shows the saved 9-tick and 10-tick coordinates separately when available.
+
+## 1.7.3 - Jump details (local build)
+
+- Moves the existing previous-tick Z decimal next to each jump coordinate when Velo is enabled, retaining its independent color.
+- Adds an optional viewing angle (yaw in degrees) captured at each actual jump, independent of the coordinate offset.
+- Renames failed tap entries to Fail Tap/4b and shows the saved 9-tick and 12-tick coordinates separately when available.
+
+## 1.7.2 - Confirmed updates (local build)
+
+- Checks the latest stable GitHub release once on startup, with a title-menu prompt before downloading.
+- Selects the current edition and verifies SHA-256, size and mod/Minecraft metadata.
+- Installs after the game exits, removes the old JAR from mods, and keeps a recovery backup.
+- Offers same-profile OneClient restart where supported, or an explicit close/manual relaunch flow for other launchers.
+- Adds manual update settings, an opt-out, installation logs and next-launch failure reporting. See [update behavior and limits](docs/UPDATES.md).
+
+## 1.7.1 - Bundled default islands (local build)
+
+- Includes Default, Halloween, Summer, Winter, Fall Island and Speedcubing scenery, each with start and finish islands.
+- Opens the island library on a new Defaults tab, with normal placement/export and a Save a copy action for customization.
+- Keeps bundled files separate from My islands and preserves existing local files. Default templates are protected from library rename/delete actions.
+
 ## [1.7.0](https://github.com/sgggnnn/bridgetap/releases/tag/v1.7.0) - OneClient styles, server presets and replay video
 
 Adds native OneClient HUD colors including an independent Velo color, per-speed previous-tick Z decimals, per-server/shareable island presets, island undo/redo, replay MP4 exports with recorded keystrokes/hotbar/final time, fail analysis, McPlay modes and mode subfolders. Fixes replay block/input alignment and removes stick navigation cooldowns. Native clip executables move into a separate, explicit-install tools pack.

@@ -28,6 +28,8 @@ public class BridgeSettingsScreen extends BridgeScreen {
         int mode=java.util.Arrays.asList(modes).indexOf(BridgeConfig.displayMode);
         dropdown("display",modeLabels[Math.max(0,mode)],modeLabels,mode,188,366,216,i->{BridgeConfig.displayMode=modes[i];BridgeConfig.save();});
 
+        toggle("Both axes + X-Z difference",BridgeConfig.showBothAxes,36,398,368,()->BridgeConfig.showBothAxes=!BridgeConfig.showBothAxes);
+
         text("DETECTION & CALCULATIONS",454,88,TEXT);
         button("Reset offsets",718,82,106,22,true,false,()->{BridgeConfig.tickOffset=BridgeConfig.plateTickOffset=0;BridgeConfig.save();});
         stepper("Jump offset",BridgeConfig.tickOffset+" ticks",454,119,370,()->BridgeConfig.tickOffset=Math.max(-40,BridgeConfig.tickOffset-1),()->BridgeConfig.tickOffset=Math.min(40,BridgeConfig.tickOffset+1));
@@ -42,7 +44,8 @@ public class BridgeSettingsScreen extends BridgeScreen {
         toggle("Recorded input overlay",BridgeConfig.showReplayInputs,454,368,370,()->BridgeConfig.showReplayInputs=!BridgeConfig.showReplayInputs);
         dropdown("output",BridgeConfig.chatOutput?"Output: Chat":"Output: Overlay",new String[]{"Overlay","Chat at end of run"},BridgeConfig.chatOutput?1:0,454,398,174,i->{BridgeConfig.chatOutput=i==1;BridgeConfig.save();});
         button("Customize colors",640,398,184,()->open(new BridgeColorsScreen(this)));
-        label("Default offsets: 0 ticks / New-run delay: 5 ticks",22,450);
+        toggle("Jump viewing angle (yaw)",BridgeConfig.showJumpAngle,22,442,368,()->BridgeConfig.showJumpAngle=!BridgeConfig.showJumpAngle);
+        button("Updates",566,442,128,26,true,false,()->UpdateManager.open(this));
         button("Back to replays",706,442,134,26,true,true,this::back);
         footer("Changes are saved automatically  /  Esc: back");
     }

@@ -1,0 +1,15 @@
+# BridgeTap updates (1.7.3)
+
+Install this update-capable edition manually once. Earlier releases cannot acquire an updater they do not contain. Automatic checks look at the latest stable GitHub release of `sgggnnn/bridgetap`, once per Minecraft session. Previews, older versions and the other loader edition are not installed. No account credentials, server address or gameplay data are uploaded. Disable the check in **Settings > Updates** or use the native OneClient **BridgeTap updates** button for a manual check.
+
+When a newer matching release is found, the confirmation appears on the title menu, without interrupting an active world or replay. **Not now** dismisses it for the session. **Yes, install update** downloads the matching official release JAR into `config/bridgetap/updates`, verifies its GitHub SHA-256 digest, file size, BridgeTap ID, Minecraft version and mod version, then asks whether to restart.
+
+Windows can lock the currently loaded JAR. The replacement therefore completes **after Minecraft exits**, using a small Java helper copied from the running mod. No native installer EXE is bundled or downloaded. Only a regular JAR located directly in `mods` or `mods/1.8.9` is automatically replaceable; symlinks and launcher-managed cache locations require manual installation.
+
+**Restart now** closes Minecraft and asks OneClient to launch the same profile when the JAR is located under `clusters/<profile>/mods`. This uses OneClient's `--launch` interface on Windows or its registered launch URL on other systems. It never copies Minecraft authentication arguments. A launcher that rebuilds the mods folder or enforces a managed profile can override local changes; such a profile may require updating through that launcher instead.
+
+For other launchers, the dialog explicitly offers **Close Minecraft to install** and instructs the player to reopen the profile manually. The mod cannot promise an automatic restart through every launcher. **Later** keeps playing and installs the approved update at the next normal exit.
+
+The old JAR is removed from the active mods folder and retained as `previous.jar.bak` in the update job directory. Other mods and personal replay/island/configuration files are not removed. A conflicting target filename, changed original JAR or invalid download aborts the installation. A failed target move attempts to restore the backup. Windows lock failures are retried for up to two minutes. `result.properties` and `helper.log` in the same job folder describe the outcome; a failed installation or relaunch is reported on the next title-menu visit after starting Minecraft.
+
+Validation uses isolated temporary mods folders and mock parent processes. It covers version/loader selection, SHA and metadata rejection, target collisions, Windows file locks, untouched unrelated files, retained backups, and a real helper process that cannot replace the JAR until its parent-lifetime connection closes. These checks do not replace testing OneClient's launcher restart in a real profile; no live game was closed or updated during automated verification.

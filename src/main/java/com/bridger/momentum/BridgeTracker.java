@@ -69,6 +69,7 @@ public class BridgeTracker {
     private static double previousVelocityY;
     private static long runStartNanos;
     private static final String[] jumpInputHistory = new String[POSITION_HISTORY_SIZE];
+    private static final double[] jumpYawHistory = new double[POSITION_HISTORY_SIZE];
     private static final int[] jumpInputTicks = new int[POSITION_HISTORY_SIZE];
     private static final boolean[] jumpInputValid = new boolean[POSITION_HISTORY_SIZE];
     private static double lastJumpCoord = 0.0;
@@ -330,7 +331,8 @@ public class BridgeTracker {
         if (isBridging && !player.f_47825615 && player.f_09676126 && (previousVelocityY > 0 || (long) currentTick - lastJumpSignalTick == 1) && !entries.isEmpty()) {
             double c = currentAxis.equals("X") ? player.f_78826675 : player.f_97691941;
             double d = Math.abs(c) - Math.floor(Math.abs(c));
-            entries.add(new JumpEntry("Head hitter", c, d, Double.NaN, currentTick - lastJumpTick, JumpEntry.EntryType.HEAD_HITTER));
+            JumpEntry head=new JumpEntry("Head hitter", c, d, Double.NaN, currentTick - lastJumpTick, JumpEntry.EntryType.HEAD_HITTER);
+            head.setHorizontalCoordinates(player.f_78826675,player.f_97691941);entries.add(head);
         }
         previousY = currentY;
         previousVelocityY = player.f_35148123;
@@ -374,6 +376,7 @@ public class BridgeTracker {
                 else if (delta > 0.5) delta -= 1.0;
 
                 JumpEntry turnEntry = new JumpEntry("Turn", turnCoord, turnDecimal, delta, ticksSinceLastJump, JumpEntry.EntryType.TURN);
+                turnEntry.setHorizontalCoordinates(player.f_78826675,player.f_97691941);
                 entries.add(turnEntry);
             }
         }
@@ -412,8 +415,13 @@ public class BridgeTracker {
         status = RunStatus.FAILED;
         restartCooldown.finish(currentTick);
 
-        // Use the same expected 9-tick sample (including the configured offset) as a real tap.
-        int expectedTapTick = lastJumpTick + 9;
+        // Show both possible next launch timings, never substitute an unavailable tick.
+        if (sbTime >= 0.0) currentBridgeTime = sbTime;
+        for(int elapsed : new int[]{9,12}) recordFailSample(elapsed);
+    }
+
+    private static void recordFailSample(int elapsed) {
+        int expectedTapTick = lastJumpTick + elapsed;
         int sampleTick = expectedTapTick + BridgeConfig.tickOffset;
         if (entries.isEmpty() || currentTick < expectedTapTick || !hasPositionSnapshot(sampleTick)) return;
         double tapCoord = coordinateAtTick(sampleTick);
@@ -424,10 +432,14 @@ public class BridgeTracker {
         if (delta < -0.5) delta += 1.0;
         else if (delta > 0.5) delta -= 1.0;
 
-        if (sbTime >= 0.0) currentBridgeTime = sbTime;
-        JumpEntry failEntry = new JumpEntry("Fail Tap", tapCoord, decimal, delta, 9, JumpEntry.EntryType.FAIL_TAP);
+        JumpEntry failEntry = new JumpEntry("Fail Tap/4b", tapCoord, decimal, delta, elapsed, JumpEntry.EntryType.FAIL_TAP);
+        attachHorizontalSample(failEntry,sampleTick);
         entries.add(failEntry);
 
+    }
+
+    private static void attachHorizontalSample(JumpEntry entry,int tick){
+        if(hasPositionSnapshot(tick)){int i=Math.floorMod(tick,POSITION_HISTORY_SIZE);entry.setHorizontalCoordinates(positionHistoryX[i],positionHistoryZ[i]);}
     }
 
     private static void recordPlateEntries(int plateTick) {
@@ -438,11 +450,13 @@ public class BridgeTracker {
 
         double p1Abs = Math.abs(p1Coord);
         double p1Dec = p1Abs - Math.floor(p1Abs);
-        entries.add(new JumpEntry("Plates-1t", p1Coord, p1Dec, Double.NaN, 0, JumpEntry.EntryType.PLATES_MINUS_1));
+        JumpEntry priorPlate=new JumpEntry("Plates-1t", p1Coord, p1Dec, Double.NaN, 0, JumpEntry.EntryType.PLATES_MINUS_1);
+        attachHorizontalSample(priorPlate,plateTick-1);entries.add(priorPlate);
 
         double pAbs = Math.abs(pCoord);
         double pDec = pAbs - Math.floor(pAbs);
-        entries.add(new JumpEntry("Plates", pCoord, pDec, Double.NaN, 0, JumpEntry.EntryType.PLATES));
+        JumpEntry plate=new JumpEntry("Plates", pCoord, pDec, Double.NaN, 0, JumpEntry.EntryType.PLATES);
+        attachHorizontalSample(plate,plateTick);entries.add(plate);
 
     }
 
@@ -475,6 +489,7 @@ public class BridgeTracker {
         int inputIndex = Math.floorMod(jumpTick, POSITION_HISTORY_SIZE);
         jumpInputHistory[inputIndex] = settings == null ? null : JumpSignals.gain(settings.f_15607202.m_70603120(), settings.f_20678369.m_70603120(), settings.f_25268871.m_70603120(), settings.f_46759128.m_70603120());
         jumpInputTicks[inputIndex] = jumpTick;
+        jumpYawHistory[inputIndex] = entity.f_80130373;
         jumpInputValid[inputIndex] = true;
         int sampleTick = jumpTick + BridgeConfig.tickOffset;
         double jumpFlatTime = mc.f_26407825 == null ? flatDuration : ScoreboardHelper.readScoreboardTime(mc.f_26407825.m_63054104());
@@ -530,6 +545,8 @@ public class BridgeTracker {
             JumpEntry flatEntry = new JumpEntry(label, currentCoord, decimal, Double.NaN, ticks, JumpEntry.EntryType.FLAT);
             if (hasJumpInput(jumpTick)) flatEntry.setGainType(jumpInputHistory[Math.floorMod(jumpTick, POSITION_HISTORY_SIZE)]);
             flatEntry.setPreJumpZ(jumpVelocity.beforeJump(jumpTick));
+            if(hasJumpInput(jumpTick))flatEntry.setJumpYaw(jumpYawHistory[Math.floorMod(jumpTick,POSITION_HISTORY_SIZE)]);
+            flatEntry.setHorizontalCoordinates(sampledX,sampledZ);
             entries.add(flatEntry);
 
             lastJumpTick = jumpTick;
@@ -569,6 +586,8 @@ public class BridgeTracker {
             if (late != null) label = late;
             JumpEntry tapEntry = new JumpEntry(label, currentCoord, decimal, delta, ticksElapsed, JumpEntry.EntryType.TAP);
             tapEntry.setPreJumpZ(jumpVelocity.beforeJump(jumpTick));
+            if(hasJumpInput(jumpTick))tapEntry.setJumpYaw(jumpYawHistory[Math.floorMod(jumpTick,POSITION_HISTORY_SIZE)]);
+            tapEntry.setHorizontalCoordinates(sampledX,sampledZ);
             entries.add(tapEntry);
             if (hasJumpInput(jumpTick)) tapEntry.setGainType(jumpInputHistory[Math.floorMod(jumpTick, POSITION_HISTORY_SIZE)]);
 

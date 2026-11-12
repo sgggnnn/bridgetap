@@ -11,6 +11,8 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.*;
 public final class OneClientConfig extends Config {
     @Switch(title="Bridge coordinates",category="HUD") public boolean coordinatesVisible=BridgeConfig.enabled;
     @Switch(title="Velo Z decimals (jump -1t)",category="HUD") public boolean showBridgeVelocity=BridgeConfig.showBridgeVelocity;
+    @Switch(title="Both axes + X-Z difference",category="HUD") public boolean showBothAxes=BridgeConfig.showBothAxes;
+    @Switch(title="Jump viewing angle (yaw)",category="HUD") public boolean showJumpAngle=BridgeConfig.showJumpAngle;
     @Switch(title="Replay information",category="HUD") public boolean showReplayInfo=BridgeConfig.showReplayInfo;
     @Switch(title="Replay keystrokes",category="HUD") public boolean showReplayInputs=BridgeConfig.showReplayInputs;
     @Switch(title="Background",category="HUD") public boolean backgroundEnabled=BridgeConfig.backgroundEnabled;
@@ -24,7 +26,7 @@ public final class OneClientConfig extends Config {
     public OneClientConfig(){super("bridgetap","BridgeTap",Category.UTILITY);initialize(false);}
     @Override protected void onInitialized(Tree tree){
         super.onInitialized(tree);tree.addMetadata("mod_card_authors","sggn");
-        for(String field:new String[]{"coordinatesVisible","showBridgeVelocity","showReplayInfo","showReplayInputs","backgroundEnabled","textShadow","chatOutput","hideOnF3","showGainType","tickOffset","plateTickOffset","turnTicks"}){
+        for(String field:new String[]{"coordinatesVisible","showBridgeVelocity","showJumpAngle","showBothAxes","showReplayInfo","showReplayInputs","backgroundEnabled","textShadow","chatOutput","hideOnF3","showGainType","tickOffset","plateTickOffset","turnTicks"}){
             Runnable apply=()->{try{BridgeConfig.class.getField(field.equals("coordinatesVisible")?"enabled":field).set(null,getClass().getField(field).get(this));BridgeConfig.save();}catch(ReflectiveOperationException ex){throw new IllegalStateException(ex);}};
             apply.run();addCallback(field,apply);
         }
@@ -32,7 +34,7 @@ public final class OneClientConfig extends Config {
     @SuppressWarnings({"rawtypes","unchecked"})
     public void syncFromBridge(){
         NativeHudStyles.sync();
-        for(String field:new String[]{"coordinatesVisible","showBridgeVelocity","showReplayInfo","showReplayInputs","backgroundEnabled","textShadow","chatOutput","hideOnF3","showGainType","tickOffset","plateTickOffset","turnTicks"}){
+        for(String field:new String[]{"coordinatesVisible","showBridgeVelocity","showJumpAngle","showBothAxes","showReplayInfo","showReplayInputs","backgroundEnabled","textShadow","chatOutput","hideOnF3","showGainType","tickOffset","plateTickOffset","turnTicks"}){
             try{org.polyfrost.oneconfig.api.config.v1.Property property=getProperty(field);Object value=BridgeConfig.class.getField(field.equals("coordinatesVisible")?"enabled":field).get(null);if(!java.util.Objects.equals(property.get(),value))property.set(value);}catch(ReflectiveOperationException ex){throw new IllegalStateException(ex);}
         }
     }
@@ -42,6 +44,7 @@ public final class OneClientConfig extends Config {
     @Button(title="Replay library",text="Browse replays",category="Replays") public void replays(){open(ReplayFolderScreen.home());}
     @Button(title="Island library",text="Browse islands",category="Islands") public void islands(){open(new IslandScreen(null));}
     @Button(title="Island presets",text="Browse presets",category="Islands") public void presets(){open(new IslandPresetsScreen(null));}
+    @Button(title="BridgeTap updates",text="Check updates",category="Tools") public void updates(){UpdateManager.open(null);}
     @Button(title="Video clips",text="Open",category="Tools") public void clips(){open(new ClipScreen(null));}
     @Button(title="Block appearance",text="Open",category="Tools") public void blocks(){open(new PlacementAppearanceScreen(null));}
     @Button(title="Overlay colors",text="Open",category="HUD") public void colors(){NativeHudStyles.edit(0);}
