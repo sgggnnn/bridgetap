@@ -74,7 +74,7 @@ def main():
     parser.add_argument('--java-home', default=os.environ.get('JAVA_HOME'))
     parser.add_argument('--minecraft', type=Path, required=True, help='Original Mojang 1.8.9 client JAR')
     parser.add_argument('--classpath', default=os.environ.get('BRIDGETAP_CLASSPATH', ''), help='LWJGL, Authlib, Guava and other Minecraft libraries')
-    parser.add_argument('--output', type=Path, default=ROOT / 'dist' / 'BridgeTap-1.7.3-Forge-1.8.9.jar')
+    parser.add_argument('--output', type=Path, default=ROOT / 'dist' / 'BridgeTap-1.7.5-Forge-1.8.9.jar')
     args = parser.parse_args()
     if args.output.exists(): raise SystemExit('Output already exists: '+str(args.output))
     args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -136,7 +136,7 @@ def main():
     with ZipFile(args.output, 'x', ZIP_DEFLATED) as out:
         out.writestr('META-INF/MANIFEST.MF', manifest)
         out.writestr('bridgetap.forge.mixins.json', json.dumps(config, indent=2))
-        out.writestr('mcmod.info', json.dumps([{'modid':'bridgetap', 'name':'BridgeTap', 'version':'1.7.3', 'mcversion':'1.8.9', 'clientSideOnly':True, 'license':'GPL-3.0-only', 'description':'Experimental island scenery, video clips and replay folders.', 'authorList':['sggn']}]))
+        out.writestr('mcmod.info', json.dumps([{'modid':'bridgetap', 'name':'BridgeTap', 'version':'1.7.5', 'mcversion':'1.8.9', 'clientSideOnly':True, 'license':'GPL-3.0-only', 'description':'Experimental island scenery, video clips and replay folders.', 'authorList':['sggn']}]))
         for p in output_classes.rglob('*.class'): out.write(p, p.relative_to(output_classes).as_posix())
         for p in (ROOT/'src/main/resources/assets').rglob('*'):
             if p.is_file(): out.write(p, p.relative_to(ROOT/'src/main/resources').as_posix())

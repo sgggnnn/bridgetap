@@ -61,8 +61,9 @@ public final class UiPreview implements UiCanvas {
         UpdateManager.state=UpdateManager.State.FAILED;UpdateManager.error="Downloaded update checksum mismatch";render(new UpdateScreen(null),font,"update-checksum-error");UpdateManager.state=UpdateManager.State.IDLE;
         BridgeColorsScreen colors=new BridgeColorsScreen();render(colors,font,"colors");colors.clickPreview(65,145,0);render(colors,font,"color-selected");colors.clickPreview(530,150,0);
         if(!"4".equals(BridgeConfig.colors[1]))throw new AssertionError("Swatch click did not update selected coordinate color");BridgeConfig.colors[1]="e";
-        colors.clickPreview(65,395,0);colors.clickPreview(530,150,0);render(colors,font,"velo-color-selected");
+        colors.clickPreview(65,335,0);colors.clickPreview(530,150,0);render(colors,font,"velo-color-selected");
         if(!"4".equals(BridgeConfig.colors[10])||!"e".equals(BridgeConfig.colors[1]))throw new AssertionError("Velo swatch is unreachable or overwrites coordinates");BridgeConfig.colors[10]="7";
+        for(int part:new int[]{11,12,13}){colors.clickPreview(65,115+part*22,0);colors.clickPreview(530,150,0);render(colors,font,"new-color-"+part);if(!"4".equals(BridgeConfig.colors[part]))throw new AssertionError("New color is unreachable: "+part);}BridgeConfig.colors[11]="a";BridgeConfig.colors[12]="c";BridgeConfig.colors[13]="7";
         BridgeLayoutScreen layout=new BridgeLayoutScreen(settings);render(layout,font,"layout");int before=BridgeConfig.hudX;
         layout.clickPreview(15,15,0);layout.dragPreview(140,195);layout.releasePreview();render(layout,font,"layout-dragged");
         if(BridgeConfig.hudX<=before||BridgeConfig.hudY<=10)throw new AssertionError("Studio drag did not update both coordinates");

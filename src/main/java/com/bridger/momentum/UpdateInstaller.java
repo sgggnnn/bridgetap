@@ -49,9 +49,15 @@ public final class UpdateInstaller {
   throw new IOException("Open OneClient and launch "+profile);
  }
  private static void waitForGame(Plan p)throws IOException{
+  boolean authenticated=false;
   try(Socket socket=new Socket()){
-   socket.connect(new InetSocketAddress("127.0.0.1",p.port),3000);socket.setSoTimeout(15000);DataInputStream in=new DataInputStream(socket.getInputStream());if(!in.readUTF().equals(p.nonce))throw new IOException("Update parent handshake failed");socket.setSoTimeout(0);while(in.read()!=-1){}
+   socket.connect(new InetSocketAddress("127.0.0.1",p.port),3000);socket.setSoTimeout(15000);DataInputStream in=new DataInputStream(socket.getInputStream());if(!in.readUTF().equals(p.nonce))throw new IOException("Update parent handshake failed");authenticated=true;socket.setSoTimeout(0);while(in.read()!=-1){}
   }catch(ConnectException|EOFException ex){if(!Files.exists(p.job.resolve("shutdown")))throw new IOException("Minecraft exit could not be verified",ex);}
+  catch(SocketException ex){
+   // Windows may reset a socket instead of delivering EOF when the JVM exits.
+   // Accept that closure only after this helper authenticated its parent.
+   if(!authenticated)throw new IOException("Minecraft exit could not be verified",ex);
+  }
  }
  public static void main(String[] args)throws Exception{
   Properties props=new Properties();try(InputStream in=Files.newInputStream(Paths.get(args[0]))){props.load(in);}Plan p=Plan.read(props);Properties result=new Properties();

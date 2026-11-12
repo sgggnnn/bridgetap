@@ -30,8 +30,8 @@ public class BridgeConfig {
     public static String replayQuery="", replayStatus="ALL", replayAxis="ALL", replayTechnique="ALL", replayContent="ALL";
     public static String replaySource="ALL",replayMode="ALL";
     public static String replayMinTime="", replayMaxTime="";
-    public static final String[] COLOR_NAMES = {"Labels", "Coordinates", "Positive delta", "Negative delta", "Ticks", "Gain", "No Gain", "Header", "Background", "Border", "Velo"};
-    public static final String[] colors = {"b", "e", "a", "c", "7", "a", "e", "b", "0", "7", "7"};
+    public static final String[] COLOR_NAMES = {"Labels", "Coordinates", "Positive delta", "Negative delta", "Ticks", "Gain", "No Gain", "Header", "Background", "Border", "Velo", "Axis delta positive", "Axis delta negative", "Jump angle"};
+    public static final String[] colors = {"b", "e", "a", "c", "7", "a", "e", "b", "0", "7", "7", "a", "c", "7"};
     public static String color(int part) { return "\u00a7" + colors[part]; }
     public static int rgb(int part) {
         int[] palette={0x000000,0x0000AA,0x00AA00,0x00AAAA,0xAA0000,0xAA00AA,0xFFAA00,0xAAAAAA,0x555555,0x5555FF,0x55FF55,0x55FFFF,0xFF5555,0xFF55FF,0xFFFF55,0xFFFFFF};

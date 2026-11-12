@@ -21,6 +21,13 @@ public final class OverlayStyleRegression {
   check(!OverlayStyle.customText[0]&&!EntryFormatter.lines(entries).get(0).contains("§#"),"Velo picker did not restore component coloring or leaked RGB to chat");
   OverlayStyle.save();OverlayStyle.resetPart(10);OverlayStyle.part(10,0xFF13579B);OverlayStyle.load();check(OverlayStyle.part(10)==0xFF13579B,"Velo RGB not persisted");
   BridgeConfig.showBridgeVelocity=false;
+  BridgeConfig.showBothAxes=true;BridgeConfig.showJumpAngle=true;JumpEntry axes=entries.get(0);axes.setHorizontalCoordinates(1.584,2.289);axes.setJumpYaw(45);
+  OverlayStyle.text(0,0xFFFFFFFF);OverlayStyle.part(11,0x00123456);OverlayStyle.part(12,0x00654321);OverlayStyle.part(13,0x00ABCDEF);
+  String styled=EntryFormatter.hudLines(entries).get(0);check(styled.contains("§#123456[\u0394 X-Z: +0.295]")&&styled.contains("§#ABCDEF[Yaw: 45.0\u00b0]"),"New component colors do not reach formatter");
+  axes.setHorizontalCoordinates(1.289,2.584);check(EntryFormatter.hudLines(entries).get(0).contains("§#654321[\u0394 X-Z: -0.295]"),"Negative axis delta color missing");
+  check(!OverlayStyle.customText[0]&&OverlayStyle.part(11)==0xFF123456&&OverlayStyle.part(13)==0xFFABCDEF,"New text colors lost opacity or kept uniform override");
+  OverlayStyle.save();java.nio.file.Path styleFile=java.nio.file.Paths.get("config/bridgetap/overlay-style.properties");byte[] savedStyle=java.nio.file.Files.readAllBytes(styleFile);OverlayStyle.part(11,0xFF000000);OverlayStyle.part(13,0xFF000000);java.nio.file.Files.write(styleFile,savedStyle);OverlayStyle.load();check(OverlayStyle.part(11)==0xFF123456&&OverlayStyle.part(13)==0xFFABCDEF,"New RGB colors were not persisted");
+  check(!EntryFormatter.lines(entries).get(0).contains("§#"),"New RGB colors leaked to chat");BridgeConfig.showBothAxes=false;BridgeConfig.showJumpAngle=false;
   OverlayStyle.resetPart(0);check(OverlayStyle.color(0).equals(BridgeConfig.color(0)),"Legacy palette fallback was not restored");
   for(int i=0;i<3;i++)OverlayStyle.reset(i);
   System.out.println("PASS: independent RGB HUD colors, ARGB/shadow persistence, legacy chat isolation and safe RGB parsing");

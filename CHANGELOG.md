@@ -4,6 +4,18 @@ History of versions available in [GitHub Releases](https://github.com/sgggnnn/br
 
 Some commits contain several intermediate versions. Those versions are tagged at the first commit archiving their binary, rather than at a dedicated source snapshot. The affected release notes explain this distinction.
 
+## [1.7.5](https://github.com/sgggnnn/bridgetap/releases/tag/v1.7.5) - Axis delta and angle colors
+
+- Adds independent positive/negative X-Z delta colors and a jump-angle color in the palette menu and native OneClient color pickers.
+- Keeps these colors separate from speed deltas and tick text, with persistence and live preview.
+- Includes the Windows update installation fix from local 1.7.4.
+
+## 1.7.4 - Windows update installation (local build)
+
+- Handles an authenticated parent socket reset as game exit, fixing Windows updates that downloaded correctly but failed during installation with Connection reset.
+- Rejects resets before the parent handshake, retaining the current JAR.
+- Reproduces both cases with real helper processes and abortive TCP closes.
+
 ## [1.7.3](https://github.com/sgggnnn/bridgetap/releases/tag/v1.7.3) - Jump details, default islands and confirmed updates
 
 - Adds **Both axes + X-Z difference**, showing both sampled horizontal decimals and their signed difference, with independent previous-tick X/Z decimals when Velo is enabled.

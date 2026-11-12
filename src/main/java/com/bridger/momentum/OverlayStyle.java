@@ -19,8 +19,8 @@ public final class OverlayStyle {
     private OverlayStyle(){}
     public static String color(int part){return customParts[part]?HudText.token(parts[part]):BridgeConfig.color(part);}
     public static int part(int part){if(customParts[part])return parts[part];return (part==8?0xA0000000:part==9?0x80000000:0xFF000000)|BridgeConfig.rgb(part);}
-    public static void part(int part,int argb){parts[part]=(part<8||part==10)?argb|0xFF000000:argb;customParts[part]=true;if((part<8||part==10))customText[0]=false;save();}
-    public static void resetPart(int part){customParts[part]=false;if((part<8||part==10))customText[0]=false;save();}
+    public static void part(int part,int argb){parts[part]=(part!=8&&part!=9)?argb|0xFF000000:argb;customParts[part]=true;if((part!=8&&part!=9))customText[0]=false;save();}
+    public static void resetPart(int part){customParts[part]=false;if((part!=8&&part!=9))customText[0]=false;save();}
     public static int background(int type){return type==0?part(8):backgrounds[type];}
     public static void background(int type,int value){if(type==0)part(8,value);else{backgrounds[type]=value;save();}}
     public static boolean backgroundShown(int type){return type==0?BridgeConfig.backgroundEnabled:showBackground[type];}

@@ -1,7 +1,7 @@
 param(
     [string]$JavaHome = $env:JAVA_HOME,
     [string]$RuntimeJavaHome = $JavaHome,
-    [string]$Jar = 'dist/BridgeTap-1.7.3.jar',
+    [string]$Jar = 'dist/BridgeTap-1.7.5.jar',
     [string]$MinecraftJar,
     [string]$GsonJar,
     [string]$Python = 'python',

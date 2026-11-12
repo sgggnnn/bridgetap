@@ -13,6 +13,7 @@ public final class NativeHudStylesRegression {
  public static void main(String[] args){
   set(NativeHudStyles.properties(0),"componentColor0",0xFF2468AC);check(OverlayStyle.part(0)==0xFF2468AC,"Coordinate picker did not reach HUD");
   set(NativeHudStyles.properties(0),"componentColor10",0xFF987654);check(OverlayStyle.part(10)==0xFF987654,"Velo picker did not reach HUD");
+  for(int part:new int[]{11,12,13}){set(NativeHudStyles.properties(0),"componentColor"+part,0x0013579B);check(OverlayStyle.part(part)==0xFF13579B,"New component picker did not reach HUD: "+part);}
   set(NativeHudStyles.properties(0),"componentColor8",0x48102030);check(OverlayStyle.background(0)==0x48102030,"Coordinate background alpha lost");
   set(NativeHudStyles.properties(1),"textColorRgb",0xFF112233);check(OverlayStyle.styled(1,"Text").equals("§#112233Text"),"Replay text picker did not reach renderer");
   set(NativeHudStyles.properties(2),"pressedBackgroundRgb",0x68456789);check(OverlayStyle.pressedBackground==0x68456789,"Pressed background picker failed");

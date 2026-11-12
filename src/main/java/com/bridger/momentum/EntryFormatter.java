@@ -31,7 +31,7 @@ public final class EntryFormatter {
    double difference=(x-z)/1000.0;
    boolean velo=BridgeConfig.showBridgeVelocity&&(entry.getType()==JumpEntry.EntryType.FLAT||entry.getType()==JumpEntry.EntryType.TAP);
    return color.apply(1)+"X "+axisValue(entry.getSampledX(),entry.getPreJumpX(),velo,color)+" "+color.apply(1)+"Z "+axisValue(entry.getSampledZ(),entry.getPreJumpZ(),velo,color)
-       +" "+color.apply(difference<0?3:2)+String.format(Locale.US,"[\u0394 X-Z: %+.3f]",difference);
+       +" "+color.apply(difference<0?12:11)+String.format(Locale.US,"[\u0394 X-Z: %+.3f]",difference);
   }
   int dec=Math.floorMod((int)Math.round(entry.getDecimal()*1000),1000);
   String velo=velocity(entry,color);
@@ -47,7 +47,7 @@ public final class EntryFormatter {
   return color.apply(10)+"/"+(Double.isNaN(entry.getPreJumpZ())?"n/a":JumpVelocity.decimalZ(entry.getPreJumpZ()).substring(1));
  }
  private static String angle(JumpEntry entry,java.util.function.IntFunction<String> color){
-  return BridgeConfig.showJumpAngle&&Double.isFinite(entry.getJumpYaw())?" "+color.apply(4)+String.format(Locale.US,"[Yaw: %.1f\u00b0]",entry.getJumpYaw()):"";
+  return BridgeConfig.showJumpAngle&&Double.isFinite(entry.getJumpYaw())?" "+color.apply(13)+String.format(Locale.US,"[Yaw: %.1f\u00b0]",entry.getJumpYaw()):"";
  }
  public static String format(JumpEntry entry){return format(entry,BridgeConfig::color);}
  private static String format(JumpEntry entry,java.util.function.IntFunction<String> color){
