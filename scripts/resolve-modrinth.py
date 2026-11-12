@@ -9,7 +9,9 @@ try:
     project=os.environ.get("MODRINTH_PROJECT", "").strip()
     if project:
         if not re.fullmatch(r"[A-Za-z0-9_-]+",project):raise SystemExit("Invalid Modrinth project ID/slug")
-        selected=get("project/"+project)
+        # Private-project reads require PROJECT_READ, but version publishing does not.
+        # mc-publish accepts an explicit ID without that scope and validates it on upload.
+        selected={"id":project,"title":project}
     else:
         user=get("user");projects=get("user/"+user["id"]+"/projects")
         candidates=[p for p in projects if any(re.sub(r"[^a-z]","",p.get(k,"").lower()) in ("bridgetap","bridgertap") for k in ("title","slug"))]
