@@ -1,0 +1,42 @@
+[
+  {
+    "file": "replay-library.jpg",
+    "title": "Replay library",
+    "description": "Organize bridge recordings in server and mode folders, filter runs, and inspect their details. Screenshot captured in Minecraft 1.8.9 with OneClient; other client HUD elements and a resource pack are also visible.",
+    "featured": true,
+    "ordering": 0,
+    "sha256": "b8fbaba9f3bd3c7e84921d5755b0c1ec994926daf15f6ae75280492bbb9bdab5"
+  },
+  {
+    "file": "replay-playback.jpg",
+    "title": "Replay playback and telemetry",
+    "description": "Watch the recorded player and block placements with keystrokes, clicks and per-tick movement telemetry. Screenshot captured in Minecraft 1.8.9 with OneClient; other client HUD elements and a resource pack are also visible.",
+    "featured": false,
+    "ordering": 1,
+    "sha256": "11b1c0f2dc1f340f3c4fb2f6d843d307566b7748e50bf04ae70472f1c5d9ae2b"
+  },
+  {
+    "file": "bridge-details.jpg",
+    "title": "Bridge coordinate breakdown",
+    "description": "Review jump coordinates, deltas, tick timings and platform arrival measurements from a saved bridge. Screenshot captured in Minecraft 1.8.9 with OneClient; other client HUD elements and a resource pack are also visible.",
+    "featured": false,
+    "ordering": 2,
+    "sha256": "484e3264b79288a3832659a6b24db4809399e158f4792af5046129ccabf10b1e"
+  },
+  {
+    "file": "replay-video-export.jpg",
+    "title": "Replay video export",
+    "description": "Export recordings as MP4 with camera options, recorded inputs, a block-stack hotbar and the final run time. Screenshot captured in Minecraft 1.8.9 with OneClient; other client HUD elements and a resource pack are also visible.",
+    "featured": false,
+    "ordering": 3,
+    "sha256": "caa30a51cb3941087b652f43534ba1212ec666528f6bb03a3a02e0b6da686736"
+  },
+  {
+    "file": "island-presets.jpg",
+    "title": "Shareable island presets",
+    "description": "Restore saved island layouts, bind a preset to a server, and import or export presets for friends. Screenshot captured in Minecraft 1.8.9 with OneClient; other client HUD elements and a resource pack are also visible.",
+    "featured": false,
+    "ordering": 4,
+    "sha256": "d4149a5b4d97b227f630976e92e17f145b89e268921a59e53e446a7f0ff823fb"
+  }
+]

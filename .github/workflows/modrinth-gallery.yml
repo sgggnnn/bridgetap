@@ -1,0 +1,34 @@
+name: Upload Modrinth screenshots
+
+on:
+  workflow_dispatch:
+    inputs:
+      project:
+        description: Existing Modrinth project ID
+        required: true
+        default: ueMpSLbl
+
+permissions:
+  contents: read
+
+concurrency:
+  group: modrinth-gallery-upload
+  cancel-in-progress: false
+
+jobs:
+  gallery:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add screenshots to the project gallery
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN || secrets.BRIDGERTAP }}
+          MODRINTH_PROJECT: ${{ inputs.project }}
+        run: python3 scripts/publish-modrinth-gallery.py --project "$MODRINTH_PROJECT"
+      - name: Preserve upload receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: modrinth-gallery-receipts
+          path: build/modrinth-gallery-upload.json
+          if-no-files-found: warn
