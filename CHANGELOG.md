@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.8.1](https://github.com/sgggnnn/bridgetap/releases/tag/v1.8.1) - Statistics and replay fixes
+
+## Added
+- Persistent local bridge statistics: average successful time, personal best, success rate, attempts, worst time and standard deviation.
+- Average-time and success-rate charts with server, mode and date filters. Single-day views show minute-based progress; longer histories use daily groups. Existing hourly statistics are retained.
+- One-time import of retained local replay history. Statistics remain available independently of replay cleanup.
+- Anniversary start/finish island pair in Island library > Defaults.
+
+## Fixed
+- Twelve-tick turns now sample 12 ticks after the latest jump and subtract 100 thousandths from the coordinate fraction (584 becomes 484), including X/Z display. Fifteen-tick turns are unchanged.
+- Replay worlds load neighboring chunks required by Argentum/Celeritas to render sparse terrain and entities. Replay renderers also rebind after texture, shader or island reloads.
+- McPlayHD mode detection checks original loaded finish platforms for Extra Short (16), Short (28), Normal (51) and Long (83), independently of height. Own placed blocks are excluded. Valid measurements survive saving, sharing and import.
+- Startup update prompts remain pending after quick server joins and support custom OneClient title screens. In-world prompts wait for a pause menu or two seconds stationary, outside bridges and replays.
+
+
 ## [1.8.0](https://github.com/sgggnnn/bridgetap/releases/tag/v1.8.0) - Profiles, audio, appearances and performance
 
 ## Added

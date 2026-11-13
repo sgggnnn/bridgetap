@@ -26,8 +26,10 @@ public final class ReplaySession {
  private final Map<Long,ReplayData.Block> applied=new HashMap<>();
  private volatile Map<Long,Integer> placedIds=Collections.emptyMap();
  private final Set<Long> chunks=new HashSet<>();
+ private final Set<Long> coveredChunks=new HashSet<>();
  private int sceneTick=-1,sourceSlot;
  private boolean rendering;
+ private volatile boolean rendererInvalid;
  private boolean followPov;
  private boolean previousSneak;
  private ReplayControls.Center centerState;
@@ -93,7 +95,8 @@ public final class ReplaySession {
  public static C_34399650 sourceWorld(){return current==null?Minecraft.m_20213497().f_26407825:current.source;}
  public static C_34399650 viewWorld(){return current==null?Minecraft.m_20213497().f_26407825:current.world;}
  public static void freeCopyCamera(){if(current!=null&&current.followPov)current.setPov(false);}
- public static void rebuildSceneryTerrain(){Minecraft mc=Minecraft.m_20213497();if(mc!=null&&mc.f_48619021!=null)mc.f_48619021.m_12518137();if(current!=null&&current.renderer!=null&&current.renderer!=mc.f_48619021)current.renderer.m_12518137();}
+ public static void rendererInvalidated(){if(current!=null&&!current.rendering)current.rendererInvalid=true;}
+ public static void rebuildSceneryTerrain(){Minecraft mc=Minecraft.m_20213497();if(mc!=null&&mc.f_48619021!=null)mc.f_48619021.m_12518137();rendererInvalidated();}
  public static void invalidateScenery(int x,int y,int z,int maxX,int maxY,int maxZ){Minecraft mc=Minecraft.m_20213497();if(mc==null)return;C_34399650 live=sourceWorld();if(live!=null)live.m_76770021(x,y,z,maxX,maxY,maxZ);if(current!=null&&current.world!=null)current.world.m_76770021(x,y,z,maxX,maxY,maxZ);}
  public static ReplayData.TickStats recordedInputs(){return current==null?null:current.timeline.sample().stats;}
  public static boolean rendering(){return current!=null&&current.rendering;}
@@ -169,6 +172,8 @@ public final class ReplaySession {
   s.rendering=true;
   mc.f_26407825=s.world;mc.f_28396371=s.camera;mc.f_48619021=s.renderer;mc.f_49464910=s.particles;mc.f_17639899=s.controls;mc.f_28235293=s.gui;
   ((ReplayContextAccessor)mc).bridgetap$setRenderCamera(s.camera);mc.f_58088711.f_33865429=0;mc.m_64046137().m_72442377(true);
+  mc.m_64046137().m_77304627(s.world);
+  if(s.rendererInvalid){s.rendererInvalid=false;s.renderer.m_96356728(null);s.renderer.m_96356728(s.world);}
   ItemInHandAccessor hand=(ItemInHandAccessor)mc.m_52934152();
   s.previousHand=hand.bridgetap$getItem();s.previousHandHeight=hand.bridgetap$getHeight();s.previousLastHandHeight=hand.bridgetap$getLastHeight();
   hand.bridgetap$setItem(s.followPov?s.ghost.f_29439708.m_27760697():s.camera.f_29439708.m_27760697());hand.bridgetap$setHeight(1);hand.bridgetap$setLastHeight(1);
@@ -177,7 +182,7 @@ public final class ReplaySession {
  public static void endRender(){
   ReplaySession s=current;if(s==null||!s.rendering)return;Minecraft mc=Minecraft.m_20213497();
   mc.f_26407825=s.source;mc.f_28396371=s.player;mc.f_48619021=s.previousRenderer;mc.f_49464910=s.previousParticles;mc.f_17639899=s.previousControls;mc.f_28235293=s.previousGui;
-  mc.f_81460813=s.previousHit;mc.f_30642501=s.previousPointedEntity;
+  mc.f_81460813=s.previousHit;mc.f_30642501=s.previousPointedEntity;mc.m_64046137().m_77304627(s.source);
   ((ReplayContextAccessor)mc).bridgetap$setRenderCamera(s.previousCamera);mc.f_58088711.f_33865429=s.previousPerspective;mc.m_64046137().m_72442377(s.previousHitboxes);s.rendering=false;
   ItemInHandAccessor hand=(ItemInHandAccessor)mc.m_52934152();hand.bridgetap$setItem(s.previousHand);hand.bridgetap$setHeight(s.previousHandHeight);hand.bridgetap$setLastHeight(s.previousLastHandHeight);
  }
@@ -282,7 +287,7 @@ public final class ReplaySession {
    world.m_76770021(b.x,b.y,b.z,b.x,b.y,b.z);
   }
  }
- private void ensureChunk(int x,int z){long chunk=((long)x<<32)^(z&0xFFFFFFFFL);if(chunks.add(chunk))world.m_66086785(x,z,true);}
+ private void ensureChunk(int x,int z){ReplayChunkCoverage.ensure(chunks,coveredChunks,x,z,(cx,cz)->world.m_66086785(cx,cz,true));}
  public static void renderHud(){
   if(!ReplayVideoExport.overlays())return;
   ReplaySession s=current;if(s==null||!s.rendering)return;

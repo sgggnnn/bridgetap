@@ -14,12 +14,14 @@ A **Minecraft 1.8.9** client mod for analyzing your bridges: jump coordinates, r
 
 **1.8.0** adds keybind profiles, microphone clips, imported 26.2 block appearances and original placement sounds, replay storage controls, a grouped Tools menu and performance improvements. It fixes Forge keybind persistence and OneClient connected-texture compatibility. See the [1.8.0 release notes](docs/releases/v1.8.0.md) and [profiles, audio and appearances guide](docs/PROFILES-AND-APPEARANCES.md).
 
+**1.8.1** adds persistent statistics and minute-level charts, Anniversary islands, and fixes for 12-tick turns, McPlay modes, replay visibility and startup update prompts. See the [1.8.1 release notes](docs/releases/v1.8.1.md).
+
 ## Installation
 
-1. Open [release 1.8.0](https://github.com/sgggnnn/bridgetap/releases/tag/v1.8.0).
+1. Open [release 1.8.1](https://github.com/sgggnnn/bridgetap/releases/tag/v1.8.1).
 2. Download the file matching your setup:
-   - **Forge 1.8.9**: `BridgeTap-1.8.0-Forge-1.8.9.jar`.
-   - **OneClient / Ornithe Fabric 1.8.9**: `BridgeTap-1.8.0-OneClient.jar`, for an environment using Ornithe mappings.
+   - **Forge 1.8.9**: `BridgeTap-1.8.1-Forge-1.8.9.jar`.
+   - **OneClient / Ornithe Fabric 1.8.9**: `BridgeTap-1.8.1-OneClient.jar`, for an environment using Ornithe mappings.
 3. Place the JAR in your instance's `mods` folder, replacing the previous BridgeTap version.
 4. Launch Minecraft with **Java 8+** and your chosen loader. Native OneClient/OneConfig integration requires **Java 21+**.
 5. For Windows clips/audio, extract the optional tools pack from the release into the game directory containing `mods`, then enable the buffer. See the [tools installation instructions](docs/releases/v1.7.0.md#downloads-and-upgrade).
@@ -146,3 +148,5 @@ Maintained at [sgggnnn/bridgetap](https://github.com/sgggnnn/bridgetap). Thanks 
 BridgeTap uses Minecraft Forge, Ornithe, Fabric Loader, Mixin, and their mapping tools. Licenses for bundled libraries are included in the JARs under `META-INF/licenses/`.
 
 Replay tick navigation now has no stick cooldown: paused sticks move one tick per action, while playing sticks still skip one second. New v5 recordings keep the initial pose and align block placement and recorded inputs with the start of each tick. v4 recordings with placement provenance are corrected at playback without rewriting their source files; older provenance-free recordings keep their original timing.
+
+The Defaults island library also includes **Anniversary**.

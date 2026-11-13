@@ -15,8 +15,9 @@ public class RunHistory {
   public final ReplayData replay;
   private volatile ServerMode.Measurement modeMeasurement;
   public ServerMode.Mode mode(){return ServerMode.detect(server,modeMeasurement);}
+  public void observeMeasurement(ServerMode.Measurement measured){if(measured!=null&&measured.available&&ServerMode.detect(server,measured)!=ServerMode.Mode.UNKNOWN)modeMeasurement=measured;}
   public boolean modeReady(){return modeMeasurement!=null;}
-  void observeMode(ReplayData data){modeMeasurement=ServerMode.measure(data);}
+  void observeMode(ReplayData data){ServerMode.Measurement measured=ServerMode.measure(data);if(modeMeasurement==null||mode()==ServerMode.Mode.UNKNOWN||ServerMode.detect(server,measured)!=ServerMode.Mode.UNKNOWN)modeMeasurement=measured;}
   private String name="";
   private boolean protectedSave;
   public boolean isProtected(){return protectedSave;}
@@ -117,7 +118,7 @@ public class RunHistory {
  private static String validServer(String server){if(server==null||server.length()>255)throw new IllegalArgumentException("Invalid server address");for(int i=0;i<server.length();i++)if(server.charAt(i)<32||server.charAt(i)==127||server.charAt(i)=='\u00a7')throw new IllegalArgumentException("Invalid server address");return server.trim();}
  private static Properties metadata(Run run){
   Properties p=new Properties();p.setProperty("id",run.id);p.setProperty("status",run.status);p.setProperty("time",String.valueOf(run.time));p.setProperty("jumps",String.valueOf(run.jumps));p.setProperty("axis",run.axis);p.setProperty("created",String.valueOf(run.created));p.setProperty("count",String.valueOf(run.details.size()));p.setProperty("name",run.name);
-  if(run.modeReady()){p.setProperty("mode.version","2");p.setProperty("mode",run.mode().name());p.setProperty("mode.measured",String.valueOf(run.modeMeasurement.available));if(run.modeMeasurement.available){p.setProperty("mode.gap",String.valueOf(run.modeMeasurement.gap));p.setProperty("mode.rise",String.valueOf(run.modeMeasurement.rise));}}
+  if(run.modeReady()){p.setProperty("mode.version","3");p.setProperty("mode",run.mode().name());p.setProperty("mode.measured",String.valueOf(run.modeMeasurement.available));if(run.modeMeasurement.available){p.setProperty("mode.gap",String.valueOf(run.modeMeasurement.gap));p.setProperty("mode.rise",String.valueOf(run.modeMeasurement.rise));}}
   p.setProperty("server",run.server);p.setProperty("protected",String.valueOf(run.protectedSave));p.setProperty("imported",String.valueOf(run.imported));for(int i=0;i<run.details.size();i++)p.setProperty("line."+i,run.details.get(i));return p;
  }
  private static Run parse(Properties p,ReplayData replay){
@@ -125,7 +126,7 @@ public class RunHistory {
   double time=Double.parseDouble(p.getProperty("time"));int jumps=Integer.parseInt(p.getProperty("jumps")),count=Integer.parseInt(p.getProperty("count","0"));long created=Long.parseLong(p.getProperty("created"));
   if((!"SUCCESS".equals(status)&&!"FAILED".equals(status))||(!"X".equals(axis)&&!"Z".equals(axis))||!Double.isFinite(time)||time<0||jumps<0||jumps>1000000||created<0||count<0||count>2000)throw new IllegalArgumentException("Invalid replay metadata");
   List<String> details=new ArrayList<>();for(int i=0;i<count;i++)details.add(p.getProperty("line."+i,"").replace("No Gay","No Gain"));
-  Run run=new Run(id,status,time,jumps,axis,created,details,replay,p.getProperty("server",""));run.name=validName(p.getProperty("name",""));run.protectedSave=!p.getProperty("protected","true").equals("false");run.imported=Boolean.parseBoolean(p.getProperty("imported","false"));if(run.modeMeasurement==null&&"2".equals(p.getProperty("mode.version"))){try{run.modeMeasurement=Boolean.parseBoolean(p.getProperty("mode.measured","false"))?new ServerMode.Measurement(true,Double.parseDouble(p.getProperty("mode.gap")),Double.parseDouble(p.getProperty("mode.rise"))):ServerMode.UNAVAILABLE;}catch(IllegalArgumentException invalid){run.modeMeasurement=null;}}return run;
+  Run run=new Run(id,status,time,jumps,axis,created,details,replay,p.getProperty("server",""));run.name=validName(p.getProperty("name",""));run.protectedSave=!p.getProperty("protected","true").equals("false");run.imported=Boolean.parseBoolean(p.getProperty("imported","false"));if((run.modeMeasurement==null||run.mode()==ServerMode.Mode.UNKNOWN)&&("3".equals(p.getProperty("mode.version"))||"2".equals(p.getProperty("mode.version"))&&Boolean.parseBoolean(p.getProperty("mode.measured","false")))){try{run.modeMeasurement=Boolean.parseBoolean(p.getProperty("mode.measured","false"))?new ServerMode.Measurement(true,Double.parseDouble(p.getProperty("mode.gap")),Double.parseDouble(p.getProperty("mode.rise"))):ServerMode.UNAVAILABLE;}catch(IllegalArgumentException invalid){run.modeMeasurement=null;}}return run;
  }
  public synchronized void rename(Run run,String name)throws IOException{
   String value=validName(name);save(run);Properties p=metadata(run);p.setProperty("name",value);
@@ -151,7 +152,7 @@ public class RunHistory {
   try{imported=parse(content.metadata,content.replay);}catch(IllegalArgumentException|NullPointerException ex){throw new IOException("Invalid replay metadata",ex);}
   final String id=imported.id;
   if(Files.exists(folder.resolve(id+".properties"))||recent().stream().anyMatch(r->r.id.equals(id))){
-   Run copy=new Run(UUID.randomUUID().toString(),imported.status,imported.time,imported.jumps,imported.axis,imported.created,imported.details,imported.replay,imported.server);copy.name=imported.name;imported=copy;
+   Run copy=new Run(UUID.randomUUID().toString(),imported.status,imported.time,imported.jumps,imported.axis,imported.created,imported.details,imported.replay,imported.server);copy.name=imported.name;copy.observeMeasurement(imported.modeMeasurement);imported=copy;
   }
   imported.imported=true;save(imported);synchronized(recent){recent.add(0,imported);if(recent.size()>10)recent.remove(10);}return imported;
  }

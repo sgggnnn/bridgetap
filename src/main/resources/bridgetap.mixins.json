@@ -30,7 +30,8 @@
     "AppearanceItemMixin",
     "AppearanceRenderItemMixin",
     "AppearanceSoundMixin"
-    ,"AppearanceCeraMixin"
+    ,"AppearanceCeraMixin",
+    "ReplayRendererReloadMixin"
   ],
   "injectors": {
     "defaultRequire": 1

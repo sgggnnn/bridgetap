@@ -5,7 +5,7 @@ import java.nio.file.*;
 
 /** Bundled static scenery is copied locally for the existing Path-based library. */
 public final class DefaultIslands {
-    private static final String[] FILES={"Default.btisland","Fall Island.btisland","Halloween.btisland","Speedcubing.btisland","Summer.btisland","Winter.btisland"};
+    private static final String[] FILES={"Anniversary.btisland","Default.btisland","Fall Island.btisland","Halloween.btisland","Speedcubing.btisland","Summer.btisland","Winter.btisland"};
     private DefaultIslands(){}
     public static synchronized void install(Path folder)throws IOException{
         Files.createDirectories(folder);

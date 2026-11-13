@@ -25,7 +25,7 @@ public final class ForgeSmokeMain {
             hooks+=count;
             System.out.println("PASS Forge transformed "+target+" ("+count+" BridgeTap methods)");
         }
-        for(String name:Arrays.asList("ReplaySession","ReplayCamera","ReplayGhost","BridgeHistoryScreen","BridgeSettingsScreen","BridgeColorsScreen","BridgeLayoutScreen","BridgeScreen","ReplayInputOverlay","ReplayRecorder","IslandOverlay","IslandScreen","ClipCapture","ClipScreen","ReplayFolderScreen","ReplayVideoExport","ReplayVideoExportScreen","ReplayFailureScreen","ServerPresets")) {
+        for(String name:Arrays.asList("ReplaySession","ReplayCamera","ReplayGhost","BridgeHistoryScreen","BridgeSettingsScreen","BridgeColorsScreen","BridgeLayoutScreen","BridgeScreen","ReplayInputOverlay","ReplayRecorder","IslandOverlay","IslandScreen","ClipCapture","ClipScreen","ReplayFolderScreen","ReplayVideoExport","ReplayVideoExportScreen","ReplayFailureScreen","StatisticsScreen","StatsTracker","ServerPresets")) {
             Class<?> type=Class.forName("com.bridger.momentum."+name,false,Launch.classLoader);
             type.getDeclaredMethods();type.getDeclaredConstructors();
         }
@@ -136,7 +136,7 @@ public final class ForgeSmokeMain {
         set(viewer,"field_70161_v",20.0);set(viewer,"field_70177_z",0f);
         testAppearanceItems(unsafe,allocate,minecraft,mc,playerType,viewer);
         Class<?> session=Class.forName("com.bridger.momentum.ReplaySession",true,Launch.classLoader);Object replay=allocate.invoke(unsafe,session);set(replay,"source",world);set(replay,"camera",viewer);
-        Field current=session.getDeclaredField("current");current.setAccessible(true);current.set(null,replay);
+        Field current=session.getDeclaredField("current");current.setAccessible(true);current.set(null,replay);Field invalid=session.getDeclaredField("rendererInvalid");invalid.setAccessible(true);session.getMethod("rendererInvalidated").invoke(null);if(!invalid.getBoolean(replay)||current.get(null)!=replay||minecraft.getField("field_71441_e").get(mc)!=world)throw new AssertionError("Renderer reload lost replay or modified live context");invalid.setBoolean(replay,false);set(replay,"rendering",true);session.getMethod("rendererInvalidated").invoke(null);if(invalid.getBoolean(replay))throw new AssertionError("Internal replay reload recursively invalidated itself");set(replay,"rendering",false);System.out.println("PASS: texture/shader invalidation defers replay rebinding without discarding the scene or entering a rebuild loop");
         Class<?> scenery=Class.forName("com.bridger.momentum.IslandOverlay",true,Launch.classLoader);
         try{
             Class<?> template=Class.forName("com.bridger.momentum.IslandTemplate",true,Launch.classLoader),block=Class.forName("com.bridger.momentum.IslandTemplate$Block",true,Launch.classLoader);

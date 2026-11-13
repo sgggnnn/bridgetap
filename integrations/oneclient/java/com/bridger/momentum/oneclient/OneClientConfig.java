@@ -41,6 +41,7 @@ public final class OneClientConfig extends Config {
     public java.util.List<org.polyfrost.oneconfig.api.config.v1.Property<?>> hudProperties(int type){return NativeHudStyles.properties(type);}
     public void bindHudStyle(int type,Object hud){NativeHudStyles.bind(type,hud);}
     private void open(C_85740840 screen){Minecraft mc=Minecraft.m_20213497();if(mc.f_28396371!=null)mc.m_52715402(screen);}
+    @Button(title="Bridge statistics",text="Open statistics",category="Replays") public void statistics(){open(new StatisticsScreen(null));}
     @Button(title="Replay library",text="Browse replays",category="Replays") public void replays(){open(ReplayFolderScreen.home());}
     @Button(title="Island library",text="Browse islands",category="Islands") public void islands(){open(new IslandScreen(null));}
     @Button(title="Island presets",text="Browse presets",category="Islands") public void presets(){open(new IslandPresetsScreen(null));}

@@ -17,6 +17,8 @@ public class DisplayRegression {
   check(line.contains("\u00a7d")&&line.contains("\u00a7f.460")&&line.contains("\u00a74-.044")&&line.contains("\u00a72(9t)")&&line.contains("\u00a75[No Gain]"),"Independent compartment colors");
   BridgeConfig.useNoGayLabel=true;check(EntryFormatter.format(entry).contains("[No Gay]"),"Alternative no-gain label");
   entry.setGainType("No Gay");BridgeConfig.useNoGayLabel=false;check(EntryFormatter.format(entry).contains("[No Gain]"),"Old labels respect current preference");
+  check(Math.abs(TurnCoordinates.decimal(123.584,12)-.484)<1e-9,"12t turn must subtract 100 thousandths");check(Math.abs(TurnCoordinates.decimal(-123.584,12)-.484)<1e-9,"Negative world coordinate changes turn correction");check(Math.abs(TurnCoordinates.decimal(.050,12)-.950)<1e-9,"12t turn wrap incorrect");check(Math.abs(TurnCoordinates.decimal(123.584,15)-.584)<1e-9,"15t turn changed");
+  JumpEntry corrected=new JumpEntry("Turn",123.584,.484,0,12,JumpEntry.EntryType.TURN);corrected.setHorizontalCoordinates(123.584,-45.289);BridgeConfig.showBothAxes=true;String correctedText=EntryFormatter.format(corrected);check(correctedText.contains("X .484")&&correctedText.contains("Z .189"),"Both axes bypass 12t correction");BridgeConfig.showBothAxes=false;
   JumpEntry turn=new JumpEntry("Turn",.216,.216,0,15,JumpEntry.EntryType.TURN);
   JumpEntry latest=new JumpEntry("Tap #2",.555,.555,0,9,JumpEntry.EntryType.TAP);
   BridgeConfig.displayMode="LAST_TURN";

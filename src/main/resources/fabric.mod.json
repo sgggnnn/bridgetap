@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "bridgetap",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "name": "BridgeTap",
   "license": "GPL-3.0-only",
   "description": "Named and shareable Minecraft bridge replays with sorting, platform measurements, per-tick telemetry and continuous POV.",

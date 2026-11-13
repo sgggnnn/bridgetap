@@ -1,0 +1,24 @@
+package com.bridger.momentum;
+import java.util.*;
+import net.minecraft.unmapped.C_85740840;
+
+public final class StatisticsScreen extends BridgeScreen {
+ private final C_85740840 parent;private String server="";private ServerMode.Mode mode;private BridgeStats.Period period=BridgeStats.Period.TODAY;private boolean rate;
+ public StatisticsScreen(C_85740840 parent){this.parent=parent;}
+ private static String seconds(double value){return Double.isFinite(value)?String.format(Locale.US,"%.3fs",value):"--";}
+ @Override protected void paint(){header("Bridge statistics","Local attempts / Successful averages / Server and mode breakdown");button("Back",752,15,88,this::back);StatsTracker.request(server,mode,period);BridgeStats.View view=StatsTracker.view();
+  List<String> servers=new ArrayList<>();servers.add("All servers");if(view!=null)servers.addAll(view.servers);int selected=server.isEmpty()?0:servers.indexOf(server);dropdown("stats-server",server.isEmpty()?"All servers":server,servers.toArray(new String[0]),selected,20,70,320,i->server=i==0?"":servers.get(i));String[] modes=new String[ServerMode.Mode.values().length+1];modes[0]="All modes";for(int i=1;i<modes.length;i++)modes[i]=ServerMode.Mode.values()[i-1].label;dropdown("stats-mode",mode==null?"All modes":mode.label,modes,mode==null?0:mode.ordinal()+1,354,70,200,i->mode=i==0?null:ServerMode.Mode.values()[i-1]);String[] periods=Arrays.stream(BridgeStats.Period.values()).map(p->p.label).toArray(String[]::new);dropdown("stats-period",period.label,periods,period.ordinal(),568,70,272,i->period=BridgeStats.Period.values()[i]);
+  if(view==null||!StatsTracker.current()){label(StatsTracker.message(),32,130);footer("Statistics are processed in the background.");return;}
+  BridgeStats.Totals total=view.totals;metric(20,"AVERAGE TIME",seconds(total.average()));metric(230,"PERSONAL BEST",seconds(total.successes==0?Double.NaN:total.best));metric(440,"SUCCESS RATE",Double.isFinite(total.rate())?String.format(Locale.US,"%.1f%%",total.rate()):"--");metric(650,"ATTEMPTS",Long.toString(total.attempts));
+  panel(20,185,820,230);text(rate?"SUCCESS RATE OVER TIME":"AVERAGE SUCCESSFUL TIME OVER TIME",38,200,ACCENT);button(rate?"Show average time":"Show success rate",602,193,218,24,true,false,()->rate=!rate);chart(view.points);
+  label("Successes: "+total.successes+"    Fails: "+(total.attempts-total.successes)+"    Worst success: "+seconds(total.successes==0?Double.NaN:total.worst)+"    Std dev: "+seconds(total.deviation()),32,430);
+  button(StatsTracker.importing()?"Importing...":view.imported?"History imported":"Import saved history",20,446,212,24,!StatsTracker.importing()&&!view.imported,false,StatsTracker::importHistory);clipped("Tracking since "+java.time.Instant.ofEpochMilli(view.since).atZone(java.time.ZoneId.systemDefault()).toLocalDate()+" / Times exclude fails",248,454,580,MUTED);footer(StatsTracker.message());
+ }
+ private void metric(int x,String title,String value){panel(x,112,190,56);label(title,x+14,123);text(value,x+14,145,TEXT);}
+ private void chart(List<BridgeStats.Point> points){int x=88,y=239,w=724,h=132;double low=Double.POSITIVE_INFINITY,high=Double.NEGATIVE_INFINITY;for(BridgeStats.Point p:points){double v=rate?p.totals.rate():p.totals.average();if(Double.isFinite(v)){low=Math.min(low,v);high=Math.max(high,v);}}
+  if(!Double.isFinite(low)){label(rate?"No attempts in this selection yet.":"No successful runs in this selection yet.",230,293);return;}if(rate){low=0;high=100;}else{double pad=Math.max(.05,(high-low)*.15);low=Math.max(0,low-pad);high+=pad;}for(int grid=0;grid<4;grid++){int gy=y+grid*h/3;line(x,gy,w);clipped(String.format(Locale.US,rate?"%.0f%%":"%.2fs",high-(high-low)*grid/3),31,gy-3,51,MUTED);}int px=0,py=0,valid=0;boolean previous=false;for(BridgeStats.Point point:points)if(Double.isFinite(rate?point.totals.rate():point.totals.average()))valid++;if(valid==1)label("One time sample available. New runs add minute-by-minute points.",132,390);
+  for(int i=0;i<points.size();i++){BridgeStats.Point p=points.get(i);double value=rate?p.totals.rate():p.totals.average();int cx=x+(points.size()==1?w/2:i*w/(points.size()-1));if(Double.isFinite(value)){int cy=y+h-(int)Math.round((value-low)/(high-low)*h);if(previous)segment(px,py,cx,cy);rect(cx-2,cy-2,5,5,ACCENT);px=cx;py=cy;previous=true;if(over(cx-7,y,14,h)){String text=p.label+": "+(rate?String.format(Locale.US,"%.1f%%",value):seconds(value))+" / "+p.totals.attempts+" attempts";rect(140,220,420,16,PANEL);label(text,146,224);}}if(i==0||i==points.size()-1||i==points.size()/2)clipped(p.label,cx-17,y+h+11,72,MUTED);}
+ }
+ private void segment(int x,int y,int tx,int ty){int steps=(Math.max(Math.abs(tx-x),Math.abs(ty-y))+3)/4;if(steps==0)return;for(int i=0;i<=steps;i++)rect(x+(tx-x)*i/steps,y+(ty-y)*i/steps,Math.max(2,Math.abs(tx-x)/steps+1),Math.max(2,Math.abs(ty-y)/steps+1),ACCENT);}
+ @Override protected void back(){open(parent);}
+}

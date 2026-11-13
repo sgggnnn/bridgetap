@@ -18,8 +18,11 @@ public final class ReplayRecorder {
  private static long dayTime;
  private static ReplayData.Identity identity=ReplayData.Identity.unknown();
  private static String server="";
+ private static C_34399650 modeWorld;private static C_32594356 modeStart;private static int modeDx,modeDz;private static ServerMode.Measurement measuredMode=ServerMode.UNAVAILABLE;
+ public static void modeAnchor(C_34399650 world,C_32594356 start,C_28786548 face){if(modeStart!=null||!ServerMode.mcplay(server)||face==null||face.m_29389506()!=0)return;modeWorld=world;modeStart=new C_32594356(start.m_32364273(),start.m_62825721(),start.m_23514936());modeDx=face.m_48689500();modeDz=face.m_22521050();}
+ public static ServerMode.Measurement modeMeasurement(){if(measuredMode.available||modeStart==null||modeWorld!=Minecraft.m_20213497().f_26407825)return measuredMode;measuredMode=ServerModeProbe.measure(server,(x,y,z)->{C_32594356 pos=new C_32594356(x,y,z);return !placements.contains(pos.m_14165896())&&modeWorld.m_09893682(pos)?C_81592558.m_63461719(modeWorld.m_77852500(pos).m_41958956()):0;},modeStart.m_32364273(),modeStart.m_62825721(),modeStart.m_23514936(),modeDx,modeDz);return measuredMode;}
  public static String serverAddress(){return server;}
- public static void reset(){clock.clear();blocks.clear();scanned.clear();states.clear();placements.clear();truncated=false;lastX=Integer.MIN_VALUE;server="";}
+ public static void reset(){modeStart=null;modeWorld=null;measuredMode=ServerMode.UNAVAILABLE;clock.clear();blocks.clear();scanned.clear();states.clear();placements.clear();truncated=false;lastX=Integer.MIN_VALUE;server="";}
  public static void start(){
   reset();IslandStartAnchors.runStart();Minecraft mc=Minecraft.m_20213497();C_57778754 p=mc.f_28396371;
   C_91543234 entry=mc.m_73689431();server=mc.m_10057689()?"Singleplayer":entry==null?"Unknown server":entry.f_01631523;

@@ -45,7 +45,9 @@ public class BridgeTracker {
         java.util.List<String> lines = new java.util.ArrayList<>();
         for (JumpEntry entry : entries) lines.add(EntryFormatter.format(entry));
         HISTORY.add(status.name(), currentBridgeTime, getJumpCount(), currentAxis, lines, ReplayRecorder.snapshot(),ReplayRecorder.serverAddress());
+        HISTORY.recent().get(0).observeMeasurement(ReplayRecorder.modeMeasurement());
         ReplayStorage.completed(HISTORY,HISTORY.recent().get(0));
+        StatsTracker.record(HISTORY.recent().get(0));
         if (BridgeConfig.chatOutput) for (String line : EntryFormatter.lines(entries)) {
             if(!line.isEmpty())sendMessage("\u00a7b[BridgeTap] " + line);
         }
@@ -368,9 +370,8 @@ public class BridgeTracker {
             int ticksSinceLastJump = currentTick - lastJumpTick;
             if (ticksSinceLastJump == BridgeConfig.turnTicks) {
                 turnRecorded = true;
-                double turnCoord = BridgeConfig.turnTicks == 12 ? currentCoord - 100.0 : currentCoord;
-                double absCoord = Math.abs(turnCoord);
-                double turnDecimal = absCoord - Math.floor(absCoord);
+                double turnCoord = currentCoord;
+                double turnDecimal = TurnCoordinates.decimal(turnCoord, ticksSinceLastJump);
                 double delta = turnDecimal - lastJumpDecimal;
                 if (delta < -0.5) delta += 1.0;
                 else if (delta > 0.5) delta -= 1.0;

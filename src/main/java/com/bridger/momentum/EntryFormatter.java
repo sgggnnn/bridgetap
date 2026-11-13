@@ -27,10 +27,11 @@ public final class EntryFormatter {
  }
  private static String coordinates(JumpEntry entry,java.util.function.IntFunction<String> color){
   if(BridgeConfig.showBothAxes&&Double.isFinite(entry.getSampledX())&&Double.isFinite(entry.getSampledZ())){
-   double x=fraction(entry.getSampledX()),z=fraction(entry.getSampledZ());
+   boolean turn12=entry.getType()==JumpEntry.EntryType.TURN&&entry.getTicksElapsed()==12;
+   double x=turn12?Math.floorMod((int)Math.round(TurnCoordinates.decimal(entry.getSampledX(),12)*1000),1000):fraction(entry.getSampledX()),z=turn12?Math.floorMod((int)Math.round(TurnCoordinates.decimal(entry.getSampledZ(),12)*1000),1000):fraction(entry.getSampledZ());
    double difference=(x-z)/1000.0;
    boolean velo=BridgeConfig.showBridgeVelocity&&(entry.getType()==JumpEntry.EntryType.FLAT||entry.getType()==JumpEntry.EntryType.TAP);
-   return color.apply(1)+"X "+axisValue(entry.getSampledX(),entry.getPreJumpX(),velo,color)+" "+color.apply(1)+"Z "+axisValue(entry.getSampledZ(),entry.getPreJumpZ(),velo,color)
+   return color.apply(1)+"X "+(turn12?String.format(Locale.US,".%03d",(int)x):axisValue(entry.getSampledX(),entry.getPreJumpX(),velo,color))+" "+color.apply(1)+"Z "+(turn12?String.format(Locale.US,".%03d",(int)z):axisValue(entry.getSampledZ(),entry.getPreJumpZ(),velo,color))
        +" "+color.apply(difference<0?12:11)+String.format(Locale.US,"[\u0394 X-Z: %+.3f]",difference);
   }
   int dec=Math.floorMod((int)Math.round(entry.getDecimal()*1000),1000);

@@ -9,6 +9,7 @@ import java.util.jar.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.unmapped.C_85740840;
 import net.minecraft.unmapped.C_95462098;
+import net.minecraft.unmapped.C_55401126;
 
 /** One asynchronous stable-release check per startup; all UI changes happen on the game thread. */
 public final class UpdateManager {
@@ -16,6 +17,7 @@ public final class UpdateManager {
  public static volatile State state=State.IDLE;public static volatile String error="",installed="",message="";public static volatile UpdateRelease release;public static volatile long downloaded;
  private static Path own;private static boolean forge,started,dismissed,previousFailure;private static UpdateInstaller.Plan plan;private static Path helper;
  private static final AtomicBoolean launched=new AtomicBoolean();private static ServerSocket lifetime;
+ private static final UpdatePrompt prompt=new UpdatePrompt();private static Object sampledWorld,sampledPlayer;private static double sampledX,sampledY,sampledZ;
  private static final Path PREFS=Paths.get("config","bridgetap","updates.properties");public static boolean automatic=true;
  private UpdateManager(){}
  private static void prefs(){try{if(Files.isRegularFile(PREFS)){Properties p=new Properties();try(InputStream in=Files.newInputStream(PREFS)){p.load(in);}automatic=Boolean.parseBoolean(p.getProperty("checkOnStartup","true"));}}catch(IOException ignored){}}
@@ -30,7 +32,14 @@ public final class UpdateManager {
  }
  public static void tick(Minecraft mc){
   if(!started){started=true;prefs();try{locate();previousResult();if(automatic&&!previousFailure)check();}catch(Exception ex){state=State.FAILED;error=String.valueOf(ex.getMessage());}}
-  if((state==State.AVAILABLE||previousFailure)&&!dismissed&&mc.f_28396371==null&&mc.f_26407825==null&&mc.f_70816363 instanceof C_95462098){dismissed=true;mc.m_52715402(new UpdateScreen(mc.f_70816363));}
+  boolean still=false;
+  if(mc.f_28396371!=null){double x=mc.f_28396371.f_78826675,y=mc.f_28396371.f_31030949,z=mc.f_28396371.f_97691941;still=sampledWorld==mc.f_26407825&&sampledPlayer==mc.f_28396371&&Math.abs(x-sampledX)<.001&&Math.abs(y-sampledY)<.001&&Math.abs(z-sampledZ)<.001;sampledX=x;sampledY=y;sampledZ=z;}
+  sampledWorld=mc.f_26407825;sampledPlayer=mc.f_28396371;
+  boolean title=mc.f_28396371==null&&mc.f_26407825==null&&mc.f_70816363!=null&&(mc.f_70816363 instanceof C_95462098||UpdatePrompt.customTitle(mc.f_70816363.getClass().getName()));
+  boolean pause=mc.f_70816363 instanceof C_55401126;
+  boolean safe=!BridgeTracker.isBridging()&&!ReplaySession.active()&&!ReplayVideoExport.active();
+  boolean idle=safe&&still&&mc.f_26407825!=null&&mc.f_28396371!=null&&mc.f_70816363==null;
+  if(prompt.ready((state==State.AVAILABLE||previousFailure)&&!dismissed&&(automatic||previousFailure),title||pause&&safe,idle,System.nanoTime())){dismissed=true;mc.m_52715402(new UpdateScreen(mc.f_70816363));}
  }
  private static void async(Runnable task){Thread worker=new Thread(task,"BridgeTap update check");worker.setDaemon(true);worker.start();}
  public static synchronized void check(){if(state==State.CHECKING||state==State.DOWNLOADING||state==State.READY)return;state=State.CHECKING;previousFailure=false;error="";async(()->{try{if(own==null)locate();UpdateRelease found=UpdateSource.latest(installed,forge);release=found;state=found==null?State.CURRENT:State.AVAILABLE;}catch(Exception ex){error=String.valueOf(ex.getMessage());state=State.FAILED;}});}
