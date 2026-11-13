@@ -81,13 +81,15 @@ The mouse wheel cycles through occupied slots. Use your Minecraft movement keys,
 
 The mod does not send files automatically. Settings are stored in `config/bridgetap.properties`, and saved runs in `config/bridgetap/saved/`. You can copy this data between your Forge and Ornithe instances.
 
-## Interface previews
+## In-game screenshots
 
-These previews are rendered from the actual menu drawing code with sample recordings and Minecraft's bitmap font.
+The replay library below was captured in Minecraft 1.8.9 with OneClient.
 
-![Replay library](docs/images/replay-library.png)
+![BridgeTap replay library in Minecraft](docs/screenshots/replay-library.jpg)
 
-[Settings](docs/images/settings.png) · [Color editor](docs/images/overlay-colors.png) · [HUD layout studio](docs/images/hud-layout.png)
+[Replay playback in game](docs/screenshots/replay-playback.jpg)
+
+Menu previews: [Settings](docs/images/settings.png) · [Color editor](docs/images/overlay-colors.png) · [HUD layout studio](docs/images/hud-layout.png)
 
 ## Islands, clips and replay organization
 
