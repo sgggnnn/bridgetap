@@ -3,10 +3,11 @@ import net.minecraft.unmapped.*;
 public class PlacementHooks {
  private static C_81592558 beforeHit,beforeAdjacent;
  private static C_32594356 hit,adjacent;
- public static void capture(C_34399650 world,C_32594356 pos,C_28786548 face){
+ public static void capture(C_34399650 world,C_32594356 pos,C_28786548 face,C_88708284 stack){
   if(world==null||pos==null||face==null){hit=null;return;}
-  hit=pos;adjacent=pos.m_39481470(face);
+  hit=new C_32594356(pos.m_32364273(),pos.m_62825721(),pos.m_23514936());adjacent=hit.m_39481470(face);
   beforeHit=world.m_77852500(hit).m_41958956();beforeAdjacent=world.m_77852500(adjacent).m_41958956();
+  if(stack!=null&&stack.m_23235460() instanceof C_71827890)PlacementAppearance.reserve(hit,C_81592558.m_63461719(beforeHit),adjacent,C_81592558.m_63461719(beforeAdjacent),C_81592558.m_63461719(((C_71827890)stack.m_23235460()).m_96251309()));
  }
  public static void finish(C_34399650 world,C_57778754 player){
   if(ReplaySession.active()){hit=null;return;}
@@ -19,6 +20,7 @@ public class PlacementHooks {
   if(placed!=null){
    PlacementAppearance.track(placed,C_81592558.m_63461719(world.m_77852500(placed).m_41958956()));
    IslandReplacement.allowPlacement(placed.m_32364273(),placed.m_62825721(),placed.m_23514936());
+   if(PlacementAppearance.enabled())PlacementAppearance.playPlacement(placed);
    if(!BridgeTracker.isBridging())return;
    PlacementEvidence.record(BridgeTracker.bridgetap$getTick(),placed.m_32364273(),placed.m_23514936(),player.f_78826675,player.f_97691941);
    ReplayRecorder.placed(world,placed);

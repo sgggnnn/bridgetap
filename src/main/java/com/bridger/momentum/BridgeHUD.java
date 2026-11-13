@@ -14,68 +14,15 @@ import org.lwjgl.opengl.GL11;
 import java.util.Arrays;
 
 public class BridgeHUD {
-    private static C_23708450 settingsKey;
-    private static C_23708450 layoutKey;
-    private static C_23708450 clipKey;
-    private static boolean keyBindingRegistered = false;
-    private static long nextCleanup;
-
-    public static void onClientTick() {
-        Minecraft mc = Minecraft.m_20213497();
-        if (mc == null || mc.f_58088711 == null) return;
-        UpdateManager.tick(mc);
-        OneClientIntegration.tick();
-        IslandReplacement.refreshTerrain();
-        PlacementAppearance.tick();
-        ServerPresets.tick();
-        ReplayVideoExport.tick();
-        long now=System.currentTimeMillis();if(now>=nextCleanup){nextCleanup=now+60000;try{ReplayFolders.local().cleanupDue(BridgeTracker.history(),now);}catch(java.io.IOException ex){System.err.println("[BridgeTap] Replay cleanup: "+ex.getMessage());}}
-
-        if (!keyBindingRegistered) {
-            settingsKey = new C_23708450("key.bridgetap.openSettings", 48, "key.categories.bridgetap");
-            layoutKey = new C_23708450("key.bridgetap.editReplayInputs", 62, "key.categories.bridgetap");
-            clipKey = new C_23708450("key.bridgetap.saveClip", 67, "key.categories.bridgetap");
-            int count=mc.f_58088711.f_41636781.length;
-            mc.f_58088711.f_41636781 = Arrays.copyOf(mc.f_58088711.f_41636781, count + 3);
-            mc.f_58088711.f_41636781[count] = settingsKey;
-            mc.f_58088711.f_41636781[count+1] = layoutKey;
-            mc.f_58088711.f_41636781[count+2] = clipKey;
-            C_23708450.m_72397208();
-            keyBindingRegistered = true;
-        }
-
-        // Consume the press even with a screen open; never trigger the UI while typing in chat.
-        boolean pressed = settingsKey.m_37810647();
-        boolean layoutPressed = layoutKey.m_37810647();
-        boolean clipPressed = clipKey.m_37810647();
-        ClipCapture.tick();
-        if (mc.f_70816363 == null) {
-            if(clipPressed)ClipCapture.save();
-            if (layoutPressed && ReplaySession.active()) mc.m_52715402(new BridgeLayoutScreen(null));
-            else if (pressed) openSettings();
-        }
-    }
-
-    public static void openSettings() {
-        Minecraft mc = Minecraft.m_20213497();
-        if (mc != null && mc.f_28396371 != null) mc.m_52715402(ReplayFolderScreen.home());
-    }
-
-    public static void render(C_97866173 gui) {
-        Minecraft mc = Minecraft.m_20213497();
-        if(OneClientIntegration.editing()){OneClientIntegration.renderEditor();return;}
-        if (mc != null && mc.f_70816363 instanceof BridgeLayoutScreen) return;
-        if (ReplaySession.active()) { ReplaySession.renderHud(); return; }
-        if (mc == null || mc.f_28396371 == null || mc.f_26407825 == null) return;
-        if (BridgeConfig.chatOutput) return;
-        if (!BridgeConfig.shouldShowHud(mc.f_58088711 != null && mc.f_58088711.f_63869242)) return;
-
-        C_23014920 fr = mc.f_21497584;
-        if (fr == null) return;
-
+    private static long hudEpoch,preparedEpoch=-1;
+    private static C_23014920 preparedFont;
+    private static HudFrame preparedHud;
+    private static final class HudFrame{final String header;final List<String> lines;final int width,height,lineHeight;HudFrame(String header,List<String> lines,int width,int height,int lineHeight){this.header=header;this.lines=lines;this.width=width;this.height=height;this.lineHeight=lineHeight;}}
+    private static HudFrame cachedHud(C_23014920 fr){if(preparedEpoch!=hudEpoch||preparedFont!=fr){preparedHud=prepareHud(fr);preparedEpoch=hudEpoch;preparedFont=fr;}return preparedHud;}
+    private static HudFrame prepareHud(C_23014920 fr){
         List<JumpEntry> entries = BridgeTracker.getEntries();
         if (entries.isEmpty() && !BridgeTracker.isBridging()) {
-            return;
+            return null;
         }
 
         // Header string based on status
@@ -102,7 +49,7 @@ public class BridgeHUD {
         if(BridgeConfig.chatOutput)header="";
         List<String> displayLines = new java.util.ArrayList<>();
         if (!BridgeConfig.chatOutput&&!displayMode.equals("TIME")) displayLines.addAll(EntryFormatter.hudLines(entries));
-        if (header.isEmpty() && displayLines.isEmpty()) return;
+        if (header.isEmpty() && displayLines.isEmpty()) return null;
 
         // Calculate box dimensions
         int maxWidth = header.isEmpty() ? 0 : fr.m_09235706(header);
@@ -116,6 +63,74 @@ public class BridgeHUD {
         int lineCount = displayLines.size() + (header.isEmpty() ? 0 : 1);
         int totalHeight = lineHeight * lineCount + padding;
         int totalWidth = maxWidth + padding * 2;
+
+        if(!header.isEmpty())header=OverlayStyle.styled(0,OverlayStyle.color(7)+HudText.unformatted(header));
+        for(int i=0;i<displayLines.size();i++)displayLines.set(i,OverlayStyle.styled(0,displayLines.get(i)));
+        return new HudFrame(header,displayLines,totalWidth,totalHeight,lineHeight);
+    }
+
+    private static C_23708450 settingsKey;
+    private static C_23708450 layoutKey;
+    private static C_23708450 clipKey,profileKey;
+    private static boolean keyBindingRegistered = false;
+    private static long nextCleanup;
+
+    public static void onClientTick() {
+        hudEpoch++;
+        Minecraft mc = Minecraft.m_20213497();
+        if (mc == null || mc.f_58088711 == null) return;
+        UpdateManager.tick(mc);
+        OneClientIntegration.tick();
+        IslandReplacement.refreshTerrain();
+        PlacementAppearance.tick();
+        ServerPresets.tick();
+        ReplayVideoExport.tick();
+        long now=System.currentTimeMillis();if(now>=nextCleanup){nextCleanup=now+60000;ReplayStorage.cleanup(BridgeTracker.history(),now);}
+
+        registerKeys(mc);
+        if(!keyBindingRegistered)return;
+
+        // Consume the press even with a screen open; never trigger the UI while typing in chat.
+        boolean pressed = settingsKey.m_37810647();
+        boolean layoutPressed = layoutKey.m_37810647();
+        boolean clipPressed = clipKey.m_37810647();
+        boolean profilePressed=profileKey.m_37810647();
+        ClipCapture.tick();
+        if (mc.f_70816363 == null) {
+            if(profilePressed&&mc.f_28396371!=null)KeybindProfilesScreen.cycle();
+            if(clipPressed)ClipCapture.save();
+            if (layoutPressed && ReplaySession.active()) mc.m_52715402(new BridgeLayoutScreen(null));
+            else if (pressed) openSettings();
+        }
+    }
+
+    public static synchronized void registerKeys(Minecraft mc){
+        if(mc==null||mc.f_58088711==null||mc.f_25803373==null)return;
+        if (!keyBindingRegistered) {
+            C_23708450[] keys=BridgeKeyBindings.register(mc.f_58088711,mc.f_25803373.toPath().resolve("options.txt"));
+            settingsKey=keys[0];layoutKey=keys[1];clipKey=keys[2];profileKey=keys[3];keyBindingRegistered=true;
+        }
+    }
+
+    public static void openSettings() {
+        Minecraft mc = Minecraft.m_20213497();
+        if (mc != null && mc.f_28396371 != null) mc.m_52715402(ReplayFolderScreen.home());
+    }
+
+    public static void render(C_97866173 gui) {
+        Minecraft mc = Minecraft.m_20213497();
+        if(OneClientIntegration.editing()){OneClientIntegration.renderEditor();return;}
+        if (mc != null && mc.f_70816363 instanceof BridgeLayoutScreen) return;
+        if (ReplaySession.active()) { ReplaySession.renderHud(); return; }
+        if (mc == null || mc.f_28396371 == null || mc.f_26407825 == null) return;
+        if (BridgeConfig.chatOutput) return;
+        if (!BridgeConfig.shouldShowHud(mc.f_58088711 != null && mc.f_58088711.f_63869242)) return;
+
+        C_23014920 fr = mc.f_21497584;
+        if (fr == null) return;
+
+        HudFrame frame=cachedHud(fr);if(frame==null)return;
+        String header=frame.header;List<String> displayLines=frame.lines;int totalWidth=frame.width,totalHeight=frame.height,lineHeight=frame.lineHeight,padding=4;
 
         C_43718703 window = new C_43718703(mc);
         float scale = (float)Math.min(BridgeConfig.hudScale,Math.min((window.m_39119333()-8.0)/totalWidth,(window.m_16103615()-8.0)/totalHeight));
@@ -144,12 +159,12 @@ public class BridgeHUD {
         int textX = padding;
         int textY = padding;
         if (!header.isEmpty()) {
-            HudText.drawStyled(0,fr,OverlayStyle.styled(0,OverlayStyle.color(7) + header.replaceAll("\u00a7[0-9a-f]", "")), textX, textY, 0xFFFFFF);
+            HudText.drawStyled(0,fr,header, textX, textY, 0xFFFFFF);
             textY += lineHeight;
         }
 
         for (String line : displayLines) {
-            HudText.drawStyled(0,fr,OverlayStyle.styled(0,line), textX, textY, 0xFFFFFF);
+            HudText.drawStyled(0,fr,line, textX, textY, 0xFFFFFF);
             textY += lineHeight;
         }
 

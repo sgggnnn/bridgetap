@@ -45,10 +45,23 @@ public class RunHistory {
  }
  private static final java.util.concurrent.ExecutorService MODE_WORKER=java.util.concurrent.Executors.newSingleThreadExecutor(r->{Thread t=new Thread(r,"BridgeTap replay mode index");t.setDaemon(true);return t;});
  private final java.util.concurrent.ConcurrentMap<String,java.util.concurrent.CompletableFuture<ServerMode.Measurement>> modeIndex=new java.util.concurrent.ConcurrentHashMap<>();
- public void indexModes(Collection<Run> runs){for(Run run:runs)if(!run.modeReady())modeIndex.computeIfAbsent(run.id,id->java.util.concurrent.CompletableFuture.supplyAsync(()->{try{return ServerMode.measure(replay(run));}catch(IOException|RuntimeException error){return ServerMode.UNAVAILABLE;}},MODE_WORKER)).thenAccept(measurement->run.modeMeasurement=measurement);}
+ public void indexModes(Collection<Run> runs){int budget=8;for(Run run:runs)if(!run.modeReady()){if(budget--<=0||modeIndex.size()>=16)break;modeIndex.computeIfAbsent(run.id,id->java.util.concurrent.CompletableFuture.supplyAsync(()->{try{return ServerMode.measure(replay(run));}catch(IOException|RuntimeException error){return ServerMode.UNAVAILABLE;}},MODE_WORKER)).thenAccept(measurement->{run.modeMeasurement=measurement;modeIndex.remove(run.id);});}}
+ private final java.util.concurrent.atomic.AtomicLong metadataRevision=new java.util.concurrent.atomic.AtomicLong();
+ private final java.util.concurrent.atomic.AtomicBoolean loadingSaved=new java.util.concurrent.atomic.AtomicBoolean();
+ private volatile List<Run> cachedSaved=Collections.emptyList();private volatile long cachedRevision=-1,catalogVersion;private volatile String catalogError="";
+ public long catalogVersion(){return catalogVersion;}public boolean loadingSaved(){return loadingSaved.get();}public String catalogError(){return catalogError;}
+ private void metadataChanged(){metadataRevision.incrementAndGet();catalogVersion++;}
+ public void reloadSaved(){metadataChanged();refreshSavedAsync();}
+ public void refreshSavedAsync(){if(!loadingSaved.compareAndSet(false,true))return;MODE_WORKER.execute(()->{try{saved();catalogError="";}catch(IOException ex){catalogError=ex.getMessage();}finally{loadingSaved.set(false);}});}
+ public List<Run> savedCached(){if(cachedRevision!=metadataRevision.get())refreshSavedAsync();return new ArrayList<>(cachedSaved);}
+ /** Blocking snapshot for the storage worker, never called by painting code. */
+ public List<Run> savedSnapshot()throws IOException{return cachedRevision==metadataRevision.get()?new ArrayList<>(cachedSaved):saved();}
+ public List<Run> favoritesCached()throws IOException{List<Run> result=new ArrayList<>();for(Run run:savedCached())if(isFavorite(run))result.add(run);return result;}
+
  private final Path folder;
  private final List<Run> recent=new ArrayList<>();
- private Set<String> favorites;
+ private volatile Set<String> favorites;
+ private final Map<String,Path> archivedLocations=new java.util.concurrent.ConcurrentHashMap<>();
  public RunHistory(Path folder) {this.folder=folder;}
  public void add(String status,double time,int jumps,String axis,List<String> details) {
   add(status,time,jumps,axis,details,null);
@@ -57,33 +70,35 @@ public class RunHistory {
   add(status,time,jumps,axis,details,replay,"");
  }
  public void add(String status,double time,int jumps,String axis,List<String> details,ReplayData replay,String server) {
-  recent.add(0,new Run(UUID.randomUUID().toString(),status,time,jumps,axis,System.currentTimeMillis(),details,replay,server));
-  if(recent.size()>10) recent.remove(10);
+  synchronized(recent){recent.add(0,new Run(UUID.randomUUID().toString(),status,time,jumps,axis,System.currentTimeMillis(),details,replay,server));
+  if(recent.size()>10) recent.remove(10);}
  }
- public List<Run> recent(){return Collections.unmodifiableList(new ArrayList<>(recent));}
+ public List<Run> recent(){synchronized(recent){return Collections.unmodifiableList(new ArrayList<>(recent));}}
  public List<Run> saved() throws IOException {
-  List<Run> runs=new ArrayList<>();
-  if(!Files.isDirectory(folder))return runs;
+  long revision=metadataRevision.get();List<Run> runs=new ArrayList<>();
+  if(!Files.isDirectory(folder)){cachedSaved=Collections.emptyList();cachedRevision=revision;catalogVersion++;return runs;}
   try(DirectoryStream<Path> files=Files.newDirectoryStream(folder,"*.properties")) {
    for(Path file:files) {
-    if(Files.size(file)>1024*1024) continue;
+    try{if(Files.size(file)>1024*1024) continue;}catch(NoSuchFileException removed){continue;}
     try(InputStream in=Files.newInputStream(file)) {
      Properties p=new Properties();p.load(in);runs.add(parse(p,null));
-    } catch(IllegalArgumentException | NullPointerException ex) {System.err.println("[BridgeTap] Invalid saved run: "+file);}
+    } catch(NoSuchFileException removed){continue;}catch(IllegalArgumentException | NullPointerException ex) {System.err.println("[BridgeTap] Invalid saved run: "+file);}
    }
   }
-  runs.sort((a,b)->Long.compare(b.created,a.created));return runs;
+  runs.sort((a,b)->Long.compare(b.created,a.created));if(metadataRevision.get()==revision){cachedSaved=Collections.unmodifiableList(new ArrayList<>(runs));cachedRevision=revision;catalogVersion++;}return runs;
  }
  public void save(Run run) throws IOException {
   save(run,true);
  }
  public void saveAutomatic(Run run)throws IOException{save(run,false);}
- private void save(Run run,boolean protect)throws IOException{
-  boolean previous=run.protectedSave;try{writeSaved(run,protect);}catch(IOException|RuntimeException ex){run.protectedSave=previous;throw ex;}
+ private synchronized void save(Run run,boolean protect)throws IOException{
+  boolean previous=run.protectedSave;try{writeSaved(run,protect);metadataChanged();}catch(IOException|RuntimeException ex){run.protectedSave=previous;throw ex;}
  }
  private void writeSaved(Run run,boolean protect)throws IOException{
   UUID.fromString(run.id);
   Files.createDirectories(folder);Path dest=folder.resolve(run.id+".properties");
+  Path archived=archivedLocations.get(run.id);if(archived!=null&&!Files.exists(dest)){Path oldMeta=archived.resolve(run.id+".properties"),oldReplay=archived.resolve(run.id+".btr"),activeReplay=folder.resolve(run.id+".btr");if(Files.exists(oldMeta)){boolean moved=false;try{if(Files.isRegularFile(oldReplay)){Files.move(oldReplay,activeReplay);moved=true;}Files.move(oldMeta,dest);archivedLocations.remove(run.id);}catch(IOException ex){if(moved)Files.move(activeReplay,oldReplay);throw ex;}}}
+
   if(Files.exists(dest)){if(protect&&!run.protectedSave){Properties p=new Properties();try(InputStream in=Files.newInputStream(dest)){p.load(in);}p.setProperty("protected","true");Path temp=Files.createTempFile(folder,"protect-",".tmp");try{try(OutputStream out=Files.newOutputStream(temp)){p.store(out,"BridgeTap protected replay");}Files.move(temp,dest,StandardCopyOption.REPLACE_EXISTING);run.protectedSave=true;}finally{Files.deleteIfExists(temp);}}return;}
   run.protectedSave=protect;
   Properties p=metadata(run);
@@ -112,14 +127,14 @@ public class RunHistory {
   List<String> details=new ArrayList<>();for(int i=0;i<count;i++)details.add(p.getProperty("line."+i,"").replace("No Gay","No Gain"));
   Run run=new Run(id,status,time,jumps,axis,created,details,replay,p.getProperty("server",""));run.name=validName(p.getProperty("name",""));run.protectedSave=!p.getProperty("protected","true").equals("false");run.imported=Boolean.parseBoolean(p.getProperty("imported","false"));if(run.modeMeasurement==null&&"2".equals(p.getProperty("mode.version"))){try{run.modeMeasurement=Boolean.parseBoolean(p.getProperty("mode.measured","false"))?new ServerMode.Measurement(true,Double.parseDouble(p.getProperty("mode.gap")),Double.parseDouble(p.getProperty("mode.rise"))):ServerMode.UNAVAILABLE;}catch(IllegalArgumentException invalid){run.modeMeasurement=null;}}return run;
  }
- public void rename(Run run,String name)throws IOException{
+ public synchronized void rename(Run run,String name)throws IOException{
   String value=validName(name);save(run);Properties p=metadata(run);p.setProperty("name",value);
   Path temp=Files.createTempFile(folder,"rename-",".tmp");
   try{
    try(OutputStream out=Files.newOutputStream(temp)){p.store(out,"BridgeTap named replay");}
    try{Files.move(temp,folder.resolve(run.id+".properties"),StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.ATOMIC_MOVE);}
    catch(AtomicMoveNotSupportedException ex){Files.move(temp,folder.resolve(run.id+".properties"),StandardCopyOption.REPLACE_EXISTING);}
-   run.name=value;for(Run recentRun:recent)if(recentRun.id.equals(run.id))recentRun.name=value;
+   run.name=value;synchronized(recent){for(Run recentRun:recent)if(recentRun.id.equals(run.id))recentRun.name=value;}metadataChanged();
   }finally{Files.deleteIfExists(temp);}
  }
  public Path exportsFolder(){return folder.getParent().resolve("exports");}
@@ -135,10 +150,10 @@ public class RunHistory {
   ReplayArchive.Content content=ReplayArchive.read(file);Run imported;
   try{imported=parse(content.metadata,content.replay);}catch(IllegalArgumentException|NullPointerException ex){throw new IOException("Invalid replay metadata",ex);}
   final String id=imported.id;
-  if(Files.exists(folder.resolve(id+".properties"))||recent.stream().anyMatch(r->r.id.equals(id))){
+  if(Files.exists(folder.resolve(id+".properties"))||recent().stream().anyMatch(r->r.id.equals(id))){
    Run copy=new Run(UUID.randomUUID().toString(),imported.status,imported.time,imported.jumps,imported.axis,imported.created,imported.details,imported.replay,imported.server);copy.name=imported.name;imported=copy;
   }
-  imported.imported=true;save(imported);recent.add(0,imported);if(recent.size()>10)recent.remove(10);return imported;
+  imported.imported=true;save(imported);synchronized(recent){recent.add(0,imported);if(recent.size()>10)recent.remove(10);}return imported;
  }
  public ReplayData replay(Run run)throws IOException {
   if(run.replay!=null){run.observeMode(run.replay);return run.replay;}
@@ -148,15 +163,25 @@ public class RunHistory {
  }
  public int deleteUnprotectedFailuresBefore(long cutoff)throws IOException{
   int deleted=0;Set<String> removed=new HashSet<>(),favorites=favoriteIds();
-  for(Run run:saved())if(run.status.equals("FAILED")&&run.created<cutoff&&!run.isProtected()&&!favorites.contains(run.id)){
-   Path metadata=folder.resolve(run.id+".properties"),recording=folder.resolve(run.id+".btr");Files.deleteIfExists(recording);Files.deleteIfExists(metadata);removed.add(run.id);deleted++;
-  }recent.removeIf(run->removed.contains(run.id));return deleted;
+  for(Run run:saved())if(run.status.equals("FAILED")&&run.created<cutoff&&!run.isProtected()&&!run.isImported()&&!favorites.contains(run.id)){synchronized(this){
+   Path metadata=folder.resolve(run.id+".properties"),recording=folder.resolve(run.id+".btr");if(!Files.isRegularFile(metadata))continue;Properties latest=new Properties();try(InputStream in=Files.newInputStream(metadata)){latest.load(in);}if(!"false".equals(latest.getProperty("protected","true"))||Boolean.parseBoolean(latest.getProperty("imported","false"))||isFavorite(run))continue;Files.deleteIfExists(recording);Files.deleteIfExists(metadata);removed.add(run.id);deleted++;
+  }}synchronized(recent){recent.removeIf(run->removed.contains(run.id));}if(deleted>0)metadataChanged();return deleted;
+ }
+ public Path archiveFolder(){return folder.toAbsolutePath().normalize().getParent().resolve("automatic-replay-archive");}
+ public int archiveAutomatic(int keep)throws IOException{
+  if(keep<0)throw new IllegalArgumentException("Negative retention limit");int automatic=0,moved=0;Set<String> removed=new HashSet<>();Path root=folder.toAbsolutePath().normalize(),archive=archiveFolder();if(!archive.startsWith(root.getParent())||archive.equals(root))throw new IOException("Invalid replay archive path");Path batch=null;
+  for(Run run:savedSnapshot()){
+   if(run.isProtected()||run.isImported()||isFavorite(run))continue;if(automatic++<keep)continue;
+   synchronized(this){Path metadata=root.resolve(run.id+".properties").normalize(),recording=root.resolve(run.id+".btr").normalize();if(!metadata.getParent().equals(root)||Files.isSymbolicLink(metadata)||Files.isSymbolicLink(recording)||!Files.isRegularFile(metadata))continue;Properties current=new Properties();try(InputStream in=Files.newInputStream(metadata)){current.load(in);}if(!"false".equals(current.getProperty("protected","true"))||Boolean.parseBoolean(current.getProperty("imported","false"))||isFavorite(run))continue;
+    if(batch==null){Files.createDirectories(archive);batch=Files.createTempDirectory(archive,"batch-");}Path targetMeta=batch.resolve(metadata.getFileName()),targetReplay=batch.resolve(recording.getFileName());boolean recordingMoved=false;try{if(Files.isRegularFile(recording)){Files.move(recording,targetReplay);recordingMoved=true;}Files.move(metadata,targetMeta);}catch(IOException ex){if(recordingMoved)Files.move(targetReplay,recording);throw ex;}archivedLocations.put(run.id,batch);removed.add(run.id);moved++;
+   }
+  }if(moved>0){synchronized(recent){recent.removeIf(run->removed.contains(run.id));}metadataChanged();}return moved;
  }
  public boolean hasReplay(Run run){
   try{UUID.fromString(run.id);return run.replay!=null||Files.isRegularFile(folder.resolve(run.id+".btr"));}
   catch(IllegalArgumentException ex){return false;}
  }
- private Set<String> favoriteIds() throws IOException {
+ private synchronized Set<String> favoriteIds() throws IOException {
   if(favorites==null){
    Set<String> loaded=new HashSet<>();Path file=folder.resolve("favorites.prefs");
    if(Files.exists(file))for(String id:Files.readAllLines(file,java.nio.charset.StandardCharsets.UTF_8)){
@@ -170,7 +195,7 @@ public class RunHistory {
  public List<Run> favorites()throws IOException {
   List<Run> result=new ArrayList<>();for(Run run:saved())if(isFavorite(run))result.add(run);return result;
  }
- public boolean toggleFavorite(Run run)throws IOException {
+ public synchronized boolean toggleFavorite(Run run)throws IOException {
   Set<String> updated=new HashSet<>(favoriteIds());boolean added=updated.add(run.id);if(!added)updated.remove(run.id);
   if(added)save(run);Files.createDirectories(folder);
   Path temp=Files.createTempFile(folder,"favorites-",".tmp");
@@ -178,7 +203,7 @@ public class RunHistory {
    Files.write(temp,updated,java.nio.charset.StandardCharsets.UTF_8);
    try{Files.move(temp,folder.resolve("favorites.prefs"),StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.ATOMIC_MOVE);}
    catch(AtomicMoveNotSupportedException ex){Files.move(temp,folder.resolve("favorites.prefs"),StandardCopyOption.REPLACE_EXISTING);}
-   favorites=updated;return added;
+   favorites=updated;metadataChanged();return added;
   }finally{Files.deleteIfExists(temp);}
  }
 }

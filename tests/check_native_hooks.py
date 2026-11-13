@@ -76,7 +76,7 @@ for mixin in config['client']:
      assert field,(mixin,name,'missing accessor field',values['value'])
      assert desc in ('()'+field[1],'('+field[1]+')V'),(mixin,name,'accessor type mismatch',desc,field[1])
      checked+=1
-    if annotation.endswith(('/Inject;','/Redirect;','/ModifyVariable;')):
+    if annotation.endswith(('/Inject;','/Redirect;','/ModifyVariable;','/ModifyArg;')):
      methods=values['method'];methods=[methods] if isinstance(methods,str) else methods
      for method in methods:
       candidates=[m for m in native.methods if m[0]==method.split('(')[0]]

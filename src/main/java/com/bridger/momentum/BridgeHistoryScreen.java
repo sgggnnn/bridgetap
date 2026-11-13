@@ -8,7 +8,7 @@ import java.util.*;
 /** Replay library with independent tabs, composable filters and stable sorting. */
 public class BridgeHistoryScreen extends BridgeScreen {
     private static final int GRID_X=20, GRID_Y=150, CARD_W=263, ROW=76, PAGE_SIZE=8;
-    private int view,selected,page,detailOffset;
+    private int view,selected,page,detailOffset;private long catalogVersion=-1;
     private String folder=ReplayFolders.ALL;
     private String message="";
     private ReplaySort sort=ReplaySort.parse(BridgeConfig.replaySort);
@@ -20,7 +20,8 @@ public class BridgeHistoryScreen extends BridgeScreen {
     public BridgeHistoryScreen(){refresh();}
     private RunHistory.Run current(){return selected>=0&&selected<rows.size()?rows.get(selected):null;}
     private void refresh(){
-        try {all=view==2?BridgeTracker.history().favorites():view==1?BridgeTracker.history().saved():BridgeTracker.history().recent();}
+        catalogVersion=BridgeTracker.history().catalogVersion();
+        try {all=view==2?BridgeTracker.history().favoritesCached():view==1?BridgeTracker.history().savedCached():BridgeTracker.history().recent();}
         catch(IOException ex){all=Collections.emptyList();message="Could not read saved runs.";}
         filter();
     }
@@ -64,6 +65,7 @@ public class BridgeHistoryScreen extends BridgeScreen {
         }catch(IOException|IllegalArgumentException ex){message="The replay could not be read.";System.err.println("[BridgeTap] "+ex);}
     }
     @Override protected void paint(){
+        if(view!=0&&catalogVersion!=BridgeTracker.history().catalogVersion())refresh();
         header("Replay library","Record. Review. Improve.");
         button("Settings",752,15,88,()->open(new BridgeSettingsScreen(this)));
         tab("Recent",20,59,78,view==0,()->switchView(0));

@@ -1,8 +1,34 @@
 # Changelog
 
-History of versions available in [GitHub Releases](https://github.com/sgggnnn/bridgetap/releases). Each release preserves its historical JARs alongside SHA-256 checksums. Forge editions start with version 1.4.4.
+## [1.8.0](https://github.com/sgggnnn/bridgetap/releases/tag/v1.8.0) - Profiles, audio, appearances and performance
 
-Some commits contain several intermediate versions. Those versions are tagged at the first commit archiving their binary, rather than at a dedicated source snapshot. The affected release notes explain this distinction.
+## Added
+- Named keybind profiles, independent rename/update actions, and a configurable shortcut to cycle profiles.
+- Optional microphone capture for clips, independently switchable from Windows system audio.
+- Minecraft 26.2 block appearances using locally imported official models, textures and original placement sounds. Selected appearances also show in the hand and hotbar.
+- Replay storage controls: recent-only by default, optional bounded auto-save, and reversible archiving of older automatic recordings. Manual saves, favorites and imports stay protected.
+- A grouped Replay Tools screen, drawn dropdown arrows, and the BridgeTap icon.
+
+## Fixed and optimized
+- Forge keybindings persist across game restarts.
+- OneClient integration is searchable again and uses a separate native configuration file.
+- Modern texture references and OneClient connected-texture compatibility preserve the selected appearance beside other blocks.
+- Original placement sounds and local server echoes are suppressed when the selected material sound plays; placement cadence is unchanged.
+- Microphone and output audio follow continuous sample clocks to avoid packet-boundary gaps/overlaps; clip audio mixes to stereo 48 kHz.
+- Large replay libraries load and organize in the background instead of saving every run implicitly.
+- Removed redundant terrain rebuilds after each placement, cached block models and HUD formatting, and reduced island-mask lookups and unnecessary texture/shader reloads.
+- Folder saves tolerate brief Windows sharing locks.
+
+## Downloads and upgrade
+Choose **one** Minecraft 1.8.9 JAR: **Forge** or **OneClient / Ornithe**. Close Minecraft and replace your previous BridgeTap JAR.
+
+**Clips/audio:** also replace the optional **BridgeTap-clip-tools-windows-x64.zip** tools by extracting it into your game directory, so the files land in `config/bridgetap/tools/`. The updated loopback helper has a new checksum; an older tools pack will be rejected. No administrator permissions are needed. Microphone recording defaults to OFF.
+
+Modern Minecraft resources are downloaded from Mojang or imported from a local 26.2 client JAR; they are not bundled with the mod. Special models, block entities, tinting and modern rendering effects have documented 1.8.9 limitations.
+
+Source code is available under **GPL-3.0-only**. Development used AI assistance.
+
+[Usage and compatibility](https://github.com/sgggnnn/bridgetap/blob/main/docs/PROFILES-AND-APPEARANCES.md) · [Discord](https://discord.gg/7gYxewvgjD)
 
 ## [1.7.5](https://github.com/sgggnnn/bridgetap/releases/tag/v1.7.5) - Axis delta and angle colors
 

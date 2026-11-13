@@ -1,0 +1,28 @@
+import com.bridger.momentum.*;
+import java.nio.file.*;
+import java.util.*;
+import java.io.*;
+public final class ReplayStorageRegression {
+ static void check(boolean value,String message){if(!value)throw new AssertionError(message);}
+ static final class CountingHistory extends RunHistory {volatile int scans;CountingHistory(Path path){super(path);}@Override public List<Run> saved()throws IOException{scans++;return super.saved();}}
+ static void drain()throws Exception{java.lang.reflect.Field field=ReplayStorage.class.getDeclaredField("IO");field.setAccessible(true);((java.util.concurrent.ExecutorService)field.get(null)).submit(()->{}).get(10,java.util.concurrent.TimeUnit.SECONDS);}
+ static void awaitCatalog(CountingHistory history,int size)throws Exception{long until=System.nanoTime()+10000000000L;while(System.nanoTime()<until){if(history.savedCached().size()==size&&!history.loadingSaved())return;Thread.sleep(5);}throw new AssertionError("Background catalog did not refresh");}
+ public static void main(String[] args)throws Exception{
+  check(ReplayStorage.mode()==0,"Automatic disk saving must default OFF");Path root=Files.createTempDirectory("replay-storage-"),dir=root.resolve("saved");CountingHistory history=new CountingHistory(dir);ReplayFolders folders=new ReplayFolders(root.resolve("folders.properties"));
+  folders.beginBatch();for(int i=0;i<50;i++){history.add("FAILED",1,1,"Z",Collections.emptyList(),null,"example.net");folders.fileByServer(history,history.recent().get(0));}check(!Files.exists(root.resolve("folders.properties")),"Folder classification wrote files during the batch");folders.endBatch();check(history.saved().isEmpty()&&history.recent().size()==10,"Folder classification persisted every transient replay");
+  ReplayData replay=new ReplayData(Arrays.asList(new ReplayData.Frame(1,65,1),new ReplayData.Frame(2,65,1)),Collections.emptyList(),false);
+  history.add("FAILED",1,1,"Z",Collections.emptyList(),replay,"live.example.net");RunHistory.Run noSave=history.recent().get(0);ReplayStorage.completed(history,noSave);drain();check(!Files.exists(dir.resolve(noSave.id+".properties")),"Default completed-run callback still saved automatically");
+  ReplayStorage.mode(1);history.add("SUCCESS",3,1,"Z",Collections.emptyList(),replay,"live.example.net");RunHistory.Run success=history.recent().get(0);ReplayStorage.completed(history,success);history.add("FAILED",1,1,"Z",Collections.emptyList(),replay,"live.example.net");RunHistory.Run failure=history.recent().get(0);ReplayStorage.completed(history,failure);drain();check(Files.exists(dir.resolve(success.id+".properties"))&&!Files.exists(dir.resolve(failure.id+".properties")),"Successful-only auto-save policy failed");
+  ReplayStorage.mode(2);ReplayStorage.completed(history,failure);drain();check(Files.exists(dir.resolve(failure.id+".properties")),"All-runs auto-save policy failed");ReplayStorage.mode(0);
+List<RunHistory.Run> automatic=new ArrayList<>();for(int i=0;i<130;i++){history.add(i%2==0?"SUCCESS":"FAILED",3,2,"X",Collections.singletonList("Tap"),replay,"example.net");RunHistory.Run run=history.recent().get(0);history.saveAutomatic(run);automatic.add(run);}
+  history.save(automatic.get(0));history.toggleFavorite(automatic.get(1));history.rename(automatic.get(2),"My saved run");RunHistory.Run imported=history.importReplay(history.exportReplay(automatic.get(3)));check(imported.isImported(),"Fixture import missing");
+  List<RunHistory.Run> before=history.saved();int eligible=0;for(RunHistory.Run run:before)if(!run.isProtected()&&!run.isImported()&&!history.isFavorite(run))eligible++;
+  int moved=history.archiveAutomatic(25);check(moved==eligible-25,"Archive limit counted manual, favorite or imported replays");for(RunHistory.Run run:Arrays.asList(automatic.get(0),automatic.get(1),automatic.get(2),imported))check(Files.exists(dir.resolve(run.id+".properties"))&&Files.exists(dir.resolve(run.id+".btr")),"Archive moved protected data");
+  long archivedFiles;try(java.util.stream.Stream<Path> files=Files.walk(history.archiveFolder())){archivedFiles=files.filter(Files::isRegularFile).count();}check(archivedFiles==moved*2L,"Archive deleted or lost a replay file pair");
+  RunHistory.Run archived=null;for(RunHistory.Run run:before)if(!Files.exists(dir.resolve(run.id+".properties"))){archived=run;break;}check(archived!=null&&archived.replay==null,"Archive restore fixture must be a disk-only summary");history.save(archived);check(history.replay(archived)!=null&&history.replay(archived).frames.size()==2&&archived.isProtected(),"Manual save after archive did not restore the recording");
+  int size=history.saved().size(),scans=history.scans;for(int i=0;i<500;i++)check(history.savedCached().size()==size,"Cached catalog changed unexpectedly");check(history.scans==scans,"Painting the library rescanned the filesystem");
+  history.add("SUCCESS",5,1,"Z",Collections.emptyList());history.save(history.recent().get(0));awaitCatalog(history,size+1);int refreshed=history.scans;for(int i=0;i<500;i++)history.savedCached();check(history.scans==refreshed,"Catalog cache never settled");
+  ReplayStorage.mode(1);ReplayStorage.limit(75);Properties preferences=new Properties();try(InputStream in=Files.newInputStream(Paths.get("config/bridgetap/replay-storage.properties"))){preferences.load(in);}check(preferences.getProperty("autoSave").equals("1")&&preferences.getProperty("automaticLimit").equals("75"),"Storage preferences not persisted");ReplayStorage.mode(0);ReplayStorage.limit(100);
+  System.out.println("PASS: folder filing no longer saves runs, bounded recent memory, batched folder writes, protected reversible archive, restore and zero metadata rescans during repeated painting");
+ }
+}

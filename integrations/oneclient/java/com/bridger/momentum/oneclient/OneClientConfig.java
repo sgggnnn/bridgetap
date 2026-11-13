@@ -23,7 +23,7 @@ public final class OneClientConfig extends Config {
     @org.polyfrost.oneconfig.api.config.v1.annotations.Number(title="Jump offset",min=-20,max=20,category="Detection") public int tickOffset=BridgeConfig.tickOffset;
     @org.polyfrost.oneconfig.api.config.v1.annotations.Number(title="Plate offset",min=-20,max=20,category="Detection") public int plateTickOffset=BridgeConfig.plateTickOffset;
     @org.polyfrost.oneconfig.api.config.v1.annotations.Number(title="Turn detection",min=1,max=60,category="Detection") public int turnTicks=BridgeConfig.turnTicks;
-    public OneClientConfig(){super("bridgetap","BridgeTap",Category.UTILITY);initialize(false);}
+    public OneClientConfig(){super("bridgetap-oneconfig.json","assets/bridgetap/icon.png","BridgeTap",Category.UTILITY);initialize(false);}
     @Override protected void onInitialized(Tree tree){
         super.onInitialized(tree);tree.addMetadata("mod_card_authors","sggn");
         for(String field:new String[]{"coordinatesVisible","showBridgeVelocity","showJumpAngle","showBothAxes","showReplayInfo","showReplayInputs","backgroundEnabled","textShadow","chatOutput","hideOnF3","showGainType","tickOffset","plateTickOffset","turnTicks"}){
@@ -44,6 +44,8 @@ public final class OneClientConfig extends Config {
     @Button(title="Replay library",text="Browse replays",category="Replays") public void replays(){open(ReplayFolderScreen.home());}
     @Button(title="Island library",text="Browse islands",category="Islands") public void islands(){open(new IslandScreen(null));}
     @Button(title="Island presets",text="Browse presets",category="Islands") public void presets(){open(new IslandPresetsScreen(null));}
+    @Button(title="Replay storage",text="Auto-save and archive",category="Tools") public void replayStorage(){open(new ReplayStorageScreen(null));}
+    @Button(title="Keybind profiles",text="Manage profiles",category="Tools") public void keybindProfiles(){open(new KeybindProfilesScreen(null));}
     @Button(title="BridgeTap updates",text="Check updates",category="Tools") public void updates(){UpdateManager.open(null);}
     @Button(title="Video clips",text="Open",category="Tools") public void clips(){open(new ClipScreen(null));}
     @Button(title="Block appearance",text="Open",category="Tools") public void blocks(){open(new PlacementAppearanceScreen(null));}

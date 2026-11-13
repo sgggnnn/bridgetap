@@ -28,7 +28,7 @@ public final class ClipCapture {
     private static final ExecutorService compression=Executors.newFixedThreadPool(WORKERS,r->{Thread t=new Thread(r,"BridgeTap frame compression");t.setDaemon(true);t.setPriority(Thread.NORM_PRIORITY-1);return t;}),exporter=worker("BridgeTap MP4 export");
     private static final AtomicInteger pending=new AtomicInteger();private static final AtomicBoolean saving=new AtomicBoolean();private static long sequence;
     private static volatile boolean enabled;private static volatile long generation;
-    private static boolean sound=NativeClipTools.windows();
+    private static boolean sound=NativeClipTools.windows(),microphone;
     private static volatile String message="Buffer off. Enable it before playing; F9 saves the recent video.";
     private static volatile String backend="Lossless RGB buffer / Waiting for capture";
     private static long next,last;private static int fps=15,maxHeight=ClipQuality.DEFAULT_HEIGHT,texture,fbo,outputW,outputH,inputW,inputH;
@@ -36,15 +36,17 @@ public final class ClipCapture {
     private static ByteBuffer pixels;
     private static final Queue<String> notices=new ConcurrentLinkedQueue<>();
     static{
-        try(InputStream in=Files.newInputStream(Paths.get("config","bridgetap-clips.properties"))){Properties p=new Properties();p.load(in);int f=Integer.parseInt(p.getProperty("fps","15")),s=Integer.parseInt(p.getProperty("seconds","30")),h=Integer.parseInt(p.getProperty("height","720"));if(validRate(f))fps=f;if(s==15||s==30||s==60)buffer.window(s);if(h==360||h==720||h==1080)maxHeight=h;sound=NativeClipTools.windows()&&Boolean.parseBoolean(p.getProperty("sound","true"));}catch(IOException|IllegalArgumentException ignored){}
+        try(InputStream in=Files.newInputStream(Paths.get("config","bridgetap-clips.properties"))){Properties p=new Properties();p.load(in);int f=Integer.parseInt(p.getProperty("fps","15")),s=Integer.parseInt(p.getProperty("seconds","30")),h=Integer.parseInt(p.getProperty("height","720"));if(validRate(f))fps=f;if(s==15||s==30||s==60)buffer.window(s);if(h==360||h==720||h==1080)maxHeight=h;sound=NativeClipTools.windows()&&Boolean.parseBoolean(p.getProperty("sound","true"));microphone=Boolean.parseBoolean(p.getProperty("microphone","false"));}catch(IOException|IllegalArgumentException ignored){}
     }
     private static void settings(){
-        try{Path file=Paths.get("config","bridgetap-clips.properties");Files.createDirectories(file.getParent());Properties p=new Properties();p.setProperty("fps",String.valueOf(fps));p.setProperty("seconds",String.valueOf(buffer.window()));p.setProperty("height",String.valueOf(maxHeight));p.setProperty("sound",String.valueOf(sound));try(OutputStream out=Files.newOutputStream(file)){p.store(out,"BridgeTap video buffer (recording starts OFF)");}}catch(IOException ex){message="Could not save clip preferences.";}
+        try{Path file=Paths.get("config","bridgetap-clips.properties");Files.createDirectories(file.getParent());Properties p=new Properties();p.setProperty("fps",String.valueOf(fps));p.setProperty("seconds",String.valueOf(buffer.window()));p.setProperty("height",String.valueOf(maxHeight));p.setProperty("sound",String.valueOf(sound));p.setProperty("microphone",String.valueOf(microphone));try(OutputStream out=Files.newOutputStream(file)){p.store(out,"BridgeTap video buffer (recording starts OFF)");}}catch(IOException ex){message="Could not save clip preferences.";}
     }
     public static void tick(){Minecraft mc=Minecraft.m_20213497();if(mc.f_28396371==null)return;String notice;while((notice=notices.poll())!=null)mc.f_28396371.m_83523863(new C_69136080("\u00a7b[BridgeTap] \u00a7f"+notice));}
     private static ExecutorService worker(String name){return Executors.newSingleThreadExecutor(r->{Thread t=new Thread(r,name);t.setDaemon(true);t.setPriority(Thread.NORM_PRIORITY-1);return t;});}
     public static boolean enabled(){return enabled;}
     public static boolean sound(){return sound;}
+    public static boolean microphone(){return microphone;}
+    public static void toggleMicrophone(){microphone=!microphone;ClipMicrophone.capture(false);clear();settings();}
     public static void toggleSound(){sound=NativeClipTools.windows()&&!sound;if(!sound)ClipAudio.capture(false);clear();settings();}
     public static boolean saving(){return saving.get();}
     public static int fps(){return fps;}
@@ -56,7 +58,7 @@ public final class ClipCapture {
     public static String stats(){return stream==null?String.format(Locale.US,"%.1fs / %.1f MiB / %.0f captured FPS (target %d) / %dp",buffer.duration(),buffer.bytes()/1048576.0,buffer.rate(),fps,maxHeight):String.format(Locale.US,"%.1fs / %.1f MiB disk / %.0f captured FPS (target %d) / %dp",stream.duration(),stream.bytes()/1048576.0,stream.rate(),fps,maxHeight);}
     public static String storage(){return stream==null?"128 MiB image buffer":"Rolling H.264 on disk / 2 GiB limit";}
     public static Path folder()throws IOException{Path p=Paths.get("bridgetap-clips");Files.createDirectories(p);return p;}
-    public static void toggle(){enabled=!enabled;if(!enabled)ClipAudio.capture(false);clear();message=enabled?"Recording video. Press F9 to save the recent buffer.":"Buffer stopped and cleared.";notices.add(message);}
+    public static void toggle(){enabled=!enabled;if(!enabled){ClipAudio.capture(false);ClipMicrophone.capture(false);}clear();message=enabled?"Recording video. Press F9 to save the recent buffer.":"Buffer stopped and cleared.";notices.add(message);}
     public static synchronized void clear(){generation++;ordered.reset(generation);sequence=0;buffer.clear();if(stream!=null)stream.reset(generation,buffer.window());next=last=0;}
     public static void duration(int seconds){synchronized(ClipCapture.class){buffer.window(seconds);clear();}settings();}
     public static boolean validRate(int value){return value==10||value==15||value==20||value==30||value==60||value==120;}
@@ -70,10 +72,10 @@ public final class ClipCapture {
         if(!saving.compareAndSet(false,true))return;final int rate=fps;
         message="Exporting MP4 in the background...";
         notices.add(message);
-        final boolean audio=sound&&enabled;exporter.execute(()->{Path wave=null;try{
+        final boolean systemAudio=sound&&enabled,micAudio=microphone&&enabled,audio=systemAudio||micAudio;exporter.execute(()->{Path wave=null;try{
             String name="BridgeTap-"+new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date())+"-"+UUID.randomUUID().toString().substring(0,8)+".mp4";
             Path target=folder().resolve(name);
-            if(audio)try{wave=ClipAudio.snapshot(frames.get(0).time,frames.get(frames.size()-1).time+1000000000L/rate,folder());}catch(Exception ex){notices.add("Audio unavailable; this clip will be silent. "+ex.getMessage());}
+            if(audio)try{wave=ClipAudioMix.snapshot(frames.get(0).time,frames.get(frames.size()-1).time+1000000000L/rate,folder(),systemAudio,micAudio);}catch(Exception ex){notices.add("Audio unavailable; this clip will be silent. "+ex.getMessage());}
             ClipVideo.write(frames,rate,target,wave,(done,total)->message="Exporting MP4: "+done*100/total+"%");
             message="Saved: "+name;
             notices.add(message);
@@ -81,18 +83,19 @@ public final class ClipCapture {
         finally{if(wave!=null)try{Files.deleteIfExists(wave);}catch(IOException ignored){}saving.set(false);}});
     }
     private static void saveStream(){
-        if(!saving.compareAndSet(false,true))return;CompletableFuture<ClipStreamBuffer.Snapshot> prepared=stream.snapshot(System.nanoTime());final boolean audio=sound&&enabled;message="Preparing recent video...";notices.add(message);
+        if(!saving.compareAndSet(false,true))return;CompletableFuture<ClipStreamBuffer.Snapshot> prepared=stream.snapshot(System.nanoTime());final boolean systemAudio=sound&&enabled,micAudio=microphone&&enabled,audio=systemAudio||micAudio;message="Preparing recent video...";notices.add(message);
         exporter.execute(()->{Path wave=null;try(ClipStreamBuffer.Snapshot snapshot=prepared.get(20,TimeUnit.SECONDS)){
             Path target=folder().resolve("BridgeTap-"+new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date())+"-"+UUID.randomUUID().toString().substring(0,8)+".mp4");
-            if(audio)try{wave=ClipAudio.snapshot(snapshot.first,snapshot.last,folder());}catch(Exception ex){notices.add("Audio unavailable; this clip will be silent. "+ex.getMessage());}
+            if(audio)try{wave=ClipAudioMix.snapshot(snapshot.first,snapshot.last,folder(),systemAudio,micAudio);}catch(Exception ex){notices.add("Audio unavailable; this clip will be silent. "+ex.getMessage());}
             message="Saving MP4 without recompressing...";snapshot.write(target,wave);message="Saved: "+target.getFileName();notices.add(message);
         }catch(Exception|LinkageError ex){prepared.cancel(false);Throwable cause=ex instanceof ExecutionException?ex.getCause():ex;message="Clip save failed: "+cause.getMessage();notices.add(message);diagnostic(cause);}finally{if(wave!=null)try{Files.deleteIfExists(wave);}catch(IOException ignored){}saving.set(false);}});
     }
     public static void capture(){
-        if(ReplayVideoExport.active()){ClipAudio.capture(false);ReplayVideoExport.capture();return;}
+        if(ReplayVideoExport.active()){ClipAudio.capture(false);ClipMicrophone.capture(false);ReplayVideoExport.capture();return;}
         Minecraft mc=Minecraft.m_20213497();
         if(mc.f_26407825!=world){world=mc.f_26407825;clear();}
         ClipAudio.capture(enabled&&sound&&mc.f_26407825!=null&&Display.isActive()&&Display.isVisible());
+        ClipMicrophone.capture(enabled&&microphone&&mc.f_26407825!=null&&Display.isActive()&&Display.isVisible());
         if(!enabled||mc.f_26407825==null||mc.f_28396371==null||!Display.isActive()||!Display.isVisible()){
             if(last!=0)clear();if(!enabled)releaseFramebuffer();return;
         }
@@ -120,7 +123,7 @@ public final class ClipCapture {
     }
     static final class VideoFrame {final byte[] rgb;final int width,height,outWidth,outHeight;VideoFrame(byte[] rgb,int w,int h,int ow,int oh){this.rgb=rgb;width=w;height=h;outWidth=ow;outHeight=oh;}}
     static void exportError(Throwable error){diagnostic(error);}
-    static void beginReplayExport(){ClipAudio.capture(false);clear();releaseFramebuffer();inputW=inputH=outputW=outputH=0;}
+    static void beginReplayExport(){ClipAudio.capture(false);ClipMicrophone.capture(false);clear();releaseFramebuffer();inputW=inputH=outputW=outputH=0;}
     static void endReplayExport(){clear();releaseFramebuffer();inputW=inputH=outputW=outputH=0;}
     static VideoFrame replayFrame(int height){Minecraft mc=Minecraft.m_20213497();int w=mc.f_31800787,h=mc.f_74192110;if(w<2||h<2||w>8192||h>8192)throw new IllegalStateException("Invalid game window size");int[] out=ClipQuality.size(w,h,height);boolean fast=mode.framebuffer(GLContext.getCapabilities().OpenGL30);int rw=fast?out[0]:w,rh=fast?out[1]:h;int length=rw*rh*3;byte[] rgb=ClipRgbPool.acquire(length);if(rgb==null)return null;boolean delivered=false;try{if(pixels==null||pixels.capacity()!=length)pixels=BufferUtils.createByteBuffer(length);pixels.clear();readPixels(w,h,out[0],out[1],fast,pixels);pixels.get(rgb);delivered=true;return new VideoFrame(rgb,rw,rh,out[0],out[1]);}finally{if(!delivered)ClipRgbPool.release(rgb);}}
     private static void captureFailed(Throwable error,boolean async,boolean fast){diagnostic(error);clear();releaseFramebuffer();if(mode.failed(async,fast)){message="Capture compatibility fallback enabled. Buffer is still ON.";backend="Retrying with a compatible capture method";}else{enabled=false;message="Video capture failed: "+error.getClass().getSimpleName()+". See config/bridgetap/clip-capture.log";}notices.add(message);}

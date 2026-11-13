@@ -9,12 +9,13 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
-@Mod(modid="bridgetap", name="BridgeTap", version="1.7.5", clientSideOnly=true,
+@Mod(modid="bridgetap", name="BridgeTap", version="1.8.0", clientSideOnly=true,
      acceptedMinecraftVersions="[1.8.9]", acceptableRemoteVersions="*")
 public final class BridgeTapForge {
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         BridgeConfig.load();
+        BridgeHUD.registerKeys(Minecraft.func_71410_x());
         MinecraftForge.EVENT_BUS.register(this);
         System.out.println("[BridgeTap] Forge client initialized");
     }

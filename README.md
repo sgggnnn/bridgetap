@@ -12,12 +12,14 @@ A **Minecraft 1.8.9** client mod for analyzing your bridges: jump coordinates, r
 
 **1.7.5** adds independent axis-delta and jump-angle colors, including native OneClient RGB pickers, and fixes Windows update installation after an authenticated connection reset. Versions 1.7.2/1.7.3 need one manual upgrade to obtain the fixed installer. See the [1.7.5 release notes](docs/releases/v1.7.5.md).
 
+**1.8.0** adds keybind profiles, microphone clips, imported 26.2 block appearances and original placement sounds, replay storage controls, a grouped Tools menu and performance improvements. It fixes Forge keybind persistence and OneClient connected-texture compatibility. See the [1.8.0 release notes](docs/releases/v1.8.0.md) and [profiles, audio and appearances guide](docs/PROFILES-AND-APPEARANCES.md).
+
 ## Installation
 
-1. Open [release 1.7.5](https://github.com/sgggnnn/bridgetap/releases/tag/v1.7.5).
+1. Open [release 1.8.0](https://github.com/sgggnnn/bridgetap/releases/tag/v1.8.0).
 2. Download the file matching your setup:
-   - **Forge 1.8.9**: `BridgeTap-1.7.0-Forge-1.8.9.jar`.
-   - **OneClient / Ornithe Fabric 1.8.9**: `BridgeTap-1.7.0-OneClient.jar`, for an environment using Ornithe mappings.
+   - **Forge 1.8.9**: `BridgeTap-1.8.0-Forge-1.8.9.jar`.
+   - **OneClient / Ornithe Fabric 1.8.9**: `BridgeTap-1.8.0-OneClient.jar`, for an environment using Ornithe mappings.
 3. Place the JAR in your instance's `mods` folder, replacing the previous BridgeTap version.
 4. Launch Minecraft with **Java 8+** and your chosen loader. Native OneClient/OneConfig integration requires **Java 21+**.
 5. For Windows clips/audio, extract the optional tools pack from the release into the game directory containing `mods`, then enable the buffer. See the [tools installation instructions](docs/releases/v1.7.0.md#downloads-and-upgrade).

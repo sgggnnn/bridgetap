@@ -1,0 +1,2 @@
+import com.bridger.momentum.oneclient.OneClientConfig;
+public class OneClientCardRegression {public static void main(String[] args){OneClientConfig c=new OneClientConfig();if(!c.title.equals("BridgeTap")||!c.iconPath.equals("assets/bridgetap/icon.png")||!c.id.equals("bridgetap-oneconfig.json"))throw new AssertionError("OneClient card metadata");System.out.println("PASS: actual OneConfig constructor keeps searchable BridgeTap title, PNG icon and file-safe config ID");System.exit(0);}}

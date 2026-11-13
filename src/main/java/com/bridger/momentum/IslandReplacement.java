@@ -12,7 +12,7 @@ public final class IslandReplacement {
         Mask(Collection<ReplayData.Block> cells,int surface){this(cells,surface,Collections.emptyList(),Collections.emptySet());}
         Mask(Collection<ReplayData.Block> cells,int surface,List<IslandMaskArea> areas,Collection<Long> visible){Set<Long> keys=new HashSet<>();int ax=30000001,ay=256,az=30000001,bx=-30000001,by=-1,bz=-30000001;for(ReplayData.Block b:cells){keys.add(b.key());ax=Math.min(ax,b.x);ay=Math.min(ay,b.y);az=Math.min(az,b.z);bx=Math.max(bx,b.x);by=Math.max(by,b.y);bz=Math.max(bz,b.z);}for(IslandMaskArea b:areas){ax=Math.min(ax,b.minX);ay=Math.min(ay,b.minY);az=Math.min(az,b.minZ);bx=Math.max(bx,b.maxX);by=Math.max(by,b.maxY);bz=Math.max(bz,b.maxZ);}blocks=Collections.unmodifiableSet(keys);minX=ax;minY=ay;minZ=az;maxX=bx;maxY=by;maxZ=bz;this.surface=surface;presetX=minX;presetY=minY;presetZ=minZ;this.areas=Collections.unmodifiableList(new ArrayList<>(areas));this.visible.addAll(visible);}
         public boolean empty(){return blocks.isEmpty()&&areas.isEmpty();}
-        boolean hidden(int x,int y,int z){long key=key(x,y,z);if(visible.contains(key))return false;if(blocks.contains(key))return true;for(IslandMaskArea area:areas)if(area.contains(x,y,z))return true;return false;}
+        boolean hidden(int x,int y,int z){if(x<minX||x>maxX||y<minY||y>maxY||z<minZ||z>maxZ)return false;long key=key(x,y,z);if(visible.contains(key))return false;if(blocks.contains(key))return true;for(IslandMaskArea area:areas)if(area.contains(x,y,z))return true;return false;}
     }
     public static final Mask EMPTY=new Mask(Collections.emptyList(),0);
     private static volatile Mask current=EMPTY;

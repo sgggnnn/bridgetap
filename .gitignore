@@ -19,3 +19,6 @@ Thumbs.db
 # Gradle bootstrap (the wrapper is infrastructure, not a mod artifact)
 /.gradle/
 !gradle/wrapper/gradle-wrapper.jar
+
+# OneConfig local runtime profiles
+/oneconfig/

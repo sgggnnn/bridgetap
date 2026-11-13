@@ -45,7 +45,7 @@ public class BridgeTracker {
         java.util.List<String> lines = new java.util.ArrayList<>();
         for (JumpEntry entry : entries) lines.add(EntryFormatter.format(entry));
         HISTORY.add(status.name(), currentBridgeTime, getJumpCount(), currentAxis, lines, ReplayRecorder.snapshot(),ReplayRecorder.serverAddress());
-        try{ReplayFolders.local().fileByServer(HISTORY,HISTORY.recent().get(0));}catch(java.io.IOException|IllegalArgumentException ex){System.err.println("[BridgeTap] Server folder: "+ex.getMessage());}
+        ReplayStorage.completed(HISTORY,HISTORY.recent().get(0));
         if (BridgeConfig.chatOutput) for (String line : EntryFormatter.lines(entries)) {
             if(!line.isEmpty())sendMessage("\u00a7b[BridgeTap] " + line);
         }

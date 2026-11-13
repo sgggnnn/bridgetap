@@ -29,8 +29,8 @@ public final class OneClientIntegration {
             }
             for(Object hud:(java.util.List<?>)hudManager.getMethod("instances").invoke(null))for(int t=0;t<3;t++)if(("bridgetap-"+t).equals(hud.getClass().getField("id").get(hud)))adapter.getMethod("bindHudStyle",int.class,Object.class).invoke(configAdapter,t,hud);
             registered=true;System.out.println("[BridgeTap] OneConfig menus and 3 HUDs registered");
-        }catch(ClassNotFoundException absent){/* Standalone installation. */}
-        catch(ReflectiveOperationException|LinkageError ex){System.err.println("[BridgeTap] OneConfig integration unavailable: "+ex);}
+        }catch(ClassNotFoundException absent){if(!"org.polyfrost.oneconfig.api.hud.v1.OneConfigHudWrapper".equals(absent.getMessage())){System.err.println("[BridgeTap] Missing OneConfig integration dependency");absent.printStackTrace();}}
+        catch(ReflectiveOperationException|LinkageError ex){System.err.println("[BridgeTap] OneConfig integration unavailable");Throwable cause=ex instanceof InvocationTargetException?((InvocationTargetException)ex).getTargetException():ex;cause.printStackTrace();}
     }
     public static boolean editing(){if(!registered)return false;try{return (Boolean)editing.invoke(manager);}catch(ReflectiveOperationException ex){return false;}}
     public static void recordSize(int type,float width,float height){sizes[type][0]=width;sizes[type][1]=height;}
@@ -42,7 +42,7 @@ public final class OneClientIntegration {
         switch(name){
             case "getId":return "bridgetap-"+t;
             case "getName":return TITLES[t];
-            case "getModId":return "bridgetap";
+            case "getModId":return "bridgetap-oneconfig.json";
             case "getX":return x(t);case "getY":return y(t);case "getScale":return scale(t);
             case "setX":if(t==0)BridgeConfig.hudX=Math.round(value);else if(t==1)BridgeConfig.replayHudX=Math.round(value);else BridgeConfig.inputHudX=Math.round(value);return null;
             case "setY":if(t==0)BridgeConfig.hudY=Math.round(value);else if(t==1)BridgeConfig.replayHudY=Math.round(value);else BridgeConfig.inputHudY=Math.round(value);return null;

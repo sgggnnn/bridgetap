@@ -129,7 +129,9 @@ public abstract class BridgeScreen extends C_85740840 {
         if(focus.equals(id))activeField=new Field(value,max,change);
     }
     protected final void dropdown(String id,String title,String[] options,int selected,int x,int y,int width,Consumer<Integer> change){
-        button(title+"  v",x,y,width,26,true,false,()->{dropdown=dropdown.equals(id)?"":id;});
+        button("",x,y,width,26,true,false,()->{dropdown=dropdown.equals(id)?"":id;});
+        int titleWidth=Math.min(ui.width(title),width-38);clipped(title,x+Math.max(8,(width-22-titleWidth)/2),y+9,width-34,TEXT);
+        int cx=x+width-16,cy=y+11;for(int i=0;i<4;i++){int yy=dropdown.equals(id)?cy+3-i:cy+i;rect(cx-3+i,yy,1,1,MUTED);rect(cx+3-i,yy,1,1,MUTED);}
         if(!dropdown.equals(id))return;
         overlays.add(()->{
             int top=Math.min(y+30,HEIGHT-12-options.length*22);

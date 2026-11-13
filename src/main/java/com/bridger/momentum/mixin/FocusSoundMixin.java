@@ -11,5 +11,5 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(C_03111506.class)
 public abstract class FocusSoundMixin {
     @Inject(method="m_38883552",at=@At("HEAD"),cancellable=true)
-    private void bridgetap$focusSound(C_53396390 sound,CallbackInfo ci){if(FocusAudio.suppress(sound))ci.cancel();}
+    private void bridgetap$focusSound(C_53396390 sound,CallbackInfo ci){if(com.bridger.momentum.PlacementAppearance.suppressOriginal(sound)||FocusAudio.suppress(sound))ci.cancel();}
 }

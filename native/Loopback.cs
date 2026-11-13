@@ -40,6 +40,14 @@ interface ICapture {
     [PreserveSig] int ReleaseBuffer(uint frames);
     [PreserveSig] int GetNextPacketSize(out uint frames);
 }
+// Sample positions, rather than thread wake-up times, define contiguous audio.
+internal sealed class LoopbackClock {
+    bool havePosition;ulong nextPosition;double nextStart;
+    public double Stamp(double timestamp,ulong position,uint frames,uint flags,int rate){
+        if(havePosition&&(flags&1)==0&&position==nextPosition)timestamp=nextStart;
+        nextPosition=position+frames;nextStart=timestamp+frames*1000.0/rate;havePosition=true;return timestamp;
+    }
+}
 static class Loopback {
     class Packet { public double Start;public byte[] Data; }
     static readonly Queue<Packet> packets=new Queue<Packet>();
@@ -62,7 +70,7 @@ static class Loopback {
             double offset=Now-Stopwatch.GetTimestamp()*1000.0/Stopwatch.Frequency;
             Check(audio.Start());Say("READY");
             Thread input=new Thread(()=>{string line;while((line=Console.In.ReadLine())!=null)commands.Enqueue(line);commands.Enqueue("STOP");});input.IsBackground=true;input.Start();
-            bool running=true;
+            bool running=true;LoopbackClock clock=new LoopbackClock();
             while(running){
                 uint count;Check(capture.GetNextPacketSize(out count));
                 while(count>0){
@@ -70,6 +78,9 @@ static class Loopback {
                     try {
                         byte[] pcm=new byte[checked((int)frames*align)];if((flags&2)==0)Marshal.Copy(data,pcm,0,pcm.Length);
                         double time=(flags&4)!=0?Now-frames*1000.0/rate:qpc/10000.0+offset;
+                        // Adjacent device positions are adjacent samples, regardless of
+                        // QPC conversion/polling jitter. Preserve real discontinuities.
+                        time=clock.Stamp(time,pos,frames,flags,rate);
                         packets.Enqueue(new Packet{Start=time,Data=pcm});bytes+=pcm.Length;
                     } finally {Check(capture.ReleaseBuffer(frames));}
                     Check(capture.GetNextPacketSize(out count));

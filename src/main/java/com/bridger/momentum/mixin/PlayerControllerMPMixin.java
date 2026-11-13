@@ -20,14 +20,15 @@ public class PlayerControllerMPMixin {
 
     @Inject(method = "m_10759796", at = @At("HEAD"))
     private void bridgetap$capturePlacement(C_57778754 player, C_34399650 world, C_88708284 stack, C_32594356 pos, C_28786548 side, C_94584382 hitVec, CallbackInfoReturnable<Boolean> cir) {
-        PlacementHooks.capture(world, pos, side);
+        com.bridger.momentum.PlacementAppearance.beginPlacement(stack);
+        PlacementHooks.capture(world, pos, side, stack);
     }
 
     @Inject(method = "m_10759796", at = @At("RETURN"))
     private void bridgetap$onPlayerRightClick(C_57778754 player, C_34399650 world, C_88708284 stack, C_32594356 pos, C_28786548 side, C_94584382 hitVec, CallbackInfoReturnable<Boolean> cir) {
-        if (cir.getReturnValue() && stack != null && stack.m_23235460() instanceof C_71827890) {
+        try{if (cir.getReturnValue() && stack != null && stack.m_23235460() instanceof C_71827890) {
             BridgeTracker.onBlockPlaced();
             PlacementHooks.finish(world, player);
-        }
+        }}finally{com.bridger.momentum.PlacementAppearance.endPlacement();}
     }
 }

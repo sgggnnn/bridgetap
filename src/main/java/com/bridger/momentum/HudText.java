@@ -7,9 +7,11 @@ import net.minecraft.unmapped.C_23014920;
 public final class HudText {
     private static final int[] PALETTE={0,0xAA,0xAA00,0xAAAA,0xAA0000,0xAA00AA,0xFFAA00,0xAAAAAA,0x555555,0x5555FF,0x55FF55,0x55FFFF,0xFF5555,0xFF55FF,0xFFFF55,0xFFFFFF};
     public static final class Span {public final String text;public final int color;Span(String text,int color){this.text=text;this.color=color;}}
-    public static String token(int color){return String.format(Locale.ROOT,"\u00a7#%06X",color&0xFFFFFF);}
-    public static String legacy(String value){return value.replaceAll("(?i)\u00a7#[0-9a-f]{6}","");}
-    public static String unformatted(String value){return legacy(value).replaceAll("(?i)\u00a7[0-9a-fk-or]","");}
+    private static final char[] HEX="0123456789ABCDEF".toCharArray();
+    private static final java.util.regex.Pattern RGB=java.util.regex.Pattern.compile("(?i)\u00a7#[0-9a-f]{6}"),LEGACY=java.util.regex.Pattern.compile("(?i)\u00a7[0-9a-fk-or]");
+    public static String token(int color){char[] token={'\u00a7','#','0','0','0','0','0','0'};for(int i=7;i>=2;i--){token[i]=HEX[color&15];color>>>=4;}return new String(token);}
+    public static String legacy(String value){return value.indexOf("\u00a7#")<0?value:RGB.matcher(value).replaceAll("");}
+    public static String unformatted(String value){return value.indexOf('\u00a7')<0?value:LEGACY.matcher(legacy(value)).replaceAll("");}
     public static List<Span> spans(String value,int base){List<Span> result=new ArrayList<>();StringBuilder text=new StringBuilder();int color=base;
         for(int i=0;i<value.length();i++){
             if(value.charAt(i)=='\u00a7'&&i+1<value.length()){

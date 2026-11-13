@@ -2,3 +2,5 @@ key.bridgetap.openSettings=Open BridgeTap replay library
 key.bridgetap.editReplayInputs=Edit replay keystrokes HUD
 key.bridgetap.saveClip=Save recent video clip
 key.categories.bridgetap=BridgeTap
+
+key.bridgetap.nextProfile=Next keybind profile

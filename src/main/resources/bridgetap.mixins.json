@@ -23,7 +23,14 @@
     "ReplayContextAccessor",
     "ReplayControllerAccessor",
     "ReplayRendererAccessor",
-    "ReplayGhostRenderMixin"
+    "ReplayGhostRenderMixin",
+    "AppearanceResourceAccessor",
+    "ModernTextureMixin",
+    "ModernBlockRenderMixin",
+    "AppearanceItemMixin",
+    "AppearanceRenderItemMixin",
+    "AppearanceSoundMixin"
+    ,"AppearanceCeraMixin"
   ],
   "injectors": {
     "defaultRequire": 1

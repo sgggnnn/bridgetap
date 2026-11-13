@@ -1,7 +1,7 @@
 param(
     [string]$JavaHome = $env:JAVA_HOME,
     [string]$RuntimeJavaHome = $JavaHome,
-    [string]$Jar = 'dist/BridgeTap-1.7.5.jar',
+    [string]$Jar = 'dist/BridgeTap-1.8.0.jar',
     [string]$MinecraftJar,
     [string]$GsonJar,
     [string]$Python = 'python',
@@ -23,7 +23,7 @@ $clipTools = Join-Path $projectRoot 'build/libs/BridgeTap-clip-tools-windows-x64
 if (Test-Path -LiteralPath $clipTools) { Expand-Archive -LiteralPath $clipTools -DestinationPath $work }
 Push-Location $work
 try {
-    foreach ($test in @('ConfigRegression', 'HistoryRegression', 'ReplayRegression', 'DisplayRegression', 'ReplayTimelineRegression','ReplayCaptureRegression', 'ReplayCameraRegression', 'TelemetryRegression','JumpVelocityRegression','BothAxesRegression', 'BridgeGeometryRegression','ServerModeRegression', 'ReplayLibraryRegression', 'ReplayControlsRegression', 'BridgeDetectionRegression', 'ReplayQueryRegression', 'OverlayPlacementRegression','OverlayStyleRegression', 'IslandRegression','IslandPresetsRegression','FocusAudioRegression','PresetServersRegression','PresetArchiveRegression','IslandEditorRegression','FailureAnalysisRegression','ReplayVideoRegression','ReplayVideoPresentationRegression', 'ReplayFoldersRegression','ReplayRetentionRegression', 'ClipRegression','NativeClipToolsRegression','ClipStreamRegression','DefaultIslandsRegression','UpdateRegression')) {
+    foreach ($test in @('ConfigRegression','KeybindProfilesRegression','ClipMicrophoneRegression','ClipAudioMixRegression', 'HistoryRegression', 'ReplayRegression', 'DisplayRegression', 'ReplayTimelineRegression','ReplayCaptureRegression', 'ReplayCameraRegression', 'TelemetryRegression','JumpVelocityRegression','BothAxesRegression', 'BridgeGeometryRegression','ServerModeRegression', 'ReplayLibraryRegression', 'ReplayControlsRegression', 'BridgeDetectionRegression', 'ReplayQueryRegression', 'OverlayPlacementRegression','OverlayStyleRegression', 'IslandRegression','IslandPresetsRegression','FocusAudioRegression','PresetServersRegression','PresetArchiveRegression','IslandEditorRegression','FailureAnalysisRegression','ReplayVideoRegression','ReplayVideoPresentationRegression', 'ReplayFoldersRegression','ReplayRetentionRegression','ReplayStorageRegression', 'ClipRegression','NativeClipToolsRegression','ClipStreamRegression','DefaultIslandsRegression','UpdateRegression')) {
         & $runtime -cp "$artifact;$classes" $test
         if ($LASTEXITCODE -ne 0) { throw "Regression failed: $test" }
     }

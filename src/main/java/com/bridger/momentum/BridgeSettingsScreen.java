@@ -45,6 +45,7 @@ public class BridgeSettingsScreen extends BridgeScreen {
         dropdown("output",BridgeConfig.chatOutput?"Output: Chat":"Output: Overlay",new String[]{"Overlay","Chat at end of run"},BridgeConfig.chatOutput?1:0,454,398,174,i->{BridgeConfig.chatOutput=i==1;BridgeConfig.save();});
         button("Customize colors",640,398,184,()->open(new BridgeColorsScreen(this)));
         toggle("Jump viewing angle (yaw)",BridgeConfig.showJumpAngle,22,442,368,()->BridgeConfig.showJumpAngle=!BridgeConfig.showJumpAngle);
+        button("Keybind profiles",406,442,148,26,true,false,()->open(new KeybindProfilesScreen(this)));
         button("Updates",566,442,128,26,true,false,()->UpdateManager.open(this));
         button("Back to replays",706,442,134,26,true,true,this::back);
         footer("Changes are saved automatically  /  Esc: back");

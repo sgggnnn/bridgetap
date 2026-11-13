@@ -50,7 +50,7 @@ public final class ClipVideo {
             List<String> command=new ArrayList<>(Arrays.asList(NativeClipTools.tool("ffmpeg.exe").toString(),"-hide_banner","-loglevel","error","-nostdin","-n","-f","image2pipe","-vcodec","png","-framerate",String.valueOf(fps),"-i","pipe:0"));
             if(audio!=null)command.addAll(Arrays.asList("-i",audio.toAbsolutePath().toString()));
             command.addAll(Arrays.asList("-map","0:v:0","-c:v","libx264","-threads","2","-preset","fast","-crf","16","-pix_fmt","yuv420p"));
-            if(audio!=null)command.addAll(Arrays.asList("-map","1:a:0","-c:a","aac","-b:a","192k","-af","apad","-shortest"));
+            if(audio!=null)command.addAll(Arrays.asList("-map","1:a:0","-c:a","aac","-b:a","192k","-ar","48000","-ac","2","-af","apad","-shortest"));
             command.addAll(Arrays.asList("-movflags","+faststart",temp.toAbsolutePath().toString()));
             process=new ProcessBuilder(command).redirectErrorStream(true).redirectOutput(log.toFile()).start();
             try(OutputStream input=new BufferedOutputStream(process.getOutputStream(),256*1024)){

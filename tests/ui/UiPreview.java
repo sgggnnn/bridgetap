@@ -51,6 +51,7 @@ public final class UiPreview implements UiCanvas {
         library.clickPreview(450,110,0);render(library,font,"sort-options");library.clickPreview(440,158,0);render(library,font,"sorted");
         if(!"FASTEST".equals(BridgeConfig.replaySort))throw new AssertionError("Sort dropdown did not select time ascending");
         library.clickPreview(610,110,0);render(library,font,"descending");if(!"SLOWEST".equals(BridgeConfig.replaySort))throw new AssertionError("Sort direction did not change");
+        render(new ReplayToolsScreen(ReplayFolderScreen.home(),new BridgeHistoryScreen(),BridgeTracker.history().recent().get(0)),font,"replay-tools");render(new KeybindProfilesScreen(null),font,"keybind-profiles");render(new ReplayStorageScreen(null),font,"replay-storage");render(new PlacementAppearanceScreen(null),font,"modern-block-import");
         BridgeSettingsScreen settings=new BridgeSettingsScreen();render(settings,font,"settings");settings.clickPreview(250,246,0);render(settings,font,"pre-jump-velocity-enabled");if(!BridgeConfig.showBridgeVelocity)throw new AssertionError("Pre-jump velocity toggle did not enable");settings.clickPreview(250,246,0);
         settings.clickPreview(250,411,0);render(settings,font,"both-axes-enabled");if(!BridgeConfig.showBothAxes)throw new AssertionError("Both axes toggle did not enable");settings.clickPreview(250,411,0);
         settings.clickPreview(250,455,0);render(settings,font,"jump-angle-enabled");if(!BridgeConfig.showJumpAngle)throw new AssertionError("Jump angle toggle did not enable");settings.clickPreview(250,455,0);
@@ -134,8 +135,9 @@ public final class UiPreview implements UiCanvas {
         Files.createDirectories(Paths.get("config"));Files.write(Paths.get("config","bridgetap-clips.properties"),new byte[]{102,112,115,61,92,117,88,88,88,88});
         ClipScreen clips=new ClipScreen(library);render(clips,font,"video-clips");
         if(ClipCapture.fps()!=15||ClipCapture.seconds()!=30||ClipCapture.height()!=720)throw new AssertionError("Malformed clip preferences did not fall back to defaults");
-        clips.clickPreview(350,185,0);render(clips,font,"video-buffer-on");if(!ClipCapture.enabled())throw new AssertionError("Video buffer toggle did not enable capture");
-        clips.clickPreview(350,185,0);if(ClipCapture.enabled())throw new AssertionError("Video buffer toggle did not stop capture");
+        clips.clickPreview(150,181,0);render(clips,font,"video-buffer-on");if(!ClipCapture.enabled())throw new AssertionError("Video buffer toggle did not enable capture");
+        clips.clickPreview(150,181,0);if(ClipCapture.enabled())throw new AssertionError("Video buffer toggle did not stop capture");
+        clips.clickPreview(700,181,0);render(clips,font,"microphone-enabled");if(!ClipCapture.microphone())throw new AssertionError("Microphone option did not enable");clips.clickPreview(700,181,0);if(ClipCapture.microphone())throw new AssertionError("Microphone option did not disable");
         render(clips,font,"video-buffer-off");clips.clickPreview(350,230,0);render(clips,font,"video-frame-rates");clips.clickPreview(350,349,0);
         if(ClipCapture.fps()!=60)throw new AssertionError("60 FPS menu option did not change capture rate");
         render(clips,font,"video-60fps");clips.clickPreview(350,230,0);render(clips,font,"video-frame-rates-120");clips.clickPreview(350,371,0);
