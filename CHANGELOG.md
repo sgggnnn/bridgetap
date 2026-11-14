@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased — Replay sharing
+
+- Add bounded offline BTR1 share codes with SHA-256 integrity, privacy review, explicit identity opt-in and shared-file fallback.
+- Preview clipboard and file imports before confirmation, then file confirmed recordings into Imported. Preserve v4/v5 recording provenance and bound actual decompressed bytes.
+
 ## [1.9.0](https://github.com/sgggnnn/bridgetap/releases/tag/v1.9.0) - Replay tools, automatic islands and HUD customization
 
 For Minecraft **1.8.9**, with separate Forge and OneClient / Ornithe downloads.

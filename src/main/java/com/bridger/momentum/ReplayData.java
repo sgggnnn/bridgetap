@@ -92,6 +92,7 @@ public final class ReplayData {
   this.presentation=presentation;
  }
  public ReplayData withPresentation(ReplayPresentation presentation){if(formatVersion<5)throw new IllegalStateException("Legacy timing must retain its provenance");return new ReplayData(frames,blocks,truncated,identity,dimension,dayTime,7,placementTags,java.util.Objects.requireNonNull(presentation));}
+ public ReplayData withIdentity(Identity identity){return new ReplayData(frames,blocks,truncated,Objects.requireNonNull(identity),dimension,dayTime,formatVersion,placementTags,presentation);}
  public BridgeGeometry.Result geometry(){if(geometry==null)geometry=BridgeGeometry.measure(this);return geometry;}
  public void write(Path file)throws IOException {
   try(DataOutputStream out=new DataOutputStream(new GZIPOutputStream(Files.newOutputStream(file,StandardOpenOption.CREATE_NEW)))){
@@ -114,8 +115,8 @@ public final class ReplayData {
   }
  }
  public static ReplayData read(Path file)throws IOException {
-  if(Files.size(file)>8*1024*1024)throw new IOException("Replay too large");
-  try(DataInputStream in=new DataInputStream(new GZIPInputStream(Files.newInputStream(file)))){
+  if(Files.size(file)>ReplayLimits.RECORDING)throw new IOException("Replay too large");
+  try(DataInputStream in=new DataInputStream(ReplayLimits.bounded(new GZIPInputStream(Files.newInputStream(file)),ReplayLimits.INFLATED))){
    if(in.readInt()!=0x42545250)throw new IOException("Invalid replay header");
    int version=in.readInt();if(version<1||version>7)throw new IOException("Unsupported replay version");
    boolean truncated=in.readBoolean();int nf=in.readInt(),nb=in.readInt();

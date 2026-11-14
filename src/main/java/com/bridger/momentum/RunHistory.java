@@ -148,7 +148,13 @@ public class RunHistory {
   ReplayArchive.write(file,metadata(run),data);return file;
  }
  public Run importReplay(Path file)throws IOException{
-  ReplayArchive.Content content=ReplayArchive.read(file);Run imported;
+  return importReplay(ReplayArchive.read(file));
+ }
+ public static Run previewImport(ReplayArchive.Content content)throws IOException{
+  try{return parse(content.metadata,content.replay);}catch(IllegalArgumentException|NullPointerException ex){throw new IOException("Invalid replay metadata",ex);}
+ }
+ public Run importReplay(ReplayArchive.Content content)throws IOException{
+  Run imported;
   try{imported=parse(content.metadata,content.replay);}catch(IllegalArgumentException|NullPointerException ex){throw new IOException("Invalid replay metadata",ex);}
   final String id=imported.id;
   if(Files.exists(folder.resolve(id+".properties"))||recent().stream().anyMatch(r->r.id.equals(id))){

@@ -1,5 +1,5 @@
 param(
-    [string]$ModJar='dist/BridgeTap-1.9.0-OneClient.jar',
+    [string]$ModJar='dist/BridgeTap-1.10.0-dev.1-OneClient.jar',
     [string]$Python='python',
     [string]$Destination=''
 )

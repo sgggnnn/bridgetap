@@ -1,7 +1,7 @@
 param(
     [string]$JavaHome = $env:JAVA_HOME,
     [string]$Classpath = $env:BRIDGETAP_CLASSPATH,
-    [string]$Output = 'dist/BridgeTap-1.9.0.jar',
+    [string]$Output = 'dist/BridgeTap-1.10.0-dev.1.jar',
     [string]$Python = 'python'
 )
 $ErrorActionPreference = 'Stop'

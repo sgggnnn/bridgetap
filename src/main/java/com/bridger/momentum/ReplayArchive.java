@@ -28,7 +28,7 @@ public final class ReplayArchive {
   byte[] buffer=new byte[8192];int size=0,n;while((n=in.read(buffer))!=-1){size+=n;if(size>limit)throw new IOException("Replay archive entry exceeds limit");out.write(buffer,0,n);}
  }
  public static Content read(Path archive)throws IOException{
-  if(Files.size(archive)>10*1024*1024)throw new IOException("Replay archive exceeds limit");
+  if(Files.size(archive)>ReplayLimits.ARCHIVE)throw new IOException("Replay archive exceeds limit");
   Path temp=Files.createTempFile("bridgetap-import-",".btr");
   try(ZipFile zip=new ZipFile(archive.toFile())){
    Set<String> entries=new HashSet<>();Enumeration<? extends ZipEntry> all=zip.entries();
@@ -45,5 +45,15 @@ public final class ReplayArchive {
    return new Content(metadata,ReplayData.read(temp));
   }catch(IllegalArgumentException ex){throw new IOException("Invalid replay archive",ex);}
   finally{Files.deleteIfExists(temp);}
+ }
+ public static byte[] bytes(Properties metadata,ReplayData replay)throws IOException{
+  Path folder=Files.createTempDirectory("bridgetap-share-"),file=folder.resolve("replay.btreplay");
+  try{write(file,metadata,replay);if(Files.size(file)>ReplayLimits.ARCHIVE)throw new IOException("Replay file is too large to share");return Files.readAllBytes(file);}
+  finally{Files.deleteIfExists(file);Files.deleteIfExists(folder);}
+ }
+ public static Content read(byte[] bytes)throws IOException{
+  if(bytes.length>ReplayLimits.ARCHIVE)throw new IOException("Replay archive exceeds limit");
+  Path file=Files.createTempFile("bridgetap-shared-",".btreplay");
+  try{Files.write(file,bytes);return read(file);}finally{Files.deleteIfExists(file);}
  }
 }

@@ -9,7 +9,8 @@ public final class ReplayToolsScreen extends BridgeScreen {
  @Override protected void paint(){header("Replay tools","Choose a category / Actions for the selected replay");button("Join Discord",610,15,130,()->message=CommunityLinks.discord());button("Back",752,15,88,this::back);
   panel(20,74,400,174);panel(440,74,400,174);panel(20,266,400,190);panel(440,266,400,190);
   text("SELECTED REPLAY",38,93,ACCENT);clipped(run==null?"Select a recording in the library first.":run.displayName(),38,115,360,MUTED);
-  button("Export replay file",38,143,364,26,run!=null,false,()->action(()->{java.nio.file.Path file=BridgeTracker.history().exportReplay(run);message="Exported: "+file.getFileName();BridgeFileActions.open(BridgeTracker.history().exportsFolder());}));
+  button("Export replay file",38,143,176,26,run!=null,false,()->action(()->{java.nio.file.Path file=BridgeTracker.history().exportReplay(run);message="Exported: "+file.getFileName();BridgeFileActions.open(BridgeTracker.history().exportsFolder());}));
+  button("Copy share code",226,143,176,26,run!=null,false,()->open(new ReplayShareScreen(this,run)));
   button("Export video",38,177,176,26,run!=null,false,()->open(new ReplayVideoExportScreen(this,run)));button("Analyze fail",226,177,176,26,run!=null,false,()->action(()->open(new ReplayFailureScreen(this,run))));
   button("Replay bookmarks",38,213,364,26,run!=null,false,()->open(new ReplayBookmarksScreen(this,run)));
   text("ISLANDS & APPEARANCE",458,93,ACCENT);label("Decorations and client-side block visuals",458,115);

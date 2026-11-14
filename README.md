@@ -43,7 +43,7 @@ Download JARs from the **GitHub release assets**. The “Source code” archives
 - **Opening detection**: 3-tick 1.0 Flat, plus opening-only 5b Late and 6b Late using jump timing, axial distance, height, and placement evidence.
 - **Recorded input overlay**: directional arrows, jump bar, LMB, and RMB during replays, plus an independent option outside replays, including short clicks and paused ticks.
 - **Free camera and POV**: fly around the bridge, inspect the white hitbox, or follow the recorded player's view.
-- **Sharing**: export and import self-contained `.btreplay` files.
+- **Sharing**: copy a complete offline replay code, preview/confirm clipboard imports, or use compatible `.btreplay` files. See the [sharing guide](docs/REPLAY-SHARING.md) for limits and privacy.
 - **Bridge measurements**: the gap between platform edges and their height difference, when the recording contains the required data.
 
 Use **Replay info: ON/OFF** to show or hide the replay information panel. The regular bridge coordinates HUD is independent of this setting. Choose the indicator wording with **No gain label**, and control its visibility with **Gain type**.
