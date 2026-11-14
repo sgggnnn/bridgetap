@@ -11,7 +11,7 @@ public final class ReplayQuery {
     public enum Technique {
         ALL("All techniques", ""), FLAT_100("1.0 Flat", "1.0 Flat"), FLAT_105("1.05 Flat", "1.05 Flat"),
         LATE_5("5b Late", "5b Late"), LATE_6("6b Late", "6b Late"), TAP_SPEED("Tap Speed", "Tap Speed"),
-        HOLD_SPEED("Hold Speed", "Hold Speed"), FLAT_4("4b Flat", "4b Flat"), TURN("Turn", "Turn");
+        HOLD_SPEED("Hold Speed", "Hold Speed"), FLAT_4("4b Flat", "4b Flat"), TURN("Turn", "Turn"), TAP_SPEED_4("4b Tap Speed", "4b Tap Speed"), HOLD_SPEED_4("4b Hold Speed", "4b Hold Speed");
         public final String label, match;
         Technique(String label, String match) { this.label=label; this.match=match; }
     }

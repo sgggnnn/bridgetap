@@ -18,6 +18,7 @@ public final class ReplayFailureAnalysis {
         double drop=data.frames.get(from).y-data.frames.get(last).y;if(drop>.5)result.add(new Finding(last,String.format(Locale.US,"Descended %.2fb over the last %d ticks.",drop,last-from)));
         if(axis.equals("X")||axis.equals("Z")){ReplayData.Frame a=data.frames.get(from),b=data.frames.get(last);double side=axis.equals("X")?Math.abs(b.z-a.z):Math.abs(b.x-a.x);if(side>.2)result.add(new Finding(last,String.format(Locale.US,"Moved %.3fb sideways over the last %d ticks.",side,last-from)));}
         if(data.truncated)result.add(new Finding(last,"Recording was truncated; the actual ending may be missing."));
+        result.add(new Finding(last,ReplayAimAnalysis.summary(data)));
         result.sort(Comparator.comparingInt(f->f.tick));return Collections.unmodifiableList(result);
     }
 }

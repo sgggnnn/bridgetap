@@ -1,6 +1,7 @@
 package com.bridger.momentum;
 
 import com.google.gson.*;
+import net.minecraft.unmapped.C_22168528;
 import java.io.*;
 import java.net.*;
 import java.nio.file.*;
@@ -32,11 +33,20 @@ public final class ModernSounds {
  }
  private static byte[] asset(JsonObject entry)throws IOException{String h=entry.get("hash").getAsString();return verified("https://resources.download.minecraft.net/"+h.substring(0,2)+"/"+h,h,entry.get("size").getAsInt());}
  private static void metadata()throws IOException{if(index!=null&&source!=null)return;JsonObject loaded=UpdateSource.json(verified("https://piston-meta.mojang.com/v1/packages/"+INDEX_HASH+"/32.json",INDEX_HASH,586366)).getAsJsonObject("objects");JsonObject sounds=UpdateSource.json(asset(loaded.getAsJsonObject("minecraft/sounds.json")));index=loaded;source=sounds;}
- private static void prepare(String event)throws IOException{synchronized(importLock){metadata();JsonArray variants=variants(event,new HashSet<>());JsonObject definition=new JsonObject();definition.add("sounds",variants);definition.addProperty("category","block");synchronized(ModernSounds.class){definitions.add("modern."+event,definition);ready.add(event);}}}
+ private static void prepare(String event)throws IOException{synchronized(importLock){metadata();JsonArray variants=variants(event,new HashSet<>());JsonObject definition=new JsonObject();definition.add("sounds",variants);definition.addProperty("category","block");definition.addProperty("replace",true);synchronized(ModernSounds.class){definitions.add("modern."+event,definition);ready.add(event);}}}
  private static JsonArray variants(String event,Set<String> visited)throws IOException{if(visited.size()>16||!visited.add(event))throw new IOException("Cyclic sound event");JsonArray result=new JsonArray();JsonObject value=source.getAsJsonObject(event);if(value==null){if(event.equals("intentionally_empty"))return result;throw new IOException("Missing placement event: "+event);}
   for(JsonElement element:value.getAsJsonArray("sounds")){JsonObject variant=element.isJsonObject()?new JsonParser().parse(element.toString()).getAsJsonObject():new JsonObject();String name=element.isJsonObject()?variant.get("name").getAsString():element.getAsString();if(variant.has("type")&&variant.get("type").getAsString().equals("event")){JsonArray children=variants(name,new HashSet<>(visited));for(JsonElement child:children)result.add(child);continue;}
    if(name.startsWith("minecraft:"))name=name.substring(10);if(!name.matches("[a-z0-9_/.-]+")||name.contains(".."))throw new IOException("Invalid sound path");JsonObject object=index.getAsJsonObject("minecraft/sounds/"+name+".ogg");if(object==null)throw new IOException("Missing placement sample: "+name);asset(object);samples.put("sounds/modern/"+name+".ogg",object.get("hash").getAsString());variant.addProperty("name","bridgetap:modern/"+name);variant.remove("stream");variant.remove("type");variant.remove("attenuation_distance");result.add(variant);
   }return result;
+ }
+ /** Register new events without stopping or restarting the native audio engine. */
+ public static void registerDynamic(Object handler)throws ReflectiveOperationException,IOException{
+  java.lang.reflect.Method parser=null;for(Class<?> type=handler.getClass();type!=null&&parser==null;type=type.getSuperclass())for(java.lang.reflect.Method m:type.getDeclaredMethods())if(m.getParameterTypes().length==1&&m.getParameterTypes()[0]==InputStream.class&&Map.class.isAssignableFrom(m.getReturnType())){parser=m;break;}
+  if(parser==null)throw new NoSuchMethodException("Native sound definition parser");parser.setAccessible(true);
+  Map<?,?> events=(Map<?,?>)parser.invoke(handler,new ByteArrayInputStream(resource("sounds.json")));
+  for(Map.Entry<?,?> event:events.entrySet()){Object value=event.getValue();java.lang.reflect.Method loader=null;for(Class<?> type=handler.getClass();type!=null&&loader==null;type=type.getSuperclass())for(java.lang.reflect.Method m:type.getDeclaredMethods())if(m.getReturnType()==void.class&&Arrays.equals(m.getParameterTypes(),new Class<?>[]{C_22168528.class,value.getClass()})){loader=m;break;}
+   if(loader==null)throw new NoSuchMethodException("Native sound event registration");loader.setAccessible(true);loader.invoke(handler,new C_22168528("bridgetap:"+event.getKey()),value);
+  }
  }
  public static synchronized byte[] resource(String path)throws IOException{if(path.equals("sounds.json"))return definitions.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);String hash=samples.get(path);if(hash==null)throw new FileNotFoundException(path);return Files.readAllBytes(ROOT.resolve(hash));}
 }

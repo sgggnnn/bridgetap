@@ -32,4 +32,11 @@ public final class BridgeDetection {
         if (Math.abs(Math.floor(to) - Math.floor(from)) != 3 || Math.abs(lateral) > 1.0) return null;
         return openingTicks == 3 ? "5b Late" : "6b Late";
     }
+
+    public static String speedTellyLabel(int ticks,double fromX,double fromY,double fromZ,double toX,double toY,double toZ,boolean xAxis,boolean placements){
+        if((ticks!=9&&ticks!=10)||!placements||Math.abs((toY-fromY)-1.0)>.12)return null;
+        double from=xAxis?fromX:fromZ,to=xAxis?toX:toZ,lateral=xAxis?toZ-fromZ:toX-fromX;
+        if(Math.abs(Math.floor(to)-Math.floor(from))!=4||Math.abs(lateral)>1.0)return null;
+        return ticks==9?"4b Tap Speed":"4b Hold Speed";
+    }
 }

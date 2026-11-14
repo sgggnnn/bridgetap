@@ -1,5 +1,50 @@
 # Changelog
 
+## [1.8.2](https://github.com/sgggnnn/bridgetap/releases/tag/v1.8.2) - Replay tools, automatic islands and HUD customization
+
+For Minecraft **1.8.9**, with separate Forge and OneClient / Ornithe downloads.
+
+### Replays and video
+
+- Add named bookmarks and automatic markers for recorded jumps, with a dedicated hotbar book and direct Go actions.
+- Offer compact, detailed or hidden replay information. Add an independent keystrokes option outside replays; it is OFF by default and shares the input overlay's layout and colors.
+- Use the original recorded-tick keystroke timing in playback and exports.
+- Show the current session's interactive chat in replays, and improve custom-sky support with recorded world, weather and biome context.
+- Freeze the ghost's walking animation during pause and prevent duplicate tick skips from a single physical click.
+- Include the recorded hand and crosshair in clean POV video exports, and center the final bridge time.
+
+### Bridge tracking and HUD
+
+- Wait for server confirmation before retaining a bridge started by a predicted block, so rejected ghost blocks do not create attempts, replays or statistics.
+- Detect iron finish plates as well as gold plates. Distinguish 9-tick 4b Tap Speed and 10-tick 4b Hold Speed while preserving opening-only 5b/6b Late detection.
+- Add independent technique-label colors and a separate zero-delta color, including OneClient RGB controls.
+- Choose whether to show failed runs or only Fail Tap/4b entries. Optional short, colored fail-analysis messages are OFF by default and use recorded placement evidence; uncertain cases remain inconclusive.
+- Add Discord entry points and a master Enable BridgeTap switch in OneClient.
+
+### Custom islands and appearances
+
+- Apply paired islands directly from the library using native platform edges and finish plates; retain Preview / Adjust and advanced independent controls.
+- Improve copied-floor selection, orientation, lane centering and connected-texture compatibility.
+- Random island and Random block now change **after a completed success or fail**, once back on a start platform, rather than on the first placed block.
+- Auto reapply runs the same **Apply automatically** action after each completed attempt **only when no custom island is displayed**. Existing islands are left untouched. The separate mode-monitor and transform-restoration loop has been removed.
+- Reduce appearance-change terrain rebuilds; prepare modern textures together, cache models and register placement sounds without restarting the audio engine.
+- Recognize McPlay modes despite small decorative platform-edge variations; these distance rules remain specific to McPlay.
+
+### Optional creator island pack
+
+The release includes `BridgeTap-Creator-Islands.zip`: Jade Sanctuary, Ember Ruins, Frost Observatory, Aether Gate, Astral Reef and Willow Ruins. Each file contains departure and arrival scenery. Copy the `.btisland` files to `config/bridgetap/islands/saved`, then refresh **My islands**. The pack is separate from the seven existing bundled defaults.
+
+### Downloads
+
+- `BridgeTap-1.8.2-Forge-1.8.9.jar` — Forge 1.8.9.
+- `BridgeTap-1.8.2-OneClient.jar` — OneClient / Ornithe Fabric 1.8.9.
+- `BridgeTap-clip-tools-windows-x64.zip` — optional Windows clip/audio tools.
+- `BridgeTap-Creator-Islands.zip` — optional island scenery.
+- `SHA256SUMS.txt` — release artifact checksums.
+
+Replace the previous JAR and keep one BridgeTap edition per instance. Existing recordings, settings and personal islands remain in their usual config folders. Native OneClient integration requires Java 21+; the core/Forge mod targets Java 8.
+
+
 ## [1.8.1](https://github.com/sgggnnn/bridgetap/releases/tag/v1.8.1) - Statistics and replay fixes
 
 ## Added

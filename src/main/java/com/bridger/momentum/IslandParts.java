@@ -17,7 +17,11 @@ public final class IslandParts {
         boolean inferred=best>=4&&Math.min(lower,upper)>=Math.max(16,template.blocks.size()*.15);
         boolean fallbackSplit=true;
         if(explicit){chosen=Math.abs(ex/ec-sx/sc)>=Math.abs(ez/ec-sz/sc)?0:1;cut=0;}else if(template.bothIslands&&cut<0){int minX=Integer.MAX_VALUE,minZ=Integer.MAX_VALUE,maxX=Integer.MIN_VALUE,maxZ=Integer.MIN_VALUE;for(IslandTemplate.Block b:template.blocks){minX=Math.min(minX,b.x);maxX=Math.max(maxX,b.x);minZ=Math.min(minZ,b.z);maxZ=Math.max(maxZ,b.z);}chosen=maxX-minX>=maxZ-minZ?0:1;int min=chosen==0?minX:minZ,max=chosen==0?maxX:maxZ;cut=(min+max)/2;fallbackSplit=min<max;}
-        axis=chosen;int anchor=axis==0?template.anchorX:template.anchorZ;direction=explicit?((axis==0?ex/ec-sx/sc:ez/ec-sz/sc)>=0?1:-1):anchor<=cut?1:-1;paired=explicit||(template.bothIslands||inferred)&&cut>=0&&fallbackSplit;
+        // Legacy attachment points can sit beyond the start lip, inside the empty
+        // corridor. Comparing them with its first edge reverses the two islands.
+        long nearLower=Long.MAX_VALUE,nearUpper=Long.MAX_VALUE;
+        for(IslandTemplate.Block b:template.blocks){long dx=b.x-template.anchorX,dz=b.z-template.anchorZ,distance=dx*dx+dz*dz;if((chosen==0?b.x:b.z)<=cut)nearLower=Math.min(nearLower,distance);else nearUpper=Math.min(nearUpper,distance);}
+        axis=chosen;direction=explicit?((axis==0?ex/ec-sx/sc:ez/ec-sz/sc)>=0?1:-1):nearLower<=nearUpper?1:-1;paired=explicit||(template.bothIslands||inferred)&&cut>=0&&fallbackSplit;
         for(int[] box:bounds){Arrays.fill(box,0,3,Integer.MAX_VALUE);Arrays.fill(box,3,6,Integer.MIN_VALUE);}
         for(int i=0;i<finish.length;i++){IslandTemplate.Block b=template.blocks.get(i);finish[i]=explicit?b.part==1:paired&&((axis==0?b.x:b.z)>cut)==(direction>0);int[] box=bounds[finish[i]?1:0];box[0]=Math.min(box[0],b.x);box[1]=Math.min(box[1],b.y);box[2]=Math.min(box[2],b.z);box[3]=Math.max(box[3],b.x+1);box[4]=Math.max(box[4],b.y+1);box[5]=Math.max(box[5],b.z+1);}
     }

@@ -57,7 +57,7 @@ public class MinecraftMixin {
     }
     @Inject(method = "m_61857590", at = @At("HEAD"), cancellable = true)
     private void bridgetap$replayUse(CallbackInfo ci) {
-        if (ReplaySession.active()) { ReplaySession.action(false); ci.cancel(); }
+        if (ReplaySession.active()) { ReplaySession.action(false); ci.cancel(); }else com.bridger.momentum.FailAimCapture.use((Minecraft)(Object)this);
     }
 
     @Inject(method = "m_77225877", at = @At("HEAD"), cancellable = true)

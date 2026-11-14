@@ -1,7 +1,14 @@
 import com.bridger.momentum.BridgeConfig;
 public class ConfigRegression {
  public static void main(String[] args){
+  if(BridgeConfig.showLiveInputs)throw new AssertionError("Live keystrokes must default OFF");
+  BridgeConfig.showLiveInputs=true;BridgeConfig.save();BridgeConfig.showLiveInputs=false;BridgeConfig.load();if(!BridgeConfig.showLiveInputs)throw new AssertionError("Live keystrokes option did not persist");BridgeConfig.showLiveInputs=false;
   if(BridgeConfig.tickOffset!=0||BridgeConfig.plateTickOffset!=0)throw new AssertionError("Both offsets default to zero");
+  if(BridgeConfig.detailedReplayInfo)throw new AssertionError("Replay information should default to compact");
+  BridgeConfig.detailedReplayInfo=true;BridgeConfig.save();BridgeConfig.detailedReplayInfo=false;BridgeConfig.load();
+  if(!BridgeConfig.detailedReplayInfo)throw new AssertionError("Detailed replay information must persist");
+  BridgeConfig.detailedReplayInfo=false;
+  BridgeConfig.modEnabled=false;BridgeConfig.save();BridgeConfig.modEnabled=true;BridgeConfig.load();if(BridgeConfig.modEnabled)throw new AssertionError("Master mod switch must persist");BridgeConfig.modEnabled=true;
   BridgeConfig.enabled=false;BridgeConfig.hideOnF3=false;BridgeConfig.showReplayInfo=false;BridgeConfig.useNoGayLabel=true;BridgeConfig.displayMode="LAST_TURN";BridgeConfig.save();
   BridgeConfig.enabled=true;BridgeConfig.hideOnF3=true;BridgeConfig.showReplayInfo=true;BridgeConfig.useNoGayLabel=false;BridgeConfig.displayMode="ALL";BridgeConfig.load();
   if(BridgeConfig.showReplayInfo||!BridgeConfig.useNoGayLabel||!"LAST_TURN".equals(BridgeConfig.displayMode))throw new AssertionError("Replay info, label and compact display must persist");

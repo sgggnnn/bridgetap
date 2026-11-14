@@ -43,7 +43,10 @@ public final class UiPreview implements UiCanvas {
             RunHistory.Run run=BridgeTracker.history().recent().get(0);BridgeTracker.history().rename(run,i==0?"Opening / 1.0 Flat to 5b Late":i==1?"Evening practice / clean run":"Bridge practice "+(i+1));
             if(i%3==0)BridgeTracker.history().toggleFavorite(run);
         }
+        RunHistory.Run bookmarked=BridgeTracker.history().recent().get(0);ReplayBookmarks marks=new ReplayBookmarks(java.nio.file.Paths.get("config/bridgetap/replay-bookmarks"),bookmarked.id);marks.add("Opening / check flat",4,80);marks.add("Tap speed #1",13,80);marks.add("Turn position",61,80);ReplayBookmarksScreen bookmarkScreen=new ReplayBookmarksScreen(null,bookmarked);render(bookmarkScreen,font,"replay-bookmarks");bookmarkScreen.clickPreview(80,132,0);render(bookmarkScreen,font,"replay-bookmark-selected");
+        List<ReplayData.Frame> autoFrames=new ArrayList<>();for(int i=0;i<7;i++)autoFrames.add(new ReplayData.Frame(0,i%2==0?64:64.42,0,0,0,0,0,false,i%2==0,0,0,0,0,0));RunHistory autoHistory=new RunHistory(java.nio.file.Paths.get("auto-bookmark-preview"));autoHistory.add("SUCCESS",.3,3,"Z",Collections.emptyList(),new ReplayData(autoFrames,Collections.emptyList(),false));ReplayBookmarksScreen autoScreen=new ReplayBookmarksScreen(null,autoHistory.recent().get(0));java.lang.reflect.Field autoFuture=ReplayBookmarksScreen.class.getDeclaredField("jumps");autoFuture.setAccessible(true);((java.util.concurrent.CompletableFuture<?>)autoFuture.get(autoScreen)).get(5,java.util.concurrent.TimeUnit.SECONDS);render(autoScreen,font,"automatic-jump-bookmarks");autoScreen.clickPreview(80,132,0);render(autoScreen,font,"automatic-jump-selected");
         BridgeHistoryScreen library=new BridgeHistoryScreen();render(library,font,"library");
+        FailureDisplayScreen failedDisplay=new FailureDisplayScreen(null);render(failedDisplay,font,"failed-bridge-display");failedDisplay.clickPreview(80,340,0);if(!"FAIL_TAPS_ONLY".equals(BridgeConfig.failedDisplay))throw new AssertionError("Failed-run display option not selected");BridgeConfig.failedDisplay="ALL";
         library.clickPreview(700,110,0);render(library,font,"filters");
         library.clickPreview(200,225,0);render(library,font,"axis-options");library.clickPreview(200,294,0);
         render(library,font,"filter-selection");library.clickPreview(600,365,0);render(library,font,"filtered");
@@ -65,7 +68,9 @@ public final class UiPreview implements UiCanvas {
         if(!"4".equals(BridgeConfig.colors[1]))throw new AssertionError("Swatch click did not update selected coordinate color");BridgeConfig.colors[1]="e";
         colors.clickPreview(65,335,0);colors.clickPreview(530,150,0);render(colors,font,"velo-color-selected");
         if(!"4".equals(BridgeConfig.colors[10])||!"e".equals(BridgeConfig.colors[1]))throw new AssertionError("Velo swatch is unreachable or overwrites coordinates");BridgeConfig.colors[10]="7";
-        for(int part:new int[]{11,12,13}){colors.clickPreview(65,115+part*22,0);colors.clickPreview(530,150,0);render(colors,font,"new-color-"+part);if(!"4".equals(BridgeConfig.colors[part]))throw new AssertionError("New color is unreachable: "+part);}BridgeConfig.colors[11]="a";BridgeConfig.colors[12]="c";BridgeConfig.colors[13]="7";
+        for(int part:new int[]{11,12,13,14}){colors.clickPreview(65,115+part*22,0);colors.clickPreview(530,150,0);render(colors,font,"new-color-"+part);if(!"4".equals(BridgeConfig.colors[part]))throw new AssertionError("New color is unreachable: "+part);}BridgeConfig.colors[11]="a";BridgeConfig.colors[12]="c";BridgeConfig.colors[13]="7";BridgeConfig.colors[14]="e";
+        colors.clickPreview(242,89,0);render(colors,font,"technique-colors-page-1");for(int part=15;part<30;part++){colors.clickPreview(65,115+(part-15)*22,0);colors.clickPreview(530,150,0);render(colors,font,"technique-colors-selected");if(!"4".equals(BridgeConfig.colors[part]))throw new AssertionError("Technique color unreachable: "+part);BridgeConfig.colors[part]="b";}
+        colors.clickPreview(242,89,0);render(colors,font,"technique-colors-page-2");for(int part=30;part<33;part++){colors.clickPreview(65,115+(part-30)*22,0);colors.clickPreview(530,150,0);render(colors,font,"technique-colors-last");if(!"4".equals(BridgeConfig.colors[part]))throw new AssertionError("Last technique color unreachable: "+part);BridgeConfig.colors[part]="b";}
         BridgeLayoutScreen layout=new BridgeLayoutScreen(settings);render(layout,font,"layout");int before=BridgeConfig.hudX;
         layout.clickPreview(15,15,0);layout.dragPreview(140,195);layout.releasePreview();render(layout,font,"layout-dragged");
         if(BridgeConfig.hudX<=before||BridgeConfig.hudY<=10)throw new AssertionError("Studio drag did not update both coordinates");
@@ -100,12 +105,12 @@ public final class UiPreview implements UiCanvas {
         if(((List<?>)managerRows.get(folders)).size()!=1)throw new AssertionError("Selecting a folder did not show its contents in the middle table");
         IslandLibrary.save(new IslandTemplate("Practice island",1,1,1,0,64,0,Arrays.asList(new IslandTemplate.Block(0,0,0,"minecraft:sandstone",0))),"saved");
         IslandScreen islands=new IslandScreen(library,selectedRun);render(islands,font,"default-islands");
-        java.lang.reflect.Field islandTab=IslandScreen.class.getDeclaredField("tab");islandTab.setAccessible(true);if(islandTab.getInt(islands)!=4||IslandLibrary.list("defaults").size()!=6)throw new AssertionError("Default islands are not shown on first open");
+        java.lang.reflect.Field islandTab=IslandScreen.class.getDeclaredField("tab");islandTab.setAccessible(true);if(islandTab.getInt(islands)!=4||IslandLibrary.list("defaults").size()!=7)throw new AssertionError("Default islands are not shown on first open");
         java.util.Set<Path> originals=new java.util.HashSet<>(IslandLibrary.list("saved"));
         islands.clickPreview(490,428,0);render(islands,font,"default-island-saved-copy");
         if(islandTab.getInt(islands)!=0||IslandLibrary.list("saved").size()!=originals.size()+1)throw new AssertionError("Save a copy did not select a personal copy");
         Path defaultCopy=IslandLibrary.list("saved").stream().filter(p->!originals.contains(p)).findFirst().orElseThrow(()->new AssertionError("Missing copied island"));
-        if(!IslandTemplate.read(defaultCopy).name.equals("Default"))throw new AssertionError("Copied wrong bundled model");IslandLibrary.delete(defaultCopy,"saved");
+        if(!IslandTemplate.read(defaultCopy).name.equals("Anniversary"))throw new AssertionError("Copied wrong bundled model");IslandLibrary.delete(defaultCopy,"saved");
         islands.clickPreview(780,72,0);render(islands,font,"default-copy-removed");
         islands.clickPreview(165,72,0);render(islands,font,"island-scenery");
         islands.clickPreview(490,428,0);render(islands,font,"island-rename");java.lang.reflect.Field renameText=IslandScreen.class.getDeclaredField("renameText");renameText.setAccessible(true);renameText.set(islands,"Renamed scenery");render(islands,font,"island-rename-edited");islands.clickPreview(500,305,0);render(islands,font,"island-renamed");
@@ -116,7 +121,7 @@ public final class UiPreview implements UiCanvas {
         render(new IslandCopyScreen(islands),font,"island-copy-selection");
         java.lang.reflect.Field activeIsland=IslandOverlay.class.getDeclaredField("active"),islandParts=IslandOverlay.class.getDeclaredField("parts");activeIsland.setAccessible(true);islandParts.setAccessible(true);
         IslandTemplate pairedScenery=new IslandTemplate("Paired scenery",22,1,1,0,64,0,Arrays.asList(new IslandTemplate.Block(0,0,0,"minecraft:stone",0),new IslandTemplate.Block(21,0,0,"minecraft:stone",0)),0,1,0,true);activeIsland.set(null,pairedScenery);islandParts.set(null,new IslandParts(pairedScenery));IslandOverlay.resetFinish();
-        IslandPlacementScreen placement=new IslandPlacementScreen(islands);render(placement,font,"island-placement-controls");placement.clickPreview(730,90,0);render(placement,font,"island-part-menu");placement.clickPreview(730,143,0);render(placement,font,"island-finish-controls");
+        IslandPlacementScreen placement=new IslandPlacementScreen(islands);render(placement,font,"island-placement-simple");placement.clickPreview(730,335,0);render(placement,font,"island-placement-controls");placement.clickPreview(730,90,0);render(placement,font,"island-part-menu");placement.clickPreview(730,143,0);render(placement,font,"island-finish-controls");
         placement.clickPreview(817,190,0);if(IslandOverlay.gap()!=21)throw new AssertionError("Finish gap plus button did not move the arrival island");
         render(placement,font,"island-gap-adjusted");placement.clickPreview(760,190,0);render(placement,font,"island-gap-focused");java.lang.reflect.Method typed=BridgeScreen.class.getDeclaredMethod("m_29116903",char.class,int.class);typed.setAccessible(true);
         typed.invoke(placement,'\0',14);typed.invoke(placement,'\0',14);render(placement,font,"island-gap-empty");typed.invoke(placement,'2',3);typed.invoke(placement,'8',9);render(placement,font,"island-gap-28");
@@ -163,6 +168,7 @@ public final class UiPreview implements UiCanvas {
             jump.invoke(null,6.5,72.0,.5,ticks+18,1.20);
             if(BridgeTracker.getEntries().get(2).getLabel().contains("Late"))throw new AssertionError("A later jump was mislabeled as an opening late");
         }
+        for(int speedTicks:new int[]{9,10}){BridgeTracker.reset();BridgeConfig.preferredAxis="X";PlacementEvidence.record(1,0,0,1,.5);jump.invoke(null,.5,70.0,.5,3,1.20);for(int n=1;n<=3;n++)PlacementEvidence.record(3+n,n,0,n+1,.5);jump.invoke(null,4.5,71.0,.5,3+speedTicks,1.20);if(!BridgeTracker.getEntries().get(1).getLabel().equals(speedTicks==9?"4b Tap Speed #1":"4b Hold Speed #1"))throw new AssertionError("Tracker did not classify the 4b tap/hold speed");}
         BridgeTracker.reset();BridgeConfig.preferredAxis="AUTO";
         System.out.println("PASS: tracker integration for 1.0/1.05 flats, 5b/6b lates and opening-only labels");
     }

@@ -48,8 +48,8 @@ public final class OneClientIntegration {
             case "setY":if(t==0)BridgeConfig.hudY=Math.round(value);else if(t==1)BridgeConfig.replayHudY=Math.round(value);else BridgeConfig.inputHudY=Math.round(value);return null;
             case "setScale":value=Math.max(.5f,Math.min(2,value));if(t==0)BridgeConfig.hudScale=value;else if(t==1)BridgeConfig.replayHudScale=value;else BridgeConfig.inputHudScale=value;return null;
             case "getScaledWidth":return sizes[t][0]*scale(t);case "getScaledHeight":return sizes[t][1]*scale(t);
-            case "getHidden":return !(t==0?BridgeConfig.enabled:t==1?BridgeConfig.showReplayInfo:BridgeConfig.showReplayInputs);
-            case "setHidden":boolean shown=!(Boolean)args[0];if(t==0)BridgeConfig.enabled=shown;else if(t==1)BridgeConfig.showReplayInfo=shown;else BridgeConfig.showReplayInputs=shown;return null;
+            case "getHidden":return !BridgeConfig.modEnabled||!(t==0?BridgeConfig.enabled:t==1?BridgeConfig.showReplayInfo:(ReplaySession.active()?BridgeConfig.showReplayInputs:BridgeConfig.showLiveInputs));
+            case "setHidden":boolean shown=!(Boolean)args[0];if(t==0)BridgeConfig.enabled=shown;else if(t==1)BridgeConfig.showReplayInfo=shown;else if(ReplaySession.active())BridgeConfig.showReplayInputs=shown;else BridgeConfig.showLiveInputs=shown;return null;
             case "getSupportsScale":case "getPlacementReady":return true;
             case "getOwnsPlacement":return false;
             case "getResizeAxes":try{return Class.forName("org.polyfrost.oneconfig.api.hud.v1.HudResize").getField("Both").get(null);}catch(ReflectiveOperationException ex){throw new IllegalStateException(ex);}
@@ -63,13 +63,15 @@ public final class OneClientIntegration {
     }
     /** Editor previews use the same positions and scales as live rendering. */
     public static void renderEditor(){
+        if(!BridgeConfig.modEnabled)return;
         Minecraft mc=Minecraft.m_20213497();if(mc.f_21497584==null)return;
         UiCanvas canvas=new MinecraftUiCanvas(mc.f_21497584);
         java.util.List<JumpEntry> entries=Arrays.asList(new JumpEntry("1.0 Flat",.504,.504,Double.NaN,3,JumpEntry.EntryType.FLAT),new JumpEntry("Turn",.216,.216,.475,15,JumpEntry.EntryType.TURN));
         java.util.List<String> coords=new ArrayList<>();coords.add(OverlayStyle.color(7)+"Success 3.85s / 3 jumps / Axis Z");coords.addAll(EntryFormatter.hudLines(entries));
         String[][] lines={coords.toArray(new String[0]),{"\u00a7bBridge replay \u00a7f0.90 / 3.85s | Tick 18/77","Ghost XYZ: 1.4366 66.1661 8.9902","Inputs: Back Jump RMB","Velocity X -0.0003 Y 0.0831 Z 0.2874"}};
         for(int t=0;t<3;t++){
-            if(t==0&&!BridgeConfig.enabled||t==1&&!BridgeConfig.showReplayInfo||t==2&&!BridgeConfig.showReplayInputs)continue;
+            if(t==1&&!BridgeConfig.detailedReplayInfo)lines[1]=new String[]{"\u00a7bReplay \u00a7f0.90 / 3.85s | 1.00x | Paused","Ghost XYZ: 1.4366 66.1661 8.9902"};
+            if(t==0&&!BridgeConfig.enabled||t==1&&!BridgeConfig.showReplayInfo||t==2&&!(ReplaySession.active()?BridgeConfig.showReplayInputs:BridgeConfig.showLiveInputs))continue;
             UiCanvas target=new ScaledUiCanvas(new MinecraftUiCanvas(mc.f_21497584,t),Math.round(x(t)),Math.round(y(t)),scale(t));
             if(t==2){ReplayInputOverlay.paint(target,0,0,new ReplayData.TickStats(1|4|16|256,0,0,0,1,0,0,19,0,0,.08,.28));recordSize(t,76,92);continue;}
             int width=0;for(String line:lines[t])width=Math.max(width,canvas.width(line)+8);recordSize(t,width,lines[t].length*11+8);

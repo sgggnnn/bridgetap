@@ -20,6 +20,7 @@ public class BridgeHUD {
     private static final class HudFrame{final String header;final List<String> lines;final int width,height,lineHeight;HudFrame(String header,List<String> lines,int width,int height,int lineHeight){this.header=header;this.lines=lines;this.width=width;this.height=height;this.lineHeight=lineHeight;}}
     private static HudFrame cachedHud(C_23014920 fr){if(preparedEpoch!=hudEpoch||preparedFont!=fr){preparedHud=prepareHud(fr);preparedEpoch=hudEpoch;preparedFont=fr;}return preparedHud;}
     private static HudFrame prepareHud(C_23014920 fr){
+        if(BridgeTracker.awaitingPlacement())return null;
         List<JumpEntry> entries = BridgeTracker.getEntries();
         if (entries.isEmpty() && !BridgeTracker.isBridging()) {
             return null;
@@ -46,9 +47,10 @@ public class BridgeHUD {
             header = String.format(Locale.US, "\u00a7eBridging %.2fs %d jumps, axis: %s", time, jumpCount, axis);
         }
 
-        if(BridgeConfig.chatOutput)header="";
+        boolean failed=status==BridgeTracker.RunStatus.FAILED;
+        if(BridgeConfig.chatOutput||!FailureDisplay.header(failed))header="";
         List<String> displayLines = new java.util.ArrayList<>();
-        if (!BridgeConfig.chatOutput&&!displayMode.equals("TIME")) displayLines.addAll(EntryFormatter.hudLines(entries));
+        if (!BridgeConfig.chatOutput&&(!displayMode.equals("TIME")||FailureDisplay.onlyTaps(failed))) displayLines.addAll(EntryFormatter.runLines(entries,failed,true));
         if (header.isEmpty() && displayLines.isEmpty()) return null;
 
         // Calculate box dimensions
@@ -79,10 +81,12 @@ public class BridgeHUD {
         hudEpoch++;
         Minecraft mc = Minecraft.m_20213497();
         if (mc == null || mc.f_58088711 == null) return;
-        UpdateManager.tick(mc);
         OneClientIntegration.tick();
+        BridgeRuntime.tick();if(!BridgeConfig.modEnabled)return;
+        UpdateManager.tick(mc);
         IslandReplacement.refreshTerrain();
         PlacementAppearance.tick();
+        AttemptRandomizer.tick(mc);
         ServerPresets.tick();
         ReplayVideoExport.tick();
         long now=System.currentTimeMillis();if(now>=nextCleanup){nextCleanup=now+60000;ReplayStorage.cleanup(BridgeTracker.history(),now);}
@@ -118,11 +122,13 @@ public class BridgeHUD {
     }
 
     public static void render(C_97866173 gui) {
+        if(!BridgeConfig.modEnabled)return;
         Minecraft mc = Minecraft.m_20213497();
         if(OneClientIntegration.editing()){OneClientIntegration.renderEditor();return;}
         if (mc != null && mc.f_70816363 instanceof BridgeLayoutScreen) return;
         if (ReplaySession.active()) { ReplaySession.renderHud(); return; }
         if (mc == null || mc.f_28396371 == null || mc.f_26407825 == null) return;
+        LiveInputOverlay.render(mc);
         if (BridgeConfig.chatOutput) return;
         if (!BridgeConfig.shouldShowHud(mc.f_58088711 != null && mc.f_58088711.f_63869242)) return;
 

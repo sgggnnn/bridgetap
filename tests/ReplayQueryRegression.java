@@ -26,6 +26,7 @@ public class ReplayQueryRegression {
         }
         history.add("FAILED",0,0,"Z",Collections.emptyList());
         for(ReplaySort order:new ReplaySort[]{ReplaySort.FASTEST,ReplaySort.SLOWEST}){rows=new ArrayList<>(history.recent());rows.sort(order.comparator());check(rows.get(rows.size()-1).time==0,"Unknown/zero durations stay at the end in either direction");}
-        System.out.println("PASS: combined replay filters, time validation, multi-term search, persistence and deterministic sort directions");
+        RunHistory speeds=new RunHistory(Files.createTempDirectory("speed-query-"));speeds.add("SUCCESS",4,4,"Z",Collections.singletonList("4b Tap Speed #1: .500 (9t)"));RunHistory.Run tap4=speeds.recent().get(0);speeds.add("SUCCESS",4,4,"Z",Collections.singletonList("4b Hold Speed #1: .500 (10t)"));RunHistory.Run hold4=speeds.recent().get(0);ReplayQuery speedQuery=new ReplayQuery();speedQuery.technique=ReplayQuery.Technique.TAP_SPEED_4;check(speedQuery.matches(tap4,true)&&!speedQuery.matches(hold4,true),"4b tap filter mixes hold speeds");speedQuery.technique=ReplayQuery.Technique.HOLD_SPEED_4;check(speedQuery.matches(hold4,true)&&!speedQuery.matches(tap4,true),"4b hold filter mixes tap speeds");
+        System.out.println("PASS: combined replay filters, 4b tap/hold distinction, validation, persistence and deterministic sorting");
     }
 }

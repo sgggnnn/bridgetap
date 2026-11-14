@@ -16,6 +16,8 @@
     "GuiIngameMixin",
     "EntityPlayerSPMixin",
     "PlayerControllerMPMixin",
+    "PlacementConfirmationMixin",
+    "ReplayGuiAccessor",
     "KeyboardInputMixin",
     "PlayerInventoryMixin",
     "PlayerDropMixin",
@@ -31,7 +33,8 @@
     "AppearanceRenderItemMixin",
     "AppearanceSoundMixin"
     ,"AppearanceCeraMixin",
-    "ReplayRendererReloadMixin"
+    "ReplayRendererReloadMixin",
+    "ReplayExportHandMixin"
   ],
   "injectors": {
     "defaultRequire": 1

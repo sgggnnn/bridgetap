@@ -7,6 +7,7 @@ import net.minecraft.unmapped.*;
 public final class IslandBlockView implements C_46108969 {
     private final Map<Long,C_15815210> states=new HashMap<>();
     public IslandBlockView(IslandTemplate template,C_15815210[] blocks){for(int i=0;i<blocks.length;i++){IslandTemplate.Block b=template.blocks.get(i);states.put(new C_32594356(b.x,b.y,b.z).m_14165896(),blocks[i]);}}
+    public IslandBlockView(IslandTemplate template,C_15815210[] blocks,IslandParts parts,int x,int y,int z,int sx,int sy,int sz,int fx,int fy,int fz){for(int i=0;i<blocks.length;i++){IslandTemplate.Block b=template.blocks.get(i);boolean finish=parts.finish[i];states.put(new C_32594356(x+b.x+(finish?fx:sx),y+b.y+(finish?fy:sy),z+b.z+(finish?fz:sz)).m_14165896(),blocks[i]);}}
     public C_15815210 m_77852500(C_32594356 pos){C_15815210 state=states.get(pos.m_14165896());return state==null?C_81592558.m_64320102(0).m_52891069():state;}
     public C_40735137 m_40611090(C_32594356 pos){return null;}
     public int m_72193523(C_32594356 pos,int light){return 0xF000F0;}

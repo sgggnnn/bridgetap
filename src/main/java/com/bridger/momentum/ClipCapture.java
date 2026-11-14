@@ -58,7 +58,7 @@ public final class ClipCapture {
     public static String stats(){return stream==null?String.format(Locale.US,"%.1fs / %.1f MiB / %.0f captured FPS (target %d) / %dp",buffer.duration(),buffer.bytes()/1048576.0,buffer.rate(),fps,maxHeight):String.format(Locale.US,"%.1fs / %.1f MiB disk / %.0f captured FPS (target %d) / %dp",stream.duration(),stream.bytes()/1048576.0,stream.rate(),fps,maxHeight);}
     public static String storage(){return stream==null?"128 MiB image buffer":"Rolling H.264 on disk / 2 GiB limit";}
     public static Path folder()throws IOException{Path p=Paths.get("bridgetap-clips");Files.createDirectories(p);return p;}
-    public static void toggle(){enabled=!enabled;if(!enabled){ClipAudio.capture(false);ClipMicrophone.capture(false);}clear();message=enabled?"Recording video. Press F9 to save the recent buffer.":"Buffer stopped and cleared.";notices.add(message);}
+    public static void toggle(){if(!BridgeConfig.modEnabled&&!enabled)return;enabled=!enabled;if(!enabled){ClipAudio.capture(false);ClipMicrophone.capture(false);}clear();message=enabled?"Recording video. Press F9 to save the recent buffer.":"Buffer stopped and cleared.";notices.add(message);}
     public static synchronized void clear(){generation++;ordered.reset(generation);sequence=0;buffer.clear();if(stream!=null)stream.reset(generation,buffer.window());next=last=0;}
     public static void duration(int seconds){synchronized(ClipCapture.class){buffer.window(seconds);clear();}settings();}
     public static boolean validRate(int value){return value==10||value==15||value==20||value==30||value==60||value==120;}
@@ -91,6 +91,7 @@ public final class ClipCapture {
         }catch(Exception|LinkageError ex){prepared.cancel(false);Throwable cause=ex instanceof ExecutionException?ex.getCause():ex;message="Clip save failed: "+cause.getMessage();notices.add(message);diagnostic(cause);}finally{if(wave!=null)try{Files.deleteIfExists(wave);}catch(IOException ignored){}saving.set(false);}});
     }
     public static void capture(){
+        if(!BridgeConfig.modEnabled)return;
         if(ReplayVideoExport.active()){ClipAudio.capture(false);ClipMicrophone.capture(false);ReplayVideoExport.capture();return;}
         Minecraft mc=Minecraft.m_20213497();
         if(mc.f_26407825!=world){world=mc.f_26407825;clear();}

@@ -10,6 +10,8 @@ public final class ServerMode {
     public static final Measurement UNAVAILABLE=new Measurement(false,0,0);
     public static boolean mcplay(String server){String host=PresetServers.canonical(server);int colon=host.indexOf(':');if(colon>=0)host=host.substring(0,colon);return host.equals("mcplayhd.net")||host.endsWith(".mcplayhd.net");}
     public static Mode detect(String server,Measurement measurement){if(!mcplay(server)||measurement==null||!measurement.available)return Mode.UNKNOWN;double gap=measurement.gap;if(near(gap,16))return Mode.EXTRA_SHORT;if(near(gap,28))return Mode.SHORT;if(near(gap,51))return Mode.NORMAL;if(near(gap,83))return Mode.LONG;return Mode.UNKNOWN;}
-    private static boolean near(double a,double b){return Math.abs(a-b)<.05;}
+    // Decorative lips can move a measured platform edge by up to two cells.
+    // Mode bands remain disjoint (the closest advertised lengths are 12 apart).
+    private static boolean near(double a,double b){return Math.abs(a-b)<=2.05;}
     public static Measurement measure(ReplayData data){if(data==null)return UNAVAILABLE;BridgeGeometry.Result result=data.geometry();return result.available?new Measurement(true,result.gap,result.rise):UNAVAILABLE;}
 }

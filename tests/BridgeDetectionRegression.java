@@ -4,6 +4,8 @@ public class BridgeDetectionRegression {
     static void check(boolean value,String why){if(!value)throw new AssertionError(why);}
     static String late(int index,int opening,int ticks,double x,double y,double z,double tx,double ty,double tz,boolean axis){return BridgeDetection.lateLabel(index,opening,ticks,x,y,z,tx,ty,tz,axis,true);}
     public static void main(String[] args){
+        for(int ticks:new int[]{9,10})for(boolean xAxis:new boolean[]{false,true})for(int direction:new int[]{-1,1}){double a=direction>0?.5:-.5,b=a+direction*4;check((ticks==9?"4b Tap Speed":"4b Hold Speed").equals(BridgeDetection.speedTellyLabel(ticks,xAxis?a:0,64,xAxis?0:a,xAxis?b:0,65,xAxis?0:b,xAxis,true)),"4b tap/hold speed missed on a cardinal axis");}
+        check(BridgeDetection.speedTellyLabel(11,.5,64,0,4.5,65,0,true,true)==null,"Wrong speed telly timing accepted");check(BridgeDetection.speedTellyLabel(9,.5,64,0,3.5,65,0,true,true)==null,"Three-column late mislabelled as 4b speed");check(BridgeDetection.speedTellyLabel(9,.5,64,0,4.5,64,0,true,true)==null,"Flat jump mislabelled as raised telly");check(BridgeDetection.speedTellyLabel(9,.5,64,0,4.5,65,0,true,false)==null,"Speed telly without placements accepted");
         RunStartCooldown cooldown=new RunStartCooldown();check(cooldown.ready(0),"First run has no cooldown");cooldown.finish(100);
         for(int tick=100;tick<105;tick++)check(!cooldown.ready(tick),"Placements cannot restart a bridge before tick 105");
         check(cooldown.ready(105),"The next bridge is allowed exactly five ticks after completion");

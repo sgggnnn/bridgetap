@@ -6,6 +6,11 @@ public final class EntryFormatter {
  private EntryFormatter(){}
  public static java.util.List<String> lines(java.util.List<JumpEntry> entries){return lines(entries,BridgeConfig::color);}
  public static java.util.List<String> hudLines(java.util.List<JumpEntry> entries){return lines(entries,OverlayStyle::color);}
+ public static java.util.List<String> runLines(java.util.List<JumpEntry> entries,boolean failed,boolean hud){
+  java.util.List<JumpEntry> visible=FailureDisplay.entries(entries,failed);java.util.function.IntFunction<String> color=hud?OverlayStyle::color:BridgeConfig::color;
+  if(!FailureDisplay.onlyTaps(failed))return lines(visible,color);
+  java.util.List<String> result=new java.util.ArrayList<>();for(JumpEntry entry:visible){String line=format(entry,color);if(!line.isEmpty())result.add(line);}return result;
+ }
  private static java.util.List<String> lines(java.util.List<JumpEntry> entries,java.util.function.IntFunction<String> color){
   java.util.List<String> result=new java.util.ArrayList<>();
   if("LAST_TURN".equals(BridgeConfig.displayMode)){
@@ -23,7 +28,7 @@ public final class EntryFormatter {
   return result;
  }
  private static String compact(String label,JumpEntry entry,java.util.function.IntFunction<String> color){
-  return color.apply(0)+"\u00bb "+label+": "+coordinates(entry,color)+angle(entry,color);
+  return color.apply(0)+"\u00bb "+color.apply(labelPart(entry))+label+": "+coordinates(entry,color)+angle(entry,color);
  }
  private static String coordinates(JumpEntry entry,java.util.function.IntFunction<String> color){
   if(BridgeConfig.showBothAxes&&Double.isFinite(entry.getSampledX())&&Double.isFinite(entry.getSampledZ())){
@@ -50,6 +55,15 @@ public final class EntryFormatter {
  private static String angle(JumpEntry entry,java.util.function.IntFunction<String> color){
   return BridgeConfig.showJumpAngle&&Double.isFinite(entry.getJumpYaw())?" "+color.apply(13)+String.format(Locale.US,"[Yaw: %.1f\u00b0]",entry.getJumpYaw()):"";
  }
+ public static int labelPart(JumpEntry entry){
+  String label=entry.getLabel().toLowerCase(Locale.ROOT);
+  switch(entry.getType()){
+   case FLAT:if(label.startsWith("1.05 "))return 16;if(label.startsWith("1.0 "))return 15;if(label.startsWith("1.1 "))return 17;if(label.startsWith("1.15 "))return 18;if(label.startsWith("1.2 "))return 19;if(label.startsWith("4b "))return 20;return 21;
+   case FAIL_TAP:return 29;case TURN:return 28;case HEAD_HITTER:return 30;case PLATES:case PLATES_MINUS_1:return 31;
+   case TAP:if(label.contains("5b late"))return 26;if(label.contains("6b late"))return 27;if(label.contains("4b tap"))return 23;if(label.contains("4b hold"))return 25;if(label.contains("hold"))return 24;if(label.contains("tap"))return 22;return 32;
+   default:return 0;
+  }
+ }
  public static String format(JumpEntry entry){return format(entry,BridgeConfig::color);}
  private static String format(JumpEntry entry,java.util.function.IntFunction<String> color){
   String mode=BridgeConfig.displayMode;
@@ -59,13 +73,14 @@ public final class EntryFormatter {
   if("COORDS_ONLY".equals(mode))line=coords;
   else if("TICKS".equals(mode)){
    if(plate)return "";
-   line=color.apply(0)+"\u00bb "+entry.getLabel()+" "+color.apply(4)+"("+entry.getTicksElapsed()+"t)";
+   line=color.apply(0)+"\u00bb "+color.apply(labelPart(entry))+entry.getLabel()+" "+color.apply(4)+"("+entry.getTicksElapsed()+"t)";
   }else{
-   line=color.apply(0)+"\u00bb "+entry.getLabel()+": "+coords;
+   line=color.apply(0)+"\u00bb "+color.apply(labelPart(entry))+entry.getLabel()+": "+coords;
    if("ALL".equals(mode)&&!plate&&entry.getType()!=JumpEntry.EntryType.HEAD_HITTER){
     double d=entry.getDelta();
-    String delta=Double.isNaN(d)?"+.n/a":String.format(Locale.US,"%s.%03d",d>=0?"+":"-",(int)Math.round(Math.abs(d)*1000));
-    line+=" "+color.apply(d<0?3:2)+delta+" "+color.apply(4)+"("+entry.getTicksElapsed()+"t)";
+    boolean zero=Double.isFinite(d)&&Math.round(Math.abs(d)*1000)==0;
+    String delta=Double.isNaN(d)?"+.n/a":String.format(Locale.US,"%s.%03d",d>=0||zero?"+":"-",(int)Math.round(Math.abs(d)*1000));
+    line+=" "+color.apply(zero?14:d<0?3:2)+delta+" "+color.apply(4)+"("+entry.getTicksElapsed()+"t)";
    }
   }
   if(BridgeConfig.showGainType&&entry.getGainType()!=null){

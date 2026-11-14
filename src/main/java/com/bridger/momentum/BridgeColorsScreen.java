@@ -6,17 +6,17 @@ import net.minecraft.unmapped.C_85740840;
 public final class BridgeColorsScreen extends BridgeScreen {
     private static final int[] PALETTE={0x000000,0x0000AA,0x00AA00,0x00AAAA,0xAA0000,0xAA00AA,0xFFAA00,0xAAAAAA,0x555555,0x5555FF,0x55FF55,0x55FFFF,0xFF5555,0xFF55FF,0xFFFF55,0xFFFFFF};
     private static final String[] NAMES={"Black","Dark blue","Dark green","Dark aqua","Dark red","Dark purple","Gold","Gray","Dark gray","Blue","Green","Aqua","Red","Pink","Yellow","White"};
-    private static final String[] DEFAULTS={"b","e","a","c","7","a","e","b","0","7","7","a","c","7"};
+    private static final String[] DEFAULTS={"b","e","a","c","7","a","e","b","0","7","7","a","c","7","e","b","b","b","b","b","b","b","b","b","b","b","b","b","b","b","b","b","b"};
     private final C_85740840 parent;
-    private int part;
+    private int part,offset;
     public BridgeColorsScreen(){this(new BridgeSettingsScreen());}
     public BridgeColorsScreen(C_85740840 parent){this.parent=parent;}
     @Override protected void paint(){
         header("Overlay colors","Choose an element, then a color");
-        panel(20,72,250,358);panel(286,72,554,358);
-        text("HUD ELEMENTS",36,88,TEXT);
-        for(int i=0;i<BridgeConfig.colors.length;i++){
-            final int index=i;int y=111+i*22;
+        panel(20,72,250,366);panel(286,72,554,358);
+        text("HUD ELEMENTS",36,88,TEXT);button("<",196,80,24,20,offset>0,false,()->offset=Math.max(0,offset-15));button(">",230,80,24,20,offset+15<BridgeConfig.colors.length,false,()->offset=Math.min(BridgeConfig.colors.length-1,offset+15));
+        for(int i=offset;i<Math.min(BridgeConfig.colors.length,offset+15);i++){
+            final int index=i;int y=111+(i-offset)*22;
             if(part==i||over(28,y-4,234,21))rect(28,y-4,234,21,part==i?0xFF254050:RAISED);
             rect(38,y+2,12,12,0xFF000000|BridgeConfig.rgb(i));
             text(BridgeConfig.COLOR_NAMES[i],60,y+4,part==i?ACCENT:TEXT);
@@ -35,9 +35,9 @@ public final class BridgeColorsScreen extends BridgeScreen {
             region(x-4,y-4,40,40,()->{OverlayStyle.resetPart(part);BridgeConfig.colors[part]=Integer.toHexString(code);BridgeConfig.save();});
             if(over(x-4,y-4,40,40))label(NAMES[c],302,239);
         }
-        label("LIVE PREVIEW",302,265);
-        rect(302,284,522,130,0xFF000000|BridgeConfig.rgb(9));
-        rect(304,286,518,126,0xE0000000|BridgeConfig.rgb(8));
+        label("LIVE PREVIEW",302,265);if(part>=15)text(BridgeConfig.color(part)+BridgeConfig.COLOR_NAMES[part]+": "+BridgeConfig.color(1)+".584",510,265,TEXT);
+        rect(302,284,522,134,0xFF000000|BridgeConfig.rgb(9));
+        rect(304,286,518,130,0xE0000000|BridgeConfig.rgb(8));
         text(BridgeConfig.color(7)+"Success 3.85s  /  7 jumps  /  Axis Z",316,299,TEXT);
         sample("1.0 Flat", ".504", "+.n/a", "3t",1,321);
         sample("Tap Speed #1", ".460", "-.044", "9t",-1,342);
@@ -45,13 +45,17 @@ public final class BridgeColorsScreen extends BridgeScreen {
         text(BridgeConfig.color(13)+"[Yaw: 135.0\u00b0]",650,363,TEXT);
         sample("Turn", ".216", "+.475", "15t",1,363);
         text(BridgeConfig.color(1)+"X .584 Z .289  "+BridgeConfig.color(11)+"[\u0394: +.295]  "+BridgeConfig.color(12)+"[\u0394: -.295]",316,384,TEXT);
+        sample("Tap Speed #2", ".460", "+.000", "9t",0,405);
         button("Reset selected",302,442,128,()->{OverlayStyle.resetPart(part);BridgeConfig.colors[part]=DEFAULTS[part];BridgeConfig.save();});
         button("Reset all",442,442,96,()->{for(int i=0;i<DEFAULTS.length;i++)OverlayStyle.resetPart(i);System.arraycopy(DEFAULTS,0,BridgeConfig.colors,0,DEFAULTS.length);BridgeConfig.save();});
         button(parent instanceof BridgeLayoutScreen?"Back to layout":"Back to settings",700,442,140,26,true,true,this::back);
         footer("Preview updates immediately  /  Esc: back");
     }
     private void sample(String label,String coord,String delta,String ticks,int sign,int y){
-        text(BridgeConfig.color(0)+"> "+label+": "+BridgeConfig.color(1)+coord+"  "+BridgeConfig.color(sign<0?3:2)+delta+"  "+BridgeConfig.color(4)+"("+ticks+")",316,y,TEXT);
+        JumpEntry.EntryType type=label.contains("Flat")?JumpEntry.EntryType.FLAT:label.equals("Turn")?JumpEntry.EntryType.TURN:JumpEntry.EntryType.TAP;
+        int labelColor=EntryFormatter.labelPart(new JumpEntry(label,0,0,0,0,type));
+        text(BridgeConfig.color(labelColor)+"> "+label+": "+BridgeConfig.color(1)+coord+"  "+BridgeConfig.color(sign==0?14:sign<0?3:2)+delta+"  "+BridgeConfig.color(4)+"("+ticks+")",316,y,TEXT);
     }
+    @Override protected void scroll(int x,int y,int direction){if(x<270&&y>=72&&y<=438)offset=Math.max(0,Math.min(Math.max(0,BridgeConfig.colors.length-15),offset+direction));}
     @Override protected void back(){BridgeConfig.save();open(parent);}
 }

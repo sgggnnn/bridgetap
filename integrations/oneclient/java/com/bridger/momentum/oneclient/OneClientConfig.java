@@ -9,11 +9,14 @@ import org.polyfrost.oneconfig.api.config.v1.annotations.*;
 
 /** Native OneConfig settings and entry points to every BridgeTap tool. */
 public final class OneClientConfig extends Config {
+    @MasterToggle @Switch(title="Enable BridgeTap",category="General") public boolean modEnabled=BridgeConfig.modEnabled;
     @Switch(title="Bridge coordinates",category="HUD") public boolean coordinatesVisible=BridgeConfig.enabled;
     @Switch(title="Velo Z decimals (jump -1t)",category="HUD") public boolean showBridgeVelocity=BridgeConfig.showBridgeVelocity;
     @Switch(title="Both axes + X-Z difference",category="HUD") public boolean showBothAxes=BridgeConfig.showBothAxes;
     @Switch(title="Jump viewing angle (yaw)",category="HUD") public boolean showJumpAngle=BridgeConfig.showJumpAngle;
     @Switch(title="Replay information",category="HUD") public boolean showReplayInfo=BridgeConfig.showReplayInfo;
+    @Switch(title="Detailed replay information",category="HUD") public boolean detailedReplayInfo=BridgeConfig.detailedReplayInfo;
+    @Switch(title="Keystrokes outside replays",category="HUD") public boolean showLiveInputs=BridgeConfig.showLiveInputs;
     @Switch(title="Replay keystrokes",category="HUD") public boolean showReplayInputs=BridgeConfig.showReplayInputs;
     @Switch(title="Background",category="HUD") public boolean backgroundEnabled=BridgeConfig.backgroundEnabled;
     @Switch(title="Text shadow",category="HUD") public boolean textShadow=BridgeConfig.textShadow;
@@ -26,15 +29,15 @@ public final class OneClientConfig extends Config {
     public OneClientConfig(){super("bridgetap-oneconfig.json","assets/bridgetap/icon.png","BridgeTap",Category.UTILITY);initialize(false);}
     @Override protected void onInitialized(Tree tree){
         super.onInitialized(tree);tree.addMetadata("mod_card_authors","sggn");
-        for(String field:new String[]{"coordinatesVisible","showBridgeVelocity","showJumpAngle","showBothAxes","showReplayInfo","showReplayInputs","backgroundEnabled","textShadow","chatOutput","hideOnF3","showGainType","tickOffset","plateTickOffset","turnTicks"}){
-            Runnable apply=()->{try{BridgeConfig.class.getField(field.equals("coordinatesVisible")?"enabled":field).set(null,getClass().getField(field).get(this));BridgeConfig.save();}catch(ReflectiveOperationException ex){throw new IllegalStateException(ex);}};
+        for(String field:new String[]{"modEnabled","coordinatesVisible","showBridgeVelocity","showJumpAngle","showBothAxes","showReplayInfo","detailedReplayInfo","showReplayInputs","showLiveInputs","backgroundEnabled","textShadow","chatOutput","hideOnF3","showGainType","tickOffset","plateTickOffset","turnTicks"}){
+            Runnable apply=()->{try{if(field.equals("modEnabled"))BridgeRuntime.setEnabled(modEnabled);else{BridgeConfig.class.getField(field.equals("coordinatesVisible")?"enabled":field).set(null,getClass().getField(field).get(this));BridgeConfig.save();}}catch(ReflectiveOperationException ex){throw new IllegalStateException(ex);}};
             apply.run();addCallback(field,apply);
         }
     }
     @SuppressWarnings({"rawtypes","unchecked"})
     public void syncFromBridge(){
         NativeHudStyles.sync();
-        for(String field:new String[]{"coordinatesVisible","showBridgeVelocity","showJumpAngle","showBothAxes","showReplayInfo","showReplayInputs","backgroundEnabled","textShadow","chatOutput","hideOnF3","showGainType","tickOffset","plateTickOffset","turnTicks"}){
+        for(String field:new String[]{"modEnabled","coordinatesVisible","showBridgeVelocity","showJumpAngle","showBothAxes","showReplayInfo","detailedReplayInfo","showReplayInputs","showLiveInputs","backgroundEnabled","textShadow","chatOutput","hideOnF3","showGainType","tickOffset","plateTickOffset","turnTicks"}){
             try{org.polyfrost.oneconfig.api.config.v1.Property property=getProperty(field);Object value=BridgeConfig.class.getField(field.equals("coordinatesVisible")?"enabled":field).get(null);if(!java.util.Objects.equals(property.get(),value))property.set(value);}catch(ReflectiveOperationException ex){throw new IllegalStateException(ex);}
         }
     }
@@ -42,6 +45,8 @@ public final class OneClientConfig extends Config {
     public void bindHudStyle(int type,Object hud){NativeHudStyles.bind(type,hud);}
     private void open(C_85740840 screen){Minecraft mc=Minecraft.m_20213497();if(mc.f_28396371!=null)mc.m_52715402(screen);}
     @Button(title="Bridge statistics",text="Open statistics",category="Replays") public void statistics(){open(new StatisticsScreen(null));}
+    @Button(title="Discord community",text="Join Discord",category="Tools") public void discord(){CommunityLinks.discord();}
+    @Button(title="Failed bridge display",text="Configure",category="HUD") public void failedBridges(){open(new FailureDisplayScreen(null));}
     @Button(title="Replay library",text="Browse replays",category="Replays") public void replays(){open(ReplayFolderScreen.home());}
     @Button(title="Island library",text="Browse islands",category="Islands") public void islands(){open(new IslandScreen(null));}
     @Button(title="Island presets",text="Browse presets",category="Islands") public void presets(){open(new IslandPresetsScreen(null));}

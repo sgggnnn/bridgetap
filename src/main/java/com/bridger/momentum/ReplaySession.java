@@ -34,7 +34,6 @@ public final class ReplaySession {
  private boolean previousSneak;
  private ReplayControls.Center centerState;
  private long lastFrame=System.nanoTime(),lastAction;
- private long lastActionSequence;
  private C_24384787 previousRenderer;
  private C_16190149 previousParticles;
  private C_34267874 previousControls;
@@ -45,16 +44,20 @@ public final class ReplaySession {
  private boolean previousHitboxes;
  private C_88708284 previousHand;
  private float previousHandHeight,previousLastHandHeight;
+ private float ghostAnimationPartial=1;
+ public static float animationPartial(Object actor,float value){ReplaySession s=current;return s!=null&&s.rendering&&actor==s.ghost?s.ghostAnimationPartial:value;}
  private boolean guiTick;
  private boolean movementCaptured,jumping,sneaking;
  private double forward,right;
  private final C_97866173 gui;
+ private final ReplaySkyCompat skyCompat=new ReplaySkyCompat();
  private C_97866173 previousGui;
 
  private ReplaySession(Minecraft mc,RunHistory.Run run,ReplayData data){
   this.data=data;this.run=run;run.observeMode(data);timeline=new ReplayTimeline(data,run.time);source=mc.f_26407825;player=mc.f_28396371;
   world=new C_34399650(null,new C_06007608(0,C_06007608.C_36868821.f_11202516,false,false,C_61837504.f_74160535),data.dimension,C_57526564.f_55214254,mc.f_40149437);
   world.m_44107872(data.dayTime);world.m_04000603(0);world.m_29822868(0);
+  if(data.presentation!=null){world.m_66891909(data.presentation.worldTime);world.m_04000603(data.presentation.rain);world.m_29822868(data.presentation.thunder);}
   camera=new ReplayCamera(mc,world,mc.m_55181026());
   camera.f_95719371=true;camera.f_77844715.f_26706858=true;camera.f_77844715.f_77637162=true;camera.f_77844715.f_86452611=true;camera.f_77844715.f_63336874=true;
   camera.f_92990329=new C_54206210();
@@ -77,6 +80,9 @@ public final class ReplaySession {
  private static C_88708284 tool(int id,String name){return new C_88708284(C_98888256.m_06629599(id)).m_12689347(name);}
  public static Object token(){return current;}
  public static String recordingId(){return current==null?"":current.run.id;}
+ public static RunHistory.Run currentRun(){return current==null?null:current.run;}
+ public static int currentTick(){return current==null?0:(int)Math.floor(current.timeline.tick());}
+ public static void openBookmarks(){if(current!=null&&!ReplayVideoExport.active()){current.timeline.pause();Minecraft.m_20213497().m_52715402(new ReplayBookmarksScreen(null,current.run));}}
  public static int lastTick(){return current==null?0:current.timeline.lastTick();}
  private int videoCameraMode=-1;
  public static final class VideoState {final C_88708284[] hotbar;final double tick;final boolean playing,pov,hideGui,bobbing;final double x,y,z;final float yaw,pitch;VideoState(ReplaySession s){hotbar=java.util.Arrays.copyOf(s.camera.f_29439708.f_35249023,9);hideGui=Minecraft.m_20213497().f_58088711.f_06955029;bobbing=Minecraft.m_20213497().f_58088711.f_16743685;tick=s.timeline.tick();playing=s.timeline.playing();pov=s.followPov;x=s.camera.f_78826675;y=s.camera.f_31030949;z=s.camera.f_97691941;yaw=s.camera.f_80130373;pitch=s.camera.f_03549461;}}
@@ -98,14 +104,15 @@ public final class ReplaySession {
  public static void rendererInvalidated(){if(current!=null&&!current.rendering)current.rendererInvalid=true;}
  public static void rebuildSceneryTerrain(){Minecraft mc=Minecraft.m_20213497();if(mc!=null&&mc.f_48619021!=null)mc.f_48619021.m_12518137();rendererInvalidated();}
  public static void invalidateScenery(int x,int y,int z,int maxX,int maxY,int maxZ){Minecraft mc=Minecraft.m_20213497();if(mc==null)return;C_34399650 live=sourceWorld();if(live!=null)live.m_76770021(x,y,z,maxX,maxY,maxZ);if(current!=null&&current.world!=null)current.world.m_76770021(x,y,z,maxX,maxY,maxZ);}
- public static ReplayData.TickStats recordedInputs(){return current==null?null:current.timeline.sample().stats;}
+ public static ReplayData.TickStats recordedInputs(){return current==null?null:current.timeline.inputs();}
  public static boolean rendering(){return current!=null&&current.rendering;}
  public static boolean povLocked(){return current!=null&&current.followPov;}
  public static ReplayGhost povActor(){return povLocked()?current.ghost:null;}
  public static C_57778754 realPlayer(){return current==null?Minecraft.m_20213497().f_28396371:current.player;}
  public static boolean start(RunHistory.Run run,ReplayData data){
+  if(!BridgeConfig.modEnabled)return false;
   Minecraft mc=Minecraft.m_20213497();if(mc.f_26407825==null||mc.f_28396371==null)return false;
-  stop();current=new ReplaySession(mc,run,data);current.lastActionSequence=BridgeTelemetry.actionSequence();mc.m_52715402(null);status("\u00a7aPlay");return true;
+  stop();current=new ReplaySession(mc,run,data);BridgeTelemetry.clearActionPresses();mc.m_52715402(null);status("\u00a7aPlay");return true;
  }
  public static void stop(){
   ReplayVideoExport.cancel();ReplaySession session=current;if(session==null)return;
@@ -158,6 +165,7 @@ public final class ReplaySession {
   if(mc.f_26407825!=s.source||mc.f_28396371!=s.player){stop();return;}
   long now=System.nanoTime();double dt=Math.min(.1,(now-s.lastFrame)/1e9);s.lastFrame=now;
   if(mc.f_70816363==null&&mc.f_92501186&&!ReplayVideoExport.active())s.timeline.advance(dt);
+  if(ReplayVideoExport.active())s.ghostAnimationPartial=1;else if(mc.f_70816363==null&&mc.f_92501186&&s.timeline.playing())s.ghostAnimationPartial=partial;
   if(ReplayVideoExport.cleanHud())mc.f_58088711.f_06955029=true;
   if(!ReplayVideoExport.active())s.updateCenter();
   s.positionCamera(partial);
@@ -168,6 +176,7 @@ public final class ReplaySession {
   s.previousRenderer=mc.f_48619021;s.previousParticles=mc.f_49464910;s.previousControls=mc.f_17639899;
   s.previousCamera=mc.m_67314413();s.previousPerspective=mc.f_58088711.f_33865429;s.previousHitboxes=mc.m_64046137().m_06540705();
   s.previousGui=mc.f_28235293;
+  s.skyCompat.sync(s.previousRenderer,s.renderer);
   s.previousHit=mc.f_81460813;s.previousPointedEntity=mc.f_30642501;
   s.rendering=true;
   mc.f_26407825=s.world;mc.f_28396371=s.camera;mc.f_48619021=s.renderer;mc.f_49464910=s.particles;mc.f_17639899=s.controls;mc.f_28235293=s.gui;
@@ -178,6 +187,8 @@ public final class ReplaySession {
   s.previousHand=hand.bridgetap$getItem();s.previousHandHeight=hand.bridgetap$getHeight();s.previousLastHandHeight=hand.bridgetap$getLastHeight();
   hand.bridgetap$setItem(s.followPov?s.ghost.f_29439708.m_27760697():s.camera.f_29439708.m_27760697());hand.bridgetap$setHeight(1);hand.bridgetap$setLastHeight(1);
   if(s.guiTick){s.gui.m_74507790();s.guiTick=false;}
+  ReplayLiveChat.sync(s.gui,s.previousGui);
+  if(s.data.presentation!=null)s.world.m_66891909(s.data.presentation.worldTime+(long)s.timeline.tick());
  }
  public static void endRender(){
   ReplaySession s=current;if(s==null||!s.rendering)return;Minecraft mc=Minecraft.m_20213497();
@@ -220,9 +231,10 @@ public final class ReplaySession {
   ReplaySession s=current;if(s==null)return;
   s.selectHotbar(Minecraft.m_20213497().f_58088711);
   int slot=s.camera.f_29439708.f_13682807;
-  long sequence=BridgeTelemetry.actionSequence();boolean fresh=sequence!=s.lastActionSequence;
-  long now=System.nanoTime();if(!ReplayControls.acceptAction(slot,fresh,now,s.lastAction))return;s.lastAction=now;s.lastActionSequence=sequence;
+  boolean fresh=BridgeTelemetry.consumeActionPress(attack);
+  long now=System.nanoTime();if(!ReplayControls.acceptAction(slot,fresh,now,s.lastAction))return;s.lastAction=now;
   if(slot==ReplayControls.EXIT){exit();return;}
+  if(slot==ReplayControls.BOOKMARKS){openBookmarks();return;}
   if(attack&&fresh&&!s.followPov&&s.aimsAtGhost()){s.setPov(true);status("\u00a7bPOV - Sneak to return to free camera");return;}
   if(slot==ReplayControls.BACK||slot==ReplayControls.FORWARD){int step=s.timeline.skip(slot==ReplayControls.BACK?-1:1);status(String.format(Locale.US,"\u00a7e%s %+.2f seconds",slot==ReplayControls.BACK?"Backward":"Forward",(slot==ReplayControls.BACK?-step:step)/20.0));}
   if(slot==ReplayControls.CENTER){
@@ -287,22 +299,28 @@ public final class ReplaySession {
    world.m_76770021(b.x,b.y,b.z,b.x,b.y,b.z);
   }
  }
- private void ensureChunk(int x,int z){ReplayChunkCoverage.ensure(chunks,coveredChunks,x,z,(cx,cz)->world.m_66086785(cx,cz,true));}
+ private void ensureChunk(int x,int z){ReplayChunkCoverage.ensure(chunks,coveredChunks,x,z,(cx,cz)->{world.m_66086785(cx,cz,true);if(data.presentation!=null){byte[] biomes=data.presentation.biomes(cx,cz);if(biomes!=null)world.m_41814513(new C_32594356(cx<<4,64,cz<<4)).m_23466484(biomes);}});}
  public static void renderHud(){
   if(!ReplayVideoExport.overlays())return;
   ReplaySession s=current;if(s==null||!s.rendering)return;
   if(BridgeConfig.showReplayInputs){
    Minecraft mc=Minecraft.m_20213497();C_43718703 window=new C_43718703(mc);
-   int height=ReplayInputOverlay.height(s.timeline.sample().stats);OneClientIntegration.recordSize(2,76,height);
+   int height=ReplayInputOverlay.height(s.timeline.inputs());OneClientIntegration.recordSize(2,76,height);
    float scale=(float)Math.min(BridgeConfig.inputHudScale,Math.min((window.m_39119333()-8f)/76,(window.m_16103615()-8f)/height));
    int x=OverlayPlacement.clamp(BridgeConfig.inputHudX,(int)Math.ceil(76*scale),window.m_39119333());
    int y=OverlayPlacement.clamp(BridgeConfig.inputHudY,(int)Math.ceil(height*scale),window.m_16103615());
-   ReplayInputOverlay.paint(new ScaledUiCanvas(new MinecraftUiCanvas(mc.f_21497584,2),x,y,scale),0,0,s.timeline.sample().stats);
+   ReplayInputOverlay.paint(new ScaledUiCanvas(new MinecraftUiCanvas(mc.f_21497584,2),x,y,scale),0,0,s.timeline.inputs());
   }
   if(!BridgeConfig.showReplayInfo)return;
   List<String> lines=new ArrayList<>();
   lines.add(String.format(Locale.US,"\u00a7b%s \u00a7f%.2f / %.2fs \u00a77| Tick %d/%d | %.2fx | %s",s.run.displayName(),s.timeline.seconds(),s.timeline.duration(),(int)s.timeline.tick(),s.timeline.lastTick(),s.timeline.speed(),s.timeline.playing()?"Play":"Paused"));
   ReplayData.Frame actor=s.timeline.sample();
+  if(!BridgeConfig.detailedReplayInfo){
+   lines.clear();
+   lines.add(String.format(Locale.US,"\u00a7bReplay \u00a7f%.2f / %.2fs \u00a77| %.2fx | %s",s.timeline.seconds(),s.timeline.duration(),s.timeline.speed(),s.timeline.playing()?"Play":"Paused"));
+   lines.add(BridgeTelemetryHUD.coordinates(actor.x,actor.y,actor.z,"Ghost"));
+   BridgeTelemetryHUD.draw(lines);return;
+  }
   lines.addAll(BridgeTelemetryHUD.lines(actor.x,actor.y,actor.z,actor.stats,"Ghost"));
   lines.add("\u00a77Server mode: \u00a7f"+s.run.mode().label);
   BridgeGeometry.Result dimensions=s.data.geometry();

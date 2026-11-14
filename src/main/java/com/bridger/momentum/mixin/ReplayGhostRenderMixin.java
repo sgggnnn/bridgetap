@@ -7,6 +7,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(C_34859172.class)
 public class ReplayGhostRenderMixin {
+ @ModifyVariable(method="m_69546567",at=@At("HEAD"),argsOnly=true,ordinal=1)
+ private float bridgetap$freezePausedAnimation(float value,C_23527099 actor,double x,double y,double z,float yaw,float partial){return ReplaySession.animationPartial(actor,value);}
  @Inject(method="m_69546567",at=@At("HEAD"),cancellable=true)
  private void bridgetap$clearGhostView(C_23527099 actor,double x,double y,double z,float yaw,float partial,CallbackInfo ci){
   // Skip only the skin/model. The dispatcher's white debug hitbox still renders.

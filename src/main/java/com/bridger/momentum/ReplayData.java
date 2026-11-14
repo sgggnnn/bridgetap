@@ -76,20 +76,26 @@ public final class ReplayData {
  public final long dayTime;
  public final boolean truncated;
  public final boolean placementTags;
+ public final ReplayPresentation presentation;
  private BridgeGeometry.Result geometry;
  public ReplayData(List<Frame> frames,List<Block> blocks,boolean truncated){this(frames,blocks,truncated,Identity.unknown(),0,6000,5,true);}
  public ReplayData(List<Frame> frames,List<Block> blocks,boolean truncated,Identity identity,int dimension,long dayTime){this(frames,blocks,truncated,identity,dimension,dayTime,5,true);}
  private ReplayData(List<Frame> frames,List<Block> blocks,boolean truncated,Identity identity,int dimension,long dayTime,int version,boolean placementTags){
+  this(frames,blocks,truncated,identity,dimension,dayTime,version,placementTags,null);
+ }
+ private ReplayData(List<Frame> frames,List<Block> blocks,boolean truncated,Identity identity,int dimension,long dayTime,int version,boolean placementTags,ReplayPresentation presentation){
   if(frames.isEmpty()||frames.size()>MAX_FRAMES||blocks.size()>MAX_BLOCKS)throw new IllegalArgumentException("Invalid recording size");
   for(Block b:blocks)if(b.tick>=frames.size())throw new IllegalArgumentException("Block outside recording");
   this.frames=Collections.unmodifiableList(new ArrayList<>(frames));this.blocks=Collections.unmodifiableList(new ArrayList<>(blocks));
   this.truncated=truncated;this.identity=identity;this.dimension=dimension;this.dayTime=dayTime;this.formatVersion=version;
   this.placementTags=placementTags;
+  this.presentation=presentation;
  }
+ public ReplayData withPresentation(ReplayPresentation presentation){if(formatVersion<5)throw new IllegalStateException("Legacy timing must retain its provenance");return new ReplayData(frames,blocks,truncated,identity,dimension,dayTime,7,placementTags,java.util.Objects.requireNonNull(presentation));}
  public BridgeGeometry.Result geometry(){if(geometry==null)geometry=BridgeGeometry.measure(this);return geometry;}
  public void write(Path file)throws IOException {
   try(DataOutputStream out=new DataOutputStream(new GZIPOutputStream(Files.newOutputStream(file,StandardOpenOption.CREATE_NEW)))){
-   out.writeInt(0x42545250);out.writeInt(formatVersion>=5?5:4);out.writeBoolean(truncated);out.writeInt(frames.size());out.writeInt(blocks.size());out.writeBoolean(placementTags);
+   out.writeInt(0x42545250);out.writeInt(formatVersion>=6?7:formatVersion>=5?5:4);out.writeBoolean(truncated);out.writeInt(frames.size());out.writeInt(blocks.size());out.writeBoolean(placementTags);
    out.writeUTF(identity.uuid);out.writeUTF(identity.name);out.writeUTF(identity.displayName);out.writeUTF(identity.textureValue);out.writeUTF(identity.textureSignature);out.writeUTF(identity.model);
    out.writeInt(identity.modelParts);
    out.writeInt(dimension);out.writeLong(dayTime);
@@ -104,13 +110,14 @@ public final class ReplayData {
     }
    }
    for(Block b:blocks){out.writeInt(b.x);out.writeInt(b.y);out.writeInt(b.z);out.writeInt(b.id);out.writeInt(b.metadata);out.writeInt(b.tick);out.writeBoolean(b.placed);}
+   if(formatVersion>=6)presentation.write(out);
   }
  }
  public static ReplayData read(Path file)throws IOException {
   if(Files.size(file)>8*1024*1024)throw new IOException("Replay too large");
   try(DataInputStream in=new DataInputStream(new GZIPInputStream(Files.newInputStream(file)))){
    if(in.readInt()!=0x42545250)throw new IOException("Invalid replay header");
-   int version=in.readInt();if(version<1||version>5)throw new IOException("Unsupported replay version");
+   int version=in.readInt();if(version<1||version>7)throw new IOException("Unsupported replay version");
    boolean truncated=in.readBoolean();int nf=in.readInt(),nb=in.readInt();
    if(nf<1||nf>MAX_FRAMES||nb<0||nb>MAX_BLOCKS)throw new IOException("Invalid replay counts");
    boolean tags=version>=4&&in.readBoolean();
@@ -131,8 +138,9 @@ public final class ReplayData {
     if(tick<0||tick>=nf)throw new IOException("Invalid block timing");
     blocks.add(new Block(x,y,z,id,metadata,tick,version>=4?in.readBoolean():tick>0));
    }
+   ReplayPresentation presentation=version>=6?ReplayPresentation.read(in,nf,version==6):null;
    if(in.read()!=-1)throw new IOException("Unexpected trailing replay data");
-   return new ReplayData(frames,blocks,truncated,who,dimension,dayTime,version,tags);
+   return new ReplayData(frames,blocks,truncated,who,dimension,dayTime,version==6?7:version,tags,presentation);
   }catch(IllegalArgumentException ex){throw new IOException("Invalid replay",ex);}
  }
 }

@@ -12,7 +12,7 @@ public final class ReplayVideoExportScreen extends BridgeScreen {
         header("Export replay video","Recorded keystrokes / Clean presentation");button("Back",752,15,88,this::back);
         panel(20,74,820,374);clipped(run==null?"Select a replay first":run.displayName(),40,95,770,TEXT);
         label("Full replay / Silent MP4 / Progress stays outside the exported video",40,125);
-        label("The live clip buffer is cleared and suspended while exporting.",40,146);
+        label("Player POV includes the recorded hand, block animation and crosshair.",40,146);
         String[] cameras={"Player POV","Follow camera","Fixed overview"};
         dropdown("camera","Camera: "+cameras[camera],cameras,camera,40,170,360,i->camera=i);
         dropdown("fps","Video: "+fps+" FPS",new String[]{"30 FPS","60 FPS","120 FPS"},fps==30?0:fps==60?1:2,430,170,388,i->fps=new int[]{30,60,120}[i]);

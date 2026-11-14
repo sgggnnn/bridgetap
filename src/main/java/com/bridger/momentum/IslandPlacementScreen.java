@@ -4,12 +4,15 @@ package com.bridger.momentum;
 public final class IslandPlacementScreen extends BridgeScreen {
     private final IslandScreen parent;private final Runnable returnNative;private boolean dragging,finished;private int dragX,dragY,movePart;private String gapText="";
     private boolean savePreset;private String presetName="",presetMessage="";
+    private boolean advanced;
     public IslandPlacementScreen(IslandScreen parent){this.parent=parent;this.returnNative=null;}
     public IslandPlacementScreen(Runnable returnNative){this.parent=null;this.returnNative=returnNative;}
     @Override protected int backgroundColor(){return 0;}
     @Override protected int backdropColor(){return 0;}
     @Override protected void paint(){
+        if(!advanced){paintSimple();return;}
         region(0,0,610,HEIGHT,()->{dragging=true;IslandOverlay.beginEditDrag();dragX=mouseX;dragY=mouseY;});
+        button("Simple controls",20,54,196,26,true,false,()->{advanced=false;movePart=0;});
         button("Undo",20,18,92,26,IslandOverlay.canUndo(),false,IslandOverlay::undo);button("Redo",124,18,92,26,IslandOverlay.canRedo(),false,IslandOverlay::redo);
         panel(620,12,228,476);text("PLACE ISLAND",636,29,ACCENT);clipped(IslandOverlay.activeTemplate()==null?"No island":IslandOverlay.activeTemplate().name,636,52,196,TEXT);
         dropdown("island-part",new String[]{"Move: Whole scene","Move: Finish island","Move: Start island"}[movePart],new String[]{"Whole scene","Finish island","Start island"},movePart,636,78,196,value->movePart=value);
@@ -33,6 +36,28 @@ public final class IslandPlacementScreen extends BridgeScreen {
         button("Cancel",636,435,92,28,true,false,this::back);button("Save preset",740,435,92,28,IslandOverlay.enabled(),false,()->{savePreset=true;presetName=IslandOverlay.activeTemplate().name;presetMessage="";});
         rect(12,HEIGHT-34,568,22,0xCC101722);text("Drag: move / Scroll: distance / Enter: place / Esc: cancel",22,HEIGHT-27,TEXT);
         if(savePreset){rect(0,0,WIDTH,HEIGHT,0xBB080E18);region(0,0,WIDTH,HEIGHT,()->{});panel(200,164,460,184);text("SAVE ISLAND PRESET",220,185,TEXT);input("preset-name",presetName,"Preset name",220,216,416,64,value->presetName=value);clipped(presetMessage,220,258,416,MUTED);button("Cancel",220,296,196,30,true,false,()->savePreset=false);button("Save preset",440,296,196,30,true,true,()->{try{IslandPresets.local().save(presetName,IslandOverlay.activeTemplate(),IslandOverlay.layout());savePreset=false;}catch(Exception ex){presetMessage=ex.getMessage();}});}
+    }
+    private void paintSimple(){
+        region(0,0,610,HEIGHT,()->{dragging=true;IslandOverlay.beginEditDrag();dragX=mouseX;dragY=mouseY;});
+        panel(620,12,228,476);text("PLACE ISLAND",636,29,ACCENT);
+        clipped(IslandOverlay.activeTemplate()==null?"No island":IslandOverlay.activeTemplate().name,636,52,196,TEXT);
+        text("Automatic alignment",636,88,TEXT);
+        clipped(IslandOverlay.autoStatus().isEmpty()?"Stand on your start island.":IslandOverlay.autoStatus(),636,111,196,MUTED);label("Manual adjustments are optional.",636,131);
+        button("Re-detect bridge",636,158,196,30,true,true,()->{IslandOverlay.autoFit();focus="";});
+        button("Rotate: "+IslandOverlay.rotation(),636,198,196,30,true,false,IslandOverlay::rotate);
+        if(IslandOverlay.hasFinish()){
+            if(!focus.equals("simple-gap"))gapText=String.valueOf(IslandOverlay.gap());
+            label("Bridge gap",636,250);button("-",710,241,25,26,true,false,()->{IslandOverlay.gap(-1);focus="";});
+            input("simple-gap",gapText,"Blocks",738,241,64,8,value->{gapText=value;try{int distance=Integer.parseInt(value);if(distance>=0&&distance<=30000000)IslandOverlay.gap(distance-IslandOverlay.gap());}catch(NumberFormatException ignored){}});
+            button("+",805,241,27,26,true,false,()->{IslandOverlay.gap(1);focus="";});
+            stepper("Finish rise",String.format(java.util.Locale.US,"%+d",IslandOverlay.bridgeHeight())+"b",636,279,196,()->IslandOverlay.moveFinish(0,-1,0),()->IslandOverlay.moveFinish(0,1,0));
+        }
+        button("Advanced controls",636,324,196,26,true,false,()->advanced=true);
+        text("2. Confirm placement",636,369,TEXT);
+        clipped(!IslandOverlay.failure().isEmpty()?IslandOverlay.failure():!IslandOverlay.canReplace()?"Move onto your start island":IslandOverlay.drawn()?"Preview ready":"Loading preview...",636,390,196,MUTED);
+        button("Place islands",636,412,196,32,IslandOverlay.enabled()&&IslandOverlay.drawn()&&IslandOverlay.failure().isEmpty(),true,()->{finished=true;IslandOverlay.confirm();open(null);});
+        button("Cancel",636,455,196,24,true,false,this::back);
+        rect(12,HEIGHT-34,568,22,0xCC101722);text("Drag: move / Scroll: distance / Enter: place / Esc: cancel",22,HEIGHT-27,TEXT);
     }
     private void nudge(int right,int up,int forward){if(movePart==1)IslandOverlay.nudgeFinish(right,up,forward);else if(movePart==2)IslandOverlay.nudgeStart(right,up,forward);else IslandOverlay.nudge(right,up,forward);}
     private void raise(int amount){if(movePart==2)IslandOverlay.moveStart(0,amount,0);else if(movePart==1)IslandOverlay.moveFinish(0,amount,0);else IslandOverlay.move(0,amount,0);}

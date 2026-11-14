@@ -24,6 +24,16 @@ public class BridgeTracker {
 
     private static RunStatus status = RunStatus.IDLE;
     private static boolean isBridging = false;
+    private static final RunStartConfirmation startConfirmation=new RunStartConfirmation();
+    public static boolean awaitingPlacement(){return startConfirmation.pending();}
+    public static synchronized void onPredictedPlacement(Object world,C_32594356 pos,int block){
+        boolean running=isBridging;
+        onBlockPlaced();
+        if(!running&&isBridging)startConfirmation.begin(world,pos.m_14165896(),block,currentTick);
+    }
+    public static synchronized void onAuthoritativePlacement(Object world,C_32594356 pos,int block){
+        int result=startConfirmation.update(world,pos.m_14165896(),block);if(result<0)reset();
+    }
     private static double currentBridgeTime = 0.0;
     private static String currentAxis = "Z";
     private static int jumpCount = 0;
@@ -32,7 +42,7 @@ public class BridgeTracker {
     private static int currentTick = 0;
     private static final JumpVelocity jumpVelocity=new JumpVelocity();private static Object velocityWorld;private static JumpVelocity.Sample preJumpVelocity;
     public static JumpVelocity.Sample preJumpVelocity(){return preJumpVelocity;}
-    public static void onTickEnd(Minecraft mc){if(ReplaySession.active()||mc==null||mc.f_26407825==null||mc.f_28396371==null){jumpVelocity.clear();preJumpVelocity=null;velocityWorld=null;return;}
+    public static void onTickEnd(Minecraft mc){if(!BridgeConfig.modEnabled||ReplaySession.active()||mc==null||mc.f_26407825==null||mc.f_28396371==null){jumpVelocity.clear();preJumpVelocity=null;velocityWorld=null;return;}
         if(velocityWorld!=mc.f_26407825){jumpVelocity.clear();preJumpVelocity=null;velocityWorld=mc.f_26407825;}
         if(hasPositionSnapshot(currentTick)){int i=Math.floorMod(currentTick,POSITION_HISTORY_SIZE);jumpVelocity.record(currentTick,positionHistoryX[i],positionHistoryY[i],positionHistoryZ[i]);}
     }
@@ -41,17 +51,21 @@ public class BridgeTracker {
     private static boolean historyCaptured = true;
     public static RunHistory history() { return HISTORY; }
     private static void captureFinishedRun() {
+        if(startConfirmation.pending())return;
         if (historyCaptured || isBridging || pendingPlateSample || !pendingJumps.isEmpty() || (status != RunStatus.SUCCESS && status != RunStatus.FAILED)) return;
         java.util.List<String> lines = new java.util.ArrayList<>();
         for (JumpEntry entry : entries) lines.add(EntryFormatter.format(entry));
-        HISTORY.add(status.name(), currentBridgeTime, getJumpCount(), currentAxis, lines, ReplayRecorder.snapshot(),ReplayRecorder.serverAddress());
+        ReplayData completedReplay=ReplayRecorder.snapshot();
+        HISTORY.add(status.name(), currentBridgeTime, getJumpCount(), currentAxis, lines, completedReplay,ReplayRecorder.serverAddress());
         HISTORY.recent().get(0).observeMeasurement(ReplayRecorder.modeMeasurement());
         ReplayStorage.completed(HISTORY,HISTORY.recent().get(0));
         StatsTracker.record(HISTORY.recent().get(0));
-        if (BridgeConfig.chatOutput) for (String line : EntryFormatter.lines(entries)) {
+        if (BridgeConfig.chatOutput) for (String line : EntryFormatter.runLines(entries,status==RunStatus.FAILED,false)) {
             if(!line.isEmpty())sendMessage("\u00a7b[BridgeTap] " + line);
         }
         historyCaptured = true;
+        AttemptRandomizer.completed(HISTORY.recent().get(0).id);
+        if(status==RunStatus.FAILED&&BridgeConfig.autoFailAnalysis)sendMessage("\u00a7b[BridgeTap] "+ReplayAimAnalysis.colored(FailAimCapture.summary()));
     }
 
     private static int lastJumpTick = 0;
@@ -149,9 +163,11 @@ public class BridgeTracker {
     public static int bridgetap$getTick() { return currentTick; }
 
     public static synchronized void reset() {
+        startConfirmation.clear();
         restartCooldown.reset();
         ReplayRecorder.reset();
         PlacementEvidence.reset();
+        FailAimCapture.reset();
         jumpVelocity.clear();preJumpVelocity=null;velocityWorld=null;
         status = RunStatus.IDLE;
         isBridging = false;
@@ -262,13 +278,14 @@ public class BridgeTracker {
     }
 
     public static synchronized void onBlockPlaced() {
+        if(!BridgeConfig.modEnabled)return;
         if(ReplaySession.active())return;
         Minecraft mc = Minecraft.m_20213497();
         if (mc == null || mc.f_28396371 == null) return;
         C_57778754 player = mc.f_28396371;
 
         if (!isBridging || status == RunStatus.SUCCESS || status == RunStatus.FAILED) {
-            if(!restartCooldown.ready(currentTick)||pendingPlateSample||!pendingJumps.isEmpty()||isPlayerOnGoldPlate(mc))return;
+            if(!restartCooldown.ready(currentTick)||pendingPlateSample||!pendingJumps.isEmpty()||isPlayerOnFinishPlate(mc))return;
             // Start a new run upon placing the first block!
             startNewRun(player);
         }
@@ -278,6 +295,7 @@ public class BridgeTracker {
         captureFinishedRun();
         historyCaptured = false;
         PlacementEvidence.reset();
+        FailAimCapture.reset();
         entries.clear();
         preJumpVelocity=null;
         jumpCount = 0;
@@ -311,7 +329,9 @@ public class BridgeTracker {
     }
 
     public static synchronized void onTick(Minecraft mc) {
+        if(!BridgeConfig.modEnabled)return;
         if (ReplaySession.active()) return;
+        if(startConfirmation.expired(mc==null?null:mc.f_26407825,currentTick))reset();
         if (mc == null || mc.f_28396371 == null || mc.f_26407825 == null) {
             if (isBridging) { isBridging=false; status=RunStatus.FAILED;restartCooldown.finish(currentTick); }
             pendingPlateSample=false;pendingJumps.clear();captureFinishedRun();
@@ -382,8 +402,8 @@ public class BridgeTracker {
             }
         }
 
-        // Check Gold Pressure Plate
-        if (isPlayerOnGoldPlate(mc)) {
+        // Both weighted pressure plates mark the finish: gold and iron.
+        if (isPlayerOnFinishPlate(mc)) {
             if (!platesRecorded) {
                 // This HEAD-of-tick arrival was previously excluded by the
                 // recording guard at tick RETURN, dropping the final 50 ms.
@@ -474,6 +494,7 @@ public class BridgeTracker {
     }
 
     public static synchronized void onJump(C_42232651 entity) {
+        if(!BridgeConfig.modEnabled)return;
         Minecraft mc = Minecraft.m_20213497();
         if (mc == null || entity != mc.f_28396371) return;
 
@@ -585,6 +606,8 @@ public class BridgeTracker {
                     && PlacementEvidence.qualifies(lastJumpTick + 1, jumpTick, lastJumpCoord,
                         currentCoord, currentAxis.equals("X"), 2));
             if (late != null) label = late;
+            String speedTelly=BridgeDetection.speedTellyLabel(ticksElapsed,lastLaunchX,lastLaunchY,lastLaunchZ,sampledX,sampledY,sampledZ,currentAxis.equals("X"),!turnRecorded&&PlacementEvidence.qualifies(lastJumpTick+1,jumpTick,lastJumpCoord,currentCoord,currentAxis.equals("X"),3));
+            if(speedTelly!=null)label=speedTelly+" #"+jumpCount;
             JumpEntry tapEntry = new JumpEntry(label, currentCoord, decimal, delta, ticksElapsed, JumpEntry.EntryType.TAP);
             tapEntry.setPreJumpZ(jumpVelocity.beforeJump(jumpTick));
             if(hasJumpInput(jumpTick))tapEntry.setJumpYaw(jumpYawHistory[Math.floorMod(jumpTick,POSITION_HISTORY_SIZE)]);
@@ -602,7 +625,8 @@ public class BridgeTracker {
         groundTicksAfterLanding = 0;
     }
 
-    public static boolean isPlayerOnGoldPlate(Minecraft mc) {
+    public static boolean isPlayerOnGoldPlate(Minecraft mc) { return isPlayerOnFinishPlate(mc); }
+    public static boolean isPlayerOnFinishPlate(Minecraft mc) {
         if (mc == null || mc.f_28396371 == null || mc.f_26407825 == null) return false;
         C_57778754 p = mc.f_28396371;
         C_82690114 box = p.m_41837471();
@@ -622,7 +646,7 @@ public class BridgeTracker {
                             || box.f_24562106 <= bz + 0.125 || box.f_85940458 >= bz + 0.875) continue;
                     C_32594356 pos = new C_32594356(bx, by, bz);
                     C_81592558 block = mc.f_26407825.m_77852500(pos).m_41958956();
-                    if (block != null && C_81592558.m_63461719(block) == 147) return true;
+                    if (block != null) { int id=C_81592558.m_63461719(block); if(id==147||id==148)return true; }
                 }
             }
         }

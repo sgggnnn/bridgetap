@@ -9,6 +9,7 @@ public class BridgeConfig {
     private static final File CONFIG_FILE = new File("config/bridgetap.properties");
 
     public static boolean enabled = true;
+    public static boolean modEnabled = true;
     public static boolean hideOnF3 = true;
     public static int hudX = 10;
     public static int hudY = 10;
@@ -20,18 +21,22 @@ public class BridgeConfig {
     public static boolean textShadow = true;
     public static boolean showGainType = false;
     public static boolean chatOutput = false;
+    public static boolean autoFailAnalysis = false;
+    public static String failedDisplay = "ALL";
     public static boolean showReplayInfo = true;
+    public static boolean detailedReplayInfo = false;
     public static boolean showBridgeVelocity = false;
     public static boolean showJumpAngle = false;
     public static boolean showBothAxes = false;
     public static boolean showReplayInputs = true;
+    public static boolean showLiveInputs = false;
     public static boolean useNoGayLabel = false;
     public static String replaySort="NEWEST";
     public static String replayQuery="", replayStatus="ALL", replayAxis="ALL", replayTechnique="ALL", replayContent="ALL";
     public static String replaySource="ALL",replayMode="ALL";
     public static String replayMinTime="", replayMaxTime="";
-    public static final String[] COLOR_NAMES = {"Labels", "Coordinates", "Positive delta", "Negative delta", "Ticks", "Gain", "No Gain", "Header", "Background", "Border", "Velo", "Axis delta positive", "Axis delta negative", "Jump angle"};
-    public static final String[] colors = {"b", "e", "a", "c", "7", "a", "e", "b", "0", "7", "7", "a", "c", "7"};
+    public static final String[] COLOR_NAMES = {"Labels", "Coordinates", "Positive delta", "Negative delta", "Ticks", "Gain", "No Gain", "Header", "Background", "Border", "Velo", "Axis delta positive", "Axis delta negative", "Jump angle", "Zero jump delta", "1.0 Flat", "1.05 Flat", "1.1 Flat", "1.15 Flat", "1.2 Flat", "4b Flat", "Other flats", "Tap Speed", "4b Tap Speed", "Hold Speed", "4b Hold Speed", "5b Late", "6b Late", "Turn", "Fail Tap / 4b", "Head hitter", "Plates", "Other jumps"};
+    public static final String[] colors = {"b", "e", "a", "c", "7", "a", "e", "b", "0", "7", "7", "a", "c", "7", "e", "b", "b", "b", "b", "b", "b", "b", "b", "b", "b", "b", "b", "b", "b", "b", "b", "b", "b"};
     public static String color(int part) { return "\u00a7" + colors[part]; }
     public static int rgb(int part) {
         int[] palette={0x000000,0x0000AA,0x00AA00,0x00AAAA,0xAA0000,0xAA00AA,0xFFAA00,0xAAAAAA,0x555555,0x5555FF,0x55FF55,0x55FFFF,0xFF5555,0xFF55FF,0xFFFF55,0xFFFFFF};
@@ -53,6 +58,7 @@ public class BridgeConfig {
             Properties props = new Properties();
             props.load(reader);
             enabled = Boolean.parseBoolean(props.getProperty("enabled", "true"));
+            modEnabled = Boolean.parseBoolean(props.getProperty("modEnabled", "true"));
             hideOnF3 = Boolean.parseBoolean(props.getProperty("hideOnF3", "true"));
             hudX = Integer.parseInt(props.getProperty("hudX", "10"));
             hudY = Integer.parseInt(props.getProperty("hudY", "10"));
@@ -66,10 +72,15 @@ public class BridgeConfig {
             textShadow = Boolean.parseBoolean(props.getProperty("textShadow", "true"));
             showGainType = Boolean.parseBoolean(props.getProperty("showGainType", "false"));
             chatOutput = Boolean.parseBoolean(props.getProperty("chatOutput", "false"));
+            autoFailAnalysis = Boolean.parseBoolean(props.getProperty("autoFailAnalysisOptIn", "false")) && Boolean.parseBoolean(props.getProperty("autoFailAnalysis", "false"));
+            failedDisplay = props.getProperty("failedDisplay", "ALL");
+            if(!java.util.Arrays.asList("ALL","HIDE","FAIL_TAPS_ONLY").contains(failedDisplay))failedDisplay="ALL";
             showBridgeVelocity = Boolean.parseBoolean(props.getProperty("showBridgeVelocity", "false"));
             showJumpAngle = Boolean.parseBoolean(props.getProperty("showJumpAngle", "false"));
             showBothAxes = Boolean.parseBoolean(props.getProperty("showBothAxes", "false"));
             showReplayInfo = Boolean.parseBoolean(props.getProperty("showReplayInfo", "true"));
+            detailedReplayInfo = Boolean.parseBoolean(props.getProperty("detailedReplayInfo", "false"));
+            showLiveInputs = Boolean.parseBoolean(props.getProperty("showLiveInputs", "false"));
             showReplayInputs = Boolean.parseBoolean(props.getProperty("showReplayInputs", "true"));
             useNoGayLabel = Boolean.parseBoolean(props.getProperty("useNoGayLabel", "false"));
             replaySort=ReplaySort.parse(props.getProperty("replaySort","NEWEST")).name();
@@ -108,6 +119,7 @@ public class BridgeConfig {
             try (FileWriter writer = new FileWriter(CONFIG_FILE)) {
                 Properties props = new Properties();
                 props.setProperty("enabled", String.valueOf(enabled));
+                props.setProperty("modEnabled", String.valueOf(modEnabled));
                 props.setProperty("hideOnF3", String.valueOf(hideOnF3));
                 props.setProperty("hudX", String.valueOf(hudX));
                 props.setProperty("hudY", String.valueOf(hudY));
@@ -120,10 +132,15 @@ public class BridgeConfig {
                 props.setProperty("textShadow", String.valueOf(textShadow));
                 props.setProperty("showGainType", String.valueOf(showGainType));
                 props.setProperty("chatOutput", String.valueOf(chatOutput));
+                props.setProperty("autoFailAnalysis", String.valueOf(autoFailAnalysis));
+                props.setProperty("autoFailAnalysisOptIn", "true");
+                props.setProperty("failedDisplay", failedDisplay);
                 props.setProperty("showBridgeVelocity",String.valueOf(showBridgeVelocity));
                 props.setProperty("showJumpAngle",String.valueOf(showJumpAngle));
                 props.setProperty("showBothAxes",String.valueOf(showBothAxes));
                 props.setProperty("showReplayInfo", String.valueOf(showReplayInfo));
+                props.setProperty("detailedReplayInfo", String.valueOf(detailedReplayInfo));
+                props.setProperty("showLiveInputs", String.valueOf(showLiveInputs));
                 props.setProperty("showReplayInputs", String.valueOf(showReplayInputs));
                 props.setProperty("useNoGayLabel", String.valueOf(useNoGayLabel));
                 props.setProperty("replaySort",replaySort);

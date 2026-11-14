@@ -11,23 +11,52 @@ import org.lwjgl.opengl.GL15;
 /** Render-only decoration: never writes blocks or supplies collisions to a world. */
 public final class IslandOverlay {
     private static C_32594356 first,second;
-    private static C_34399650 selectionWorld,placedWorld;
+    private static C_34399650 selectionWorld,placedWorld;private static String placedServer="";
     private static IslandTemplate active;
     private static C_15815210[] states;
     private static Map<Integer,Integer> stateIndex=Collections.emptyMap();
     private static C_41102159 builtModel;
     private static int x,y,z,startX,startY,startZ,finishX,finishY,finishZ,rotation;private static boolean dirty,preview;
     private static IslandParts parts;
+    private static IslandTemplate deckTemplate;private static int[][] decks;
     private static final C_93396801.C_25517371[] meshes=new C_93396801.C_25517371[2];
+    private static IslandConnectedTextures connectedTextures=new IslandConnectedTextures();private static boolean connectedDirty;
     private static long lastDraw,maskRefreshAt;
-    private static void moved(){lastDraw=0;maskRefreshAt=System.nanoTime()+200000000L;rememberEdit();}
+    private static void moved(){lastDraw=0;connectedDirty=true;maskRefreshAt=System.nanoTime()+200000000L;rememberEdit();}
     private static Backup backup;
     private static int editBaseX,editBaseY,editBaseZ;private static IslandEditHistory edits;private static boolean restoringEdit;
     private static Path libraryFile;
     private static IslandReplacement.Mask target=IslandReplacement.EMPTY;
     private static IslandReplacement.Mask originalMask=IslandReplacement.EMPTY;
-    private static final class Backup {IslandTemplate template;int x,y,z,fx,fy,fz,sx,sy,sz,turn;C_34399650 world;Path file;IslandReplacement.Mask mask,baseMask;Backup(){template=active;this.x=IslandOverlay.x;this.y=IslandOverlay.y;this.z=IslandOverlay.z;fx=finishX;fy=finishY;fz=finishZ;sx=startX;sy=startY;sz=startZ;turn=rotation;world=placedWorld;file=libraryFile;mask=IslandReplacement.current();baseMask=originalMask;}}
+    private static final class Backup {final String server=placedServer;IslandTemplate template;int x,y,z,fx,fy,fz,sx,sy,sz,turn;C_34399650 world;Path file;IslandReplacement.Mask mask,baseMask;Backup(){template=active;this.x=IslandOverlay.x;this.y=IslandOverlay.y;this.z=IslandOverlay.z;fx=finishX;fy=finishY;fz=finishZ;sx=startX;sy=startY;sz=startZ;turn=rotation;world=placedWorld;file=libraryFile;mask=IslandReplacement.current();baseMask=originalMask;}}
     private static String failure="";
+    private static String autoStatus="";
+    public static String autoStatus(){return autoStatus;}
+    public static boolean beginAutoPreview(IslandTemplate template){beginPreview(template);return autoFit();}
+    public static void applyAttemptIsland(IslandTemplate template,Path file){
+        IslandAutoFit.Result found=IslandAutoFit.forAttempt(template);show(template,true);IslandAutoPlacement.Plan p=found.plan;
+        target=originalMask=found.mask;x=p.x;y=p.y;z=p.z;rotation=p.rotation;startX=startY=startZ=0;finishX=p.finishX;finishY=p.finishY;finishZ=p.finishZ;
+        if(file!=null)libraryFile(file);IslandReplacement.set(target);moved();edits=new IslandEditHistory(editLayout());autoStatus=found.summary;confirm();
+    }
+    private static boolean onNativeFootprint(IslandReplacement.Mask mask){C_57778754 viewer=ReplaySession.viewer();if(viewer==null||mask.empty())return false;int px=(int)Math.floor(viewer.f_78826675),pz=(int)Math.floor(viewer.f_97691941);for(int dx=-1;dx<=1;dx++)for(int dz=-1;dz<=1;dz++)if(mask.containsColumn(px+dx,pz+dz))return true;return false;}
+    public static boolean onCurrentFootprint(){return active!=null&&placedWorld==ReplaySession.sourceWorld()&&onNativeFootprint(originalMask);}
+    public static void reapplyForAttempt(){AttemptRandomizer.reapplySaved();}
+    public static boolean reapplyAutomatically(){
+        if(active==null)throw new IllegalArgumentException("Place an island first");
+        return applyAutomatically(active,libraryFile);
+    }
+    public static boolean applyAutomatically(IslandTemplate template,Path file){
+        boolean fitted=beginAutoPreview(template);
+        if(file!=null)libraryFile(file);if(fitted)confirm();return fitted;
+    }
+    public static boolean autoFit(){
+        if(active==null)return false;
+        try{IslandAutoFit.Result found=IslandAutoFit.detect(active);IslandAutoPlacement.Plan p=found.plan;beginEditDrag();try{
+            target=originalMask=found.mask;x=p.x;y=p.y;z=p.z;rotation=p.rotation;startX=startY=startZ=0;finishX=p.finishX;finishY=p.finishY;finishZ=p.finishZ;
+            IslandReplacement.set(target);moved();
+        }finally{endEditDrag();}edits=new IslandEditHistory(editLayout());autoStatus=found.summary;return true;
+        }catch(IllegalArgumentException ex){autoStatus=ex.getMessage();return false;}
+    }
     public static String failure(){return failure;}
     public static boolean enabled(){return active!=null;}
     public static IslandTemplate activeTemplate(){return active;}
@@ -36,10 +65,13 @@ public final class IslandOverlay {
     public static int rotation(){return rotation*90;}
     public static void rotate(){rotation=(rotation+1)%4;moved();}
     public static boolean hasFinish(){return parts!=null&&parts.paired;}
-    public static int gap(){return hasFinish()?parts.gap(finishX-startX,finishZ-startZ):0;}
+    public static int gap(){if(!hasFinish())return 0;int[][] b=deckTemplate==active?decks:parts.bounds;int axis=parts.axis==0?0:2,delta=parts.axis==0?finishX-startX:finishZ-startZ;return parts.direction>0?b[1][axis]+delta-b[0][axis+3]:b[0][axis]-b[1][axis+3]-delta;}
+    public static int bridgeHeight(){if(!hasFinish())return 0;int[][] b=deckTemplate==active?decks:parts.bounds;return b[1][4]+finishY-b[0][4]-startY;}
     public static int finishHeight(){return finishY;}
     public static int startHeight(){return startY;}
     public static int sceneY(){return y;}
+    static boolean nativeContains(int x,int z){return originalMask.containsColumn(x,z);}
+    static int nativeDepth(){return originalMask.empty()?0:originalMask.surface-originalMask.presetY;}
     public static IslandLayout layout(){
         if(active==null)throw new IllegalStateException("Place an island before saving a preset");
         IslandReplacement.Mask anchor=originalMask;
@@ -51,6 +83,10 @@ public final class IslandOverlay {
     }
     public static void applyPreset(IslandTemplate template,IslandLayout layout){
         IslandReplacement.Mask presetTarget=IslandStartAnchors.resolve(template,layout);
+        applyPresetAt(template,layout,presetTarget);
+    }
+    public static void applySurfacePreset(IslandTemplate template,IslandLayout layout,int depth){IslandReplacement.Mask target=IslandStartAnchors.resolve(template,layout);int dy=target.surface-target.presetY-depth;IslandLayout corrected=new IslandLayout(layout.x,layout.y+dy,layout.z,layout.startX,layout.startY,layout.startZ,layout.finishX,layout.finishY,layout.finishZ,layout.rotation,layout.focus,layout.stableAnchor);applyPresetAt(template,corrected,target);}
+    private static void applyPresetAt(IslandTemplate template,IslandLayout layout,IslandReplacement.Mask presetTarget){
         Backup previous=new Backup();boolean oldFocus=IslandReplacement.focus();
         try{
             beginPreview(template,presetTarget);
@@ -73,13 +109,14 @@ public final class IslandOverlay {
     public static void moveFinish(int dx,int dy,int dz){if(!hasFinish())return;finishX+=dx;finishY+=dy;finishZ+=dz;moved();}
     public static void nudgeFinish(int right,int up,int forward){C_57778754 camera=ReplaySession.viewer();if(camera==null)return;double yaw=Math.toRadians(camera.f_80130373);int[] local=IslandRotation.point((int)Math.round(-Math.cos(yaw)*right-Math.sin(yaw)*forward),(int)Math.round(-Math.sin(yaw)*right+Math.cos(yaw)*forward),0,0,-rotation);moveFinish(local[0],up,local[1]);}
     private static int[] sceneBounds(){int[] result=parts.bounds[0].clone();for(int a=0;a<3;a++){int offset=a==0?startX:a==1?startY:startZ;result[a]+=offset;result[a+3]+=offset;}if(hasFinish())for(int a=0;a<3;a++){int offset=a==0?finishX:a==1?finishY:finishZ;result[a]=Math.min(result[a],parts.bounds[1][a]+offset);result[a+3]=Math.max(result[a+3],parts.bounds[1][a+3]+offset);}return IslandRotation.bounds(result,active.anchorX,active.anchorZ,rotation);}
+    public static Path libraryPath(){return libraryFile;}
     public static void libraryFile(Path path){libraryFile=path.toAbsolutePath().normalize();}
     public static boolean isFrom(Path path){return libraryFile!=null&&libraryFile.equals(path.toAbsolutePath().normalize());}
     public static void renameLabel(Path path,String name){if(isFrom(path)&&active!=null)active=new IslandTemplate(name,active.width,active.height,active.depth,active.originX,active.originY,active.originZ,active.blocks,active.anchorX,active.anchorY,active.anchorZ,active.bothIslands);}
     public static boolean previewing(){return preview;}
     public static boolean drawn(){return active!=null&&System.nanoTime()-lastDraw<1000000000L;}
     public static void beginPreview(IslandTemplate template){beginPreview(template,IslandReplacement.captureScene());}
-    private static void beginPreview(IslandTemplate template,IslandReplacement.Mask detected){ServerPresets.manual();edits=null;Backup previous=new Backup();target=detected;originalMask=target;show(template,false);backup=previous;preview=true;if(!target.empty())replaceHere();editBaseX=x;editBaseY=y;editBaseZ=z;edits=new IslandEditHistory(editLayout());}
+    private static void beginPreview(IslandTemplate template,IslandReplacement.Mask detected){autoStatus="";ServerPresets.manual();edits=null;Backup previous=new Backup();target=detected;originalMask=target;show(template,false);backup=previous;preview=true;if(!target.empty())replaceHere();editBaseX=x;editBaseY=y;editBaseZ=z;edits=new IslandEditHistory(editLayout());}
     private static IslandLayout editLayout(){if(!originalMask.empty())return layout();return new IslandLayout(x-editBaseX,y-editBaseY,z-editBaseZ,startX,startY,startZ,finishX,finishY,finishZ,rotation,IslandReplacement.focus());}
     public static void rememberEdit(){if(preview&&edits!=null&&!restoringEdit)edits.record(editLayout());}
     public static void beginEditDrag(){if(edits!=null)edits.begin();}
@@ -94,8 +131,8 @@ public final class IslandOverlay {
     public static boolean replacing(){return !IslandReplacement.current().empty();}
     public static void toggleReplacement(){IslandReplacement.set(replacing()?IslandReplacement.EMPTY:target);moved();}
     public static void replaceHere(){if(active==null||target.empty())return;int[] anchor=IslandRotation.point(active.anchorX+startX,active.anchorZ+startZ,active.anchorX,active.anchorZ,rotation);x=target.attachX-anchor[0];y=target.surface-active.anchorY-startY;z=target.attachZ-anchor[1];IslandReplacement.set(target);moved();}
-    public static void confirm(){refreshMask();preview=false;backup=null;}
-    public static void refreshMask(){maskRefreshAt=0;if(active==null||!replacing())return;List<IslandBox> boxes=new ArrayList<>();for(int group=0;group<(hasFinish()?2:1);group++){int[] b=parts.bounds[group].clone();if(group==1){b[0]+=finishX;b[3]+=finishX;b[1]+=finishY;b[4]+=finishY;b[2]+=finishZ;b[5]+=finishZ;}else{b[0]+=startX;b[3]+=startX;b[1]+=startY;b[4]+=startY;b[2]+=startZ;b[5]+=startZ;}b=IslandRotation.bounds(b,active.anchorX,active.anchorZ,rotation);boxes.add(new IslandBox(x+b[0],y+b[1],z+b[2],b[3]-b[0],b[4]-b[1],b[5]-b[2]));}target=IslandReplacement.extend(originalMask,boxes);IslandReplacement.set(target);}
+    public static void confirm(){refreshMask();preview=false;backup=null;if(active!=null)AttemptRandomizer.placementConfirmed(active,libraryFile,layout());}
+    public static void refreshMask(){maskRefreshAt=0;if(connectedDirty&&connectedTextures.enabled())dirty=true;connectedDirty=false;if(active==null||!replacing())return;List<IslandBox> boxes=new ArrayList<>();for(int group=0;group<(hasFinish()?2:1);group++){int[] b=parts.bounds[group].clone();if(group==1){b[0]+=finishX;b[3]+=finishX;b[1]+=finishY;b[4]+=finishY;b[2]+=finishZ;b[5]+=finishZ;}else{b[0]+=startX;b[3]+=startX;b[1]+=startY;b[4]+=startY;b[2]+=startZ;b[5]+=startZ;}b=IslandRotation.bounds(b,active.anchorX,active.anchorZ,rotation);boxes.add(new IslandBox(x+b[0],y+b[1],z+b[2],b[3]-b[0],b[4]-b[1],b[5]-b[2]));}target=IslandReplacement.extend(originalMask,boxes);IslandReplacement.set(target);}
     public static void cancel(){Backup previous=backup;backup=null;preview=false;disable();if(previous!=null&&previous.template!=null&&previous.world==ReplaySession.sourceWorld()){show(previous.template,true);x=previous.x;y=previous.y;z=previous.z;finishX=previous.fx;finishY=previous.fy;finishZ=previous.fz;startX=previous.sx;startY=previous.sy;startZ=previous.sz;rotation=previous.turn;libraryFile=previous.file;target=previous.mask;originalMask=previous.baseMask;IslandReplacement.set(previous.mask);}}
     public static void nudge(int right,int up,int forward){C_57778754 camera=ReplaySession.viewer();if(camera==null)return;double yaw=Math.toRadians(camera.f_80130373);move((int)Math.round(-Math.cos(yaw)*right-Math.sin(yaw)*forward),up,(int)Math.round(-Math.sin(yaw)*right+Math.cos(yaw)*forward));}
     public static String description(){return active==null?"No scenery active":active.name+" @ "+x+", "+y+", "+z;}
@@ -104,7 +141,7 @@ public final class IslandOverlay {
     public static void tick(){
         Minecraft mc=Minecraft.m_20213497();
         if(mc.f_26407825!=selectionWorld){selectionWorld=mc.f_26407825;first=second=null;}
-        if(active!=null&&mc.f_26407825!=placedWorld)disable();
+        if(active!=null&&mc.f_26407825!=placedWorld){Backup previous=new Backup();IslandLayout savedLayout=layout();disable();AttemptRandomizer.rememberWorldChange(previous.template,previous.file,savedLayout);}
         if(active!=null&&maskRefreshAt!=0&&System.nanoTime()>=maskRefreshAt)refreshMask();
     }
     public static void corner(boolean one){
@@ -149,6 +186,8 @@ public final class IslandOverlay {
         return new IslandTemplate(name,mx-ox+1,my-oy+1,mz-oz+1,ox,oy,oz,blocks,Math.max(0,Math.min(mx-ox,(int)Math.floor(point.x)-ox)),Math.max(0,Math.min(my-oy+13,(int)Math.round(point.y)-oy)),Math.max(0,Math.min(mz-oz,(int)Math.floor(point.z)-oz)),both);
     }
     public static void show(IslandTemplate template,boolean original){
+        if(!BridgeConfig.modEnabled)throw new IllegalArgumentException("Enable BridgeTap in OneClient first");
+        connectedTextures=new IslandConnectedTextures();connectedDirty=false;
         Minecraft mc=Minecraft.m_20213497();C_57778754 viewer=ReplaySession.viewer();if(viewer==null)throw new IllegalArgumentException("Join a world before placing scenery");
         C_15815210[] resolved=new C_15815210[template.blocks.size()];
         for(int i=0;i<resolved.length;i++){
@@ -157,7 +196,7 @@ public final class IslandOverlay {
             resolved[i]=block.m_28027445(b.meta);
         }
         IslandBlockView view=new IslandBlockView(template,resolved);for(int i=0;i<resolved.length;i++){IslandTemplate.Block b=template.blocks.get(i);resolved[i]=resolved[i].m_41958956().m_43334227(resolved[i],view,new C_32594356(b.x,b.y,b.z));}
-        active=template;states=resolved;parts=new IslandParts(template);rotation=0;startX=startY=startZ=0;resetFinish();placedWorld=ReplaySession.sourceWorld();failure="";dirty=true;lastDraw=0;libraryFile=null;
+        active=template;states=resolved;parts=new IslandParts(template);decks=new int[2][];decks[0]=IslandAutoPlacement.deck(template,parts,0);if(parts.paired)decks[1]=IslandAutoPlacement.deck(template,parts,1);deckTemplate=template;rotation=0;startX=startY=startZ=0;resetFinish();placedWorld=ReplaySession.sourceWorld();placedServer=PresetServers.canonical(ServerPresets.address());failure="";dirty=true;lastDraw=0;libraryFile=null;
         if(IslandReplacement.focus())IslandReplacement.requestTerrainRebuild();
         Map<Integer,Integer> indexes=new HashMap<>();for(int i=0;i<template.blocks.size();i++){IslandTemplate.Block b=template.blocks.get(i);indexes.put(key(b.x,b.y,b.z),i);}stateIndex=indexes;
         double yaw=Math.toRadians(viewer.f_80130373),distance=Math.max(8,Math.max(template.width,template.depth)*.75);
@@ -166,9 +205,10 @@ public final class IslandOverlay {
         z=original?template.originZ:(int)Math.floor(viewer.f_97691941+Math.cos(yaw)*distance-template.depth/2.0);
     }
     public static void move(int dx,int dy,int dz){if(active!=null){x+=dx;y+=dy;z+=dz;moved();}}
-    public static void disable(){if(IslandReplacement.focus())IslandReplacement.requestTerrainRebuild();active=null;states=null;parts=null;stateIndex=Collections.emptyMap();Arrays.fill(meshes,null);dirty=true;preview=false;lastDraw=0;libraryFile=null;IslandReplacement.set(IslandReplacement.EMPTY);}
+    public static void disable(){AttemptRandomizer.forgetIsland();if(IslandReplacement.focus())IslandReplacement.requestTerrainRebuild();active=null;states=null;parts=null;deckTemplate=null;decks=null;connectedTextures=new IslandConnectedTextures();connectedDirty=false;stateIndex=Collections.emptyMap();Arrays.fill(meshes,null);dirty=true;preview=false;lastDraw=0;libraryFile=null;IslandReplacement.set(IslandReplacement.EMPTY);}
     public static void render(float partial){
         Minecraft mc=Minecraft.m_20213497();
+        if(active!=null&&connectedTextures.prepare(mc.m_62864302()))dirty=true;
         if(active!=null&&meshes[0]!=null&&mc.m_01427411().m_35215294().m_50076884(states[0])!=builtModel)dirty=true;
         if(dirty)Arrays.fill(meshes,null);dirty=false;
         if(active==null)return;C_42232651 camera=mc.m_67314413();if(camera==null)return;
@@ -188,6 +228,7 @@ public final class IslandOverlay {
             GL11.glTranslated(active.anchorX+.5,0,active.anchorZ+.5);GL11.glRotatef(-rotation*90,0,1,0);GL11.glTranslated(-active.anchorX-.5,0,-active.anchorZ-.5);
             if(!failure.isEmpty()){if(preview)outline(active.width,active.height,active.depth);return;}
             C_96603444 tess=C_96603444.m_23865043();C_93396801 buffer=tess.m_74061400();
+            IslandBlockView connectedView=connectedTextures.enabled()&&(meshes[0]==null||hasFinish()&&meshes[1]==null)?new IslandBlockView(active,states,parts,x,y,z,startX,startY,startZ,finishX,finishY,finishZ):null;
             for(int group=0;group<(hasFinish()?2:1);group++){
             if(meshes[group]==null){
                 Set<Integer> opaque=new HashSet<>();for(int i=0;i<states.length;i++)if((parts.finish[i]?1:0)==group&&states[i].m_41958956().m_57757663()){IslandTemplate.Block b=active.blocks.get(i);opaque.add(key(b.x,b.y,b.z));}
@@ -197,8 +238,9 @@ public final class IslandOverlay {
                     if((parts.finish[i]?1:0)!=group)continue;
                     IslandTemplate.Block b=active.blocks.get(i);C_41102159 model=mc.m_01427411().m_35215294().m_50076884(states[i]);
                     int tint=states[i].m_41958956().m_51470331(states[i]);
-                    for(C_28786548 face:C_28786548.values())if(!opaque.contains(key(b.x+face.m_48689500(),b.y+face.m_29389506(),b.z+face.m_22521050())))quads(buffer,model.m_14859469(face),b,tint);
-                    quads(buffer,model.m_89748930(),b,tint);
+                    C_32594356 texturePos=connectedView==null?null:new C_32594356(x+b.x+(group==1?finishX:startX),y+b.y+(group==1?finishY:startY),z+b.z+(group==1?finishZ:startZ));
+                    for(C_28786548 face:C_28786548.values())if(!opaque.contains(key(b.x+face.m_48689500(),b.y+face.m_29389506(),b.z+face.m_22521050())))quads(buffer,connectedView==null?model.m_14859469(face):connectedTextures.transform(connectedView,states[i],texturePos,model.m_14859469(face)),b,tint);
+                    quads(buffer,connectedView==null?model.m_89748930():connectedTextures.transform(connectedView,states[i],texturePos,model.m_89748930()),b,tint);
                 }if(buffer.m_34710145()==0)throw new IllegalStateException("No visible block faces were found");meshes[group]=buffer.m_68005141();}finally{buffer.m_21091689();}
             }
             GL11.glPushMatrix();try{GL11.glTranslated(group==1?finishX:startX,group==1?finishY:startY,group==1?finishZ:startZ);buffer.m_90389466(GL11.GL_QUADS,C_90362304.f_51724203);buffer.m_76351101(meshes[group]);tess.m_70070273();if(preview){int[] box=parts.bounds[group];GL11.glTranslated(box[0],box[1],box[2]);GL11.glPushAttrib(GL11.GL_ENABLE_BIT|GL11.GL_DEPTH_BUFFER_BIT|GL11.GL_CURRENT_BIT|GL11.GL_LINE_BIT);try{outline(box[3]-box[0],box[4]-box[1],box[5]-box[2]);}finally{GL11.glPopAttrib();}}}finally{GL11.glPopMatrix();}

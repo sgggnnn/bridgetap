@@ -6,12 +6,12 @@ public class ReplayControlsRegression {
  static void near(double actual,double expected,String why){check(Math.abs(actual-expected)<.000001,why+": "+actual+" != "+expected);}
  public static void main(String[] args){
   List<ReplayData.Frame> frames=new ArrayList<>();for(int i=0;i<=60;i++)frames.add(new ReplayData.Frame(i,70,0));
-  check(ReplayControls.acceptAction(ReplayControls.BACK,true,1,1)&&ReplayControls.acceptAction(ReplayControls.FORWARD,true,2,1)&&ReplayControls.acceptAction(ReplayControls.FORWARD,false,2,2),"Sticks must not have a time cooldown");
+  check(ReplayControls.acceptAction(ReplayControls.BACK,true,1,1)&&ReplayControls.acceptAction(ReplayControls.FORWARD,true,2,1)&&!ReplayControls.acceptAction(ReplayControls.FORWARD,false,2,2),"Sticks must not have a time cooldown");
   check(!ReplayControls.acceptAction(ReplayControls.CENTER,false,999999999,0),"Holding pause must not toggle repeatedly");
   ReplayTimeline timeline=new ReplayTimeline(new ReplayData(frames,Collections.emptyList(),false));
-  check(Arrays.equals(ReplayControls.slots(),new int[]{0,1,2,3,8}),"Navigation, center, speed and exit occupy slots");
+  check(Arrays.equals(ReplayControls.slots(),new int[]{0,1,2,3,4,8}),"Navigation, center, speed, bookmarks and exit occupy slots");
   int occupied=0;for(int i=0;i<9;i++){if(ReplayControls.item(i,timeline)!=0)occupied++;check(ReplayControls.isTool(i)==(ReplayControls.item(i,timeline)!=0),"Unused slots cannot activate tools");}
-  check(occupied==5,"Replay hotbar must contain exactly five items");
+  check(occupied==6&&ReplayControls.item(ReplayControls.BOOKMARKS,timeline)==340&&ReplayControls.label(ReplayControls.BOOKMARKS,timeline).contains("Bookmarks"),"Bookmarks need a named book in slot 5");
   check(ReplayControls.item(0,timeline)==280&&ReplayControls.item(2,timeline)==280&&ReplayControls.item(8,timeline)==166,"Two real sticks and one barrier");
   check(ReplayControls.center(timeline)==ReplayControls.Center.PAUSE,"Playing center is Pause");
   timeline.toggle();check(ReplayControls.center(timeline)==ReplayControls.Center.PLAY,"Paused center is Play");
@@ -21,7 +21,7 @@ public class ReplayControlsRegression {
   timeline.restart();near(timeline.tick(),0,"Replay starts from zero");check(timeline.playing()&&ReplayControls.center(timeline)==ReplayControls.Center.PAUSE,"Replay restores the Pause item");
   timeline.seek(60);timeline.pause();timeline.skip(-1);check(ReplayControls.center(timeline)==ReplayControls.Center.PLAY,"Rewinding off the end restores normal Play");
   int slot=1;for(int i=0;i<100;i++){slot=ReplayControls.scroll(slot,-1);check(ReplayControls.isTool(slot),"Mouse wheel skips unused cells");}
-  check(ReplayControls.scroll(2,-1)==3&&ReplayControls.scroll(3,-1)==8&&ReplayControls.scroll(8,-1)==0&&ReplayControls.scroll(0,1)==8,"Tool wraparound");
+  check(ReplayControls.scroll(2,-1)==3&&ReplayControls.scroll(3,-1)==4&&ReplayControls.scroll(4,-1)==8&&ReplayControls.scroll(8,-1)==0&&ReplayControls.scroll(0,1)==8,"Tool wraparound");
   timeline.restart();timeline.cycleSpeed();near(timeline.speed(),2,"Speed cycles to 2x");
   timeline.advance(.5);near(timeline.tick(),20,"Speed affects timeline advancement");
   check(ReplayControls.label(3,timeline).contains("2.00x"),"Speed item label tracks current speed");
@@ -34,6 +34,6 @@ public class ReplayControlsRegression {
   near(ReplayTargeting.hit(actor,0,76,0,0,90,64),4.2,"Looking down at the player");
   near(ReplayTargeting.hit(actor,0,71.62,0,0,0,64),0,"Camera already inside the player can target POV");
   near(ReplayTargeting.hit(new ReplayData.Frame(-8,70,0),0,71.62,0,90,0,64),7.7,"Minecraft west-facing player targeting");
-  System.out.println("PASS: exactly five controls, Pause/Play/Replay states, restart, tool-only scrolling and player POV ray targeting");
+  System.out.println("PASS: six controls including a dedicated bookmark book, Pause/Play/Replay, speed, scrolling and POV targeting");
  }
 }

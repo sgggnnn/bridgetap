@@ -10,7 +10,9 @@ public class BridgeSettingsScreen extends BridgeScreen {
     public BridgeSettingsScreen(C_85740840 parent){this.parent=parent;}
     @Override protected void paint(){
         header("Settings","Make BridgeTap work your way");
-        panel(20,72,400,358);panel(438,72,402,230);panel(438,310,402,120);
+        button("Join Discord",718,15,122,()->CommunityLinks.discord());
+        button("Failed bridges",568,15,138,()->open(new FailureDisplayScreen(this)));
+        panel(20,72,400,358);panel(438,72,402,238);panel(438,310,402,120);
         text("HUD & POSITIONING",36,88,TEXT);label("Your regular bridge coordinates display",36,103);
         toggle("HUD enabled",BridgeConfig.enabled,36,122,368,()->BridgeConfig.enabled=!BridgeConfig.enabled);
         toggle("Hide while F3 is open",BridgeConfig.hideOnF3,36,154,368,()->BridgeConfig.hideOnF3=!BridgeConfig.hideOnF3);
@@ -36,12 +38,13 @@ public class BridgeSettingsScreen extends BridgeScreen {
         stepper("Plate offset",BridgeConfig.plateTickOffset+" ticks",454,151,370,()->BridgeConfig.plateTickOffset=Math.max(-40,BridgeConfig.plateTickOffset-1),()->BridgeConfig.plateTickOffset=Math.min(40,BridgeConfig.plateTickOffset+1));
         stepper("Turn detection",BridgeConfig.turnTicks+" ticks",454,183,370,()->BridgeConfig.turnTicks=12,()->BridgeConfig.turnTicks=15);
         toggle("Show Gain / No Gain",BridgeConfig.showGainType,454,217,370,()->BridgeConfig.showGainType=!BridgeConfig.showGainType);
+        toggle("Keystrokes outside replays",BridgeConfig.showLiveInputs,454,286,370,()->BridgeConfig.showLiveInputs=!BridgeConfig.showLiveInputs);
         label("Indicator label",454,264);
         dropdown("gain",BridgeConfig.useNoGayLabel?"No Gay":"No Gain",new String[]{"No Gain","No Gay"},BridgeConfig.useNoGayLabel?1:0,654,255,170,i->{BridgeConfig.useNoGayLabel=i==1;BridgeConfig.save();});
 
         text("OVERLAY & REPLAY",454,324,TEXT);
-        toggle("Replay information",BridgeConfig.showReplayInfo,454,340,370,()->BridgeConfig.showReplayInfo=!BridgeConfig.showReplayInfo);
-        toggle("Recorded input overlay",BridgeConfig.showReplayInputs,454,368,370,()->BridgeConfig.showReplayInputs=!BridgeConfig.showReplayInputs);
+        dropdown("replay-info",!BridgeConfig.showReplayInfo?"Replay HUD: Hidden":BridgeConfig.detailedReplayInfo?"Replay HUD: Detailed":"Replay HUD: Compact",new String[]{"Compact","Detailed","Hidden"},!BridgeConfig.showReplayInfo?2:BridgeConfig.detailedReplayInfo?1:0,454,340,370,i->{BridgeConfig.showReplayInfo=i!=2;BridgeConfig.detailedReplayInfo=i==1;BridgeConfig.save();});
+        toggle("Keystrokes in replays",BridgeConfig.showReplayInputs,454,368,370,()->BridgeConfig.showReplayInputs=!BridgeConfig.showReplayInputs);
         dropdown("output",BridgeConfig.chatOutput?"Output: Chat":"Output: Overlay",new String[]{"Overlay","Chat at end of run"},BridgeConfig.chatOutput?1:0,454,398,174,i->{BridgeConfig.chatOutput=i==1;BridgeConfig.save();});
         button("Customize colors",640,398,184,()->open(new BridgeColorsScreen(this)));
         toggle("Jump viewing angle (yaw)",BridgeConfig.showJumpAngle,22,442,368,()->BridgeConfig.showJumpAngle=!BridgeConfig.showJumpAngle);

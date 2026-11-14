@@ -87,6 +87,17 @@ for mixin in config['client']:
       checked+=1
       ats=values['at'];ats=[ats] if isinstance(ats,tuple) else ats
       for _,at in ats:
+       if at.get('value')=='FIELD':
+        signature=at['target'];owner,tail=signature[1:].split(';',1);field,field_desc=tail.split(':',1);indices=[]
+        for index,c in enumerate(native.cp):
+         if isinstance(c,tuple) and c[0]==9:
+          pair=native.cp[c[2]]
+          if (native.cp[native.cp[c[1]][1]],native.cp[pair[1]],native.cp[pair[2]])==(owner,field,field_desc):indices.append(index)
+        present=False;opcode=at.get('opcode',180)
+        if isinstance(opcode,tuple):opcode=struct.unpack('>i',opcode[1])[0]
+        for _,_,candidate in candidates:
+         r=Reader(candidate['Code']);r.u2();r.u2();code=r.read(r.u4());present|=any(bytes([opcode])+struct.pack('>H',index) in code for index in indices)
+        assert present,(mixin,name,'missing field instruction',signature)
        if at.get('value')=='INVOKE':
         signature=at['target'];owner,tail=signature[1:].split(';',1);mname,params=tail.split('(',1)
         indices=native.calls(owner,mname,'('+params)

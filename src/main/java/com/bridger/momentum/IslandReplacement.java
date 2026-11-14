@@ -11,6 +11,7 @@ public final class IslandReplacement {
         final List<IslandMaskArea> areas;final Set<Long> visible=java.util.concurrent.ConcurrentHashMap.newKeySet();
         Mask(Collection<ReplayData.Block> cells,int surface){this(cells,surface,Collections.emptyList(),Collections.emptySet());}
         Mask(Collection<ReplayData.Block> cells,int surface,List<IslandMaskArea> areas,Collection<Long> visible){Set<Long> keys=new HashSet<>();int ax=30000001,ay=256,az=30000001,bx=-30000001,by=-1,bz=-30000001;for(ReplayData.Block b:cells){keys.add(b.key());ax=Math.min(ax,b.x);ay=Math.min(ay,b.y);az=Math.min(az,b.z);bx=Math.max(bx,b.x);by=Math.max(by,b.y);bz=Math.max(bz,b.z);}for(IslandMaskArea b:areas){ax=Math.min(ax,b.minX);ay=Math.min(ay,b.minY);az=Math.min(az,b.minZ);bx=Math.max(bx,b.maxX);by=Math.max(by,b.maxY);bz=Math.max(bz,b.maxZ);}blocks=Collections.unmodifiableSet(keys);minX=ax;minY=ay;minZ=az;maxX=bx;maxY=by;maxZ=bz;this.surface=surface;presetX=minX;presetY=minY;presetZ=minZ;this.areas=Collections.unmodifiableList(new ArrayList<>(areas));this.visible.addAll(visible);}
+        public boolean containsColumn(int x,int z){if(x<minX||x>maxX||z<minZ||z>maxZ)return false;for(int y=Math.max(0,minY);y<=Math.min(255,maxY);y++)if(blocks.contains(key(x,y,z)))return true;return false;}
         public boolean empty(){return blocks.isEmpty()&&areas.isEmpty();}
         boolean hidden(int x,int y,int z){if(x<minX||x>maxX||y<minY||y>maxY||z<minZ||z>maxZ)return false;long key=key(x,y,z);if(visible.contains(key))return false;if(blocks.contains(key))return true;for(IslandMaskArea area:areas)if(area.contains(x,y,z))return true;return false;}
     }
@@ -26,6 +27,11 @@ public final class IslandReplacement {
     public static boolean hidden(int x,int y,int z){Mask mask=current;if(focus&&IslandOverlay.enabled())return !mask.visible.contains(key(x,y,z))&&!PlacementAppearance.isPlaced(x,y,z);return !mask.empty()&&mask.hidden(x,y,z);}
     public static void allowPlacement(int x,int y,int z){Mask mask=current;if(mask.hidden(x,y,z)){mask.visible.add(key(x,y,z));ReplaySession.invalidateScenery(x,y,z,x,y,z);}}
     public static Mask current(){return current;}
+    public static boolean isFinishIsland(Mask mask){
+        ReplayData data=ReplaySession.recording();if(data!=null){for(ReplayData.Block b:data.blocks)if(!b.placed&&(b.id==147||b.id==148)&&mask.blocks.contains(b.key()))return true;return false;}
+        Minecraft mc=Minecraft.m_20213497();if(mc==null||mc.f_26407825==null)return false;
+        for(long k:mask.blocks){C_32594356 pos=new C_32594356((int)(k>>38),(int)(k&4095),(int)(k<<26>>38));int id=C_81592558.m_63461719(mc.f_26407825.m_77852500(pos).m_41958956());if(id==147||id==148)return true;}return false;
+    }
     public static void set(Mask next){Mask old=current;if(old==next)return;current=next;rebuildRequested=true;invalidate(old);invalidate(next);}
     public static void refreshTerrain(){if(!rebuildRequested)return;Minecraft mc=Minecraft.m_20213497();if(mc==null||mc.f_26407825==null||mc.f_48619021==null)return;rebuildRequested=false;ReplaySession.rebuildSceneryTerrain();}
     private static void invalidate(Mask mask){if(!mask.empty())ReplaySession.invalidateScenery(mask.minX,mask.minY,mask.minZ,mask.maxX,mask.maxY,mask.maxZ);}
@@ -44,6 +50,7 @@ public final class IslandReplacement {
         }
         Mask result=new Mask(cells.values(),base.surface,areas,visible);result.attachX=base.attachX;result.attachZ=base.attachZ;result.presetX=base.presetX;result.presetY=base.presetY;result.presetZ=base.presetZ;return result;
     }
+    static Mask combine(Mask start,Mask end,int surface){List<ReplayData.Block> cells=new ArrayList<>();for(Mask mask:new Mask[]{start,end})for(long k:mask.blocks)cells.add(new ReplayData.Block((int)(k>>38),(int)(k&4095),(int)(k<<26>>38),1,0,0,false));Mask result=new Mask(cells,surface);result.presetX=start.presetX;result.presetY=start.presetY;result.presetZ=start.presetZ;result.attachX=start.attachX;result.attachZ=start.attachZ;return result;}
     public static Mask capture(){
         Minecraft mc=Minecraft.m_20213497();C_57778754 viewer=ReplaySession.viewer();if(mc==null||viewer==null)return EMPTY;
         return captureAt((int)Math.floor(viewer.f_78826675),(int)Math.floor(viewer.f_31030949)-1,(int)Math.floor(viewer.f_97691941));
@@ -94,7 +101,7 @@ public final class IslandReplacement {
             Mask scene=new Mask(cells,nearby.empty()?(int)Math.round(data.frames.get(0).y):nearby.surface);scene.attachX=nearby.empty()?(int)Math.floor(data.frames.get(0).x):nearby.attachX;scene.attachZ=nearby.empty()?(int)Math.floor(data.frames.get(0).z):nearby.attachZ;Mask reference=start.empty()?nearby:start;if(!reference.empty()){scene.presetX=reference.presetX;scene.presetY=reference.presetY;scene.presetZ=reference.presetZ;}return scene;
         }catch(IllegalArgumentException ex){return nearby.empty()?current:nearby;}
     }
-    private static ReplayData sceneData(){ReplayData replay=ReplaySession.recording();if(replay!=null)return replay;String live=PresetServers.canonical(ServerPresets.address());return !live.isEmpty()&&live.equals(PresetServers.canonical(ReplayRecorder.serverAddress()))?ReplayRecorder.snapshot():null;}
+    static ReplayData sceneData(){ReplayData replay=ReplaySession.recording();if(replay!=null)return replay;String live=PresetServers.canonical(ServerPresets.address());return !live.isEmpty()&&live.equals(PresetServers.canonical(ReplayRecorder.serverAddress()))?ReplayRecorder.snapshot():null;}
     private static ReplayData.Block cell(Minecraft mc,Map<Long,ReplayData.Block> recorded,boolean replay,Set<Long> excluded,int x,int y,int z){
         if(y<0||y>255||excluded.contains(key(x,y,z)))return null;
         if(replay)return recorded.get(key(x,y,z));

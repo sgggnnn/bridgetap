@@ -16,15 +16,21 @@ public final class ReplayRecorder {
  private static boolean truncated;
  private static int lastX=Integer.MIN_VALUE,lastY,lastZ,dimension;
  private static long dayTime;
+ private static long worldTime;private static float rain,thunder;
+ private static final Map<Long,byte[]> biomes=new HashMap<>();
  private static ReplayData.Identity identity=ReplayData.Identity.unknown();
  private static String server="";
+ private static C_34399650 sourceWorld;private static C_32594356 sourceStart;
+ public static C_32594356 sourceStart(C_34399650 world){return sourceWorld==world?sourceStart:null;}
+ public static void sourceAnchor(C_34399650 world,C_32594356 pos){if(sourceStart==null&&!placements.contains(pos.m_14165896())){sourceWorld=world;sourceStart=new C_32594356(pos.m_32364273(),pos.m_62825721(),pos.m_23514936());}}
  private static C_34399650 modeWorld;private static C_32594356 modeStart;private static int modeDx,modeDz;private static ServerMode.Measurement measuredMode=ServerMode.UNAVAILABLE;
  public static void modeAnchor(C_34399650 world,C_32594356 start,C_28786548 face){if(modeStart!=null||!ServerMode.mcplay(server)||face==null||face.m_29389506()!=0)return;modeWorld=world;modeStart=new C_32594356(start.m_32364273(),start.m_62825721(),start.m_23514936());modeDx=face.m_48689500();modeDz=face.m_22521050();}
  public static ServerMode.Measurement modeMeasurement(){if(measuredMode.available||modeStart==null||modeWorld!=Minecraft.m_20213497().f_26407825)return measuredMode;measuredMode=ServerModeProbe.measure(server,(x,y,z)->{C_32594356 pos=new C_32594356(x,y,z);return !placements.contains(pos.m_14165896())&&modeWorld.m_09893682(pos)?C_81592558.m_63461719(modeWorld.m_77852500(pos).m_41958956()):0;},modeStart.m_32364273(),modeStart.m_62825721(),modeStart.m_23514936(),modeDx,modeDz);return measuredMode;}
  public static String serverAddress(){return server;}
- public static void reset(){modeStart=null;modeWorld=null;measuredMode=ServerMode.UNAVAILABLE;clock.clear();blocks.clear();scanned.clear();states.clear();placements.clear();truncated=false;lastX=Integer.MIN_VALUE;server="";}
+ public static void reset(){sourceWorld=null;sourceStart=null;modeStart=null;modeWorld=null;measuredMode=ServerMode.UNAVAILABLE;clock.clear();blocks.clear();scanned.clear();states.clear();placements.clear();biomes.clear();truncated=false;lastX=Integer.MIN_VALUE;server="";}
  public static void start(){
   reset();IslandStartAnchors.runStart();Minecraft mc=Minecraft.m_20213497();C_57778754 p=mc.f_28396371;
+  worldTime=mc.f_26407825.m_13949261();rain=mc.f_26407825.m_77661568(1);thunder=mc.f_26407825.m_10970845(1);
   C_91543234 entry=mc.m_73689431();server=mc.m_10057689()?"Singleplayer":entry==null?"Unknown server":entry.f_01631523;
   GameProfile profile=p.m_37763343();String value="",signature="";
   C_97147141 info=mc.m_55181026().m_00890679(profile.getId());
@@ -45,6 +51,10 @@ public final class ReplayRecorder {
   if(!(end?clock.endTick(tick,frame):clock.boundary(tick,frame))){truncated=true;return;}
   int x=(int)Math.floor(p.f_78826675),y=(int)Math.floor(p.f_31030949),z=(int)Math.floor(p.f_97691941);
   if(x!=lastX||y!=lastY||z!=lastZ){
+   for(int cx=(x>>4)-1;cx<=(x>>4)+1;cx++)for(int cz=(z>>4)-1;cz<=(z>>4)+1;cz++){
+    long key=ReplayPresentation.key(cx,cz);C_32594356 pos=new C_32594356(cx<<4,64,cz<<4);
+    if(biomes.size()<ReplayPresentation.MAX_BIOMES&&!biomes.containsKey(key)&&mc.f_26407825.m_09893682(pos))biomes.put(key,mc.f_26407825.m_41814513(pos).m_17523919().clone());
+   }
    int radius=frames.size()==1?12:8;
    for(int bx=x-radius;bx<=x+radius;bx++)for(int bz=z-radius;bz<=z+radius;bz++)for(int by=Math.max(0,y-24);by<=Math.min(255,y+12);by++){
     C_32594356 pos=new C_32594356(bx,by,bz);long key=pos.m_14165896();
@@ -72,5 +82,5 @@ public final class ReplayRecorder {
   // Mark the placement before scanning this tick so it cannot become a tick-0 background block.
   add(pos,world.m_77852500(pos),tick,true);
  }
- public static ReplayData snapshot(){return frames.isEmpty()?null:new ReplayData(frames,blocks,truncated||clock.truncated(),identity,dimension,dayTime);}
+ public static ReplayData snapshot(){if(frames.isEmpty())return null;return new ReplayData(frames,blocks,truncated||clock.truncated(),identity,dimension,dayTime).withPresentation(new ReplayPresentation(worldTime,rain,thunder,biomes));}
 }

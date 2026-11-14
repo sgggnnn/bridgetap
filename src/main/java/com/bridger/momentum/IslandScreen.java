@@ -8,7 +8,7 @@ import net.minecraft.unmapped.C_85740840;
 public final class IslandScreen extends BridgeScreen {
     private final C_85740840 parent;
     private List<Path> files=Collections.emptyList();private int tab=4,page,selected;
-    private String name="",message="Choose a default or saved island and click Place to preview it.";
+    private String name="",message="Stand on your start island, choose a style and click Apply automatically.";
     private final Map<Path,String> names=new HashMap<>();
     private final Map<Path,IslandTemplate> loaded=new HashMap<>();
     private final Set<Path> invalid=new HashSet<>();
@@ -35,8 +35,10 @@ public final class IslandScreen extends BridgeScreen {
     private void selectSaved(Path file){tab=0;refresh();selected=Math.max(0,files.indexOf(file));page=selected/6;}
     public void copiedFile(Path file,String status){selectSaved(file);message=status;}
     private void place()throws Exception{
-        IslandTemplate template=current();IslandOverlay.beginPreview(template);IslandOverlay.libraryFile(files.get(selected));open(new IslandPlacementScreen(this));
+        IslandTemplate template=current();boolean fitted=IslandOverlay.beginAutoPreview(template);IslandOverlay.libraryFile(files.get(selected));if(fitted){IslandOverlay.confirm();open(null);}else open(new IslandPlacementScreen(this));
     }
+    private void randomIsland()throws Exception{AttemptRandomizer.toggleIslands(kind());message=AttemptRandomizer.status();}
+    private void reapplyCurrent(){run(()->{AttemptRandomizer.toggleReapply();message=AttemptRandomizer.status();});}
     private void copyBoth()throws Exception{
         if(replay==null&&replayRun!=null)replay=BridgeTracker.history().replay(replayRun);
         String title=name.trim().isEmpty()?(replayLabel.length()>45?replayLabel.substring(0,45):replayLabel)+" - Both islands":name;
@@ -44,7 +46,7 @@ public final class IslandScreen extends BridgeScreen {
     }
     @Override protected void paint(){
         header("Island library","Copy. Preview. Place.");button("Back",752,15,88,this::back);
-        button("Presets",620,15,120,()->open(new IslandPresetsScreen(this)));
+        button("Auto reapply: "+(AttemptRandomizer.reapply()?"ON":"OFF"),448,15,160,28,true,AttemptRandomizer.reapply(),this::reapplyCurrent);button("Presets",620,15,120,()->open(new IslandPresetsScreen(this)));
         tab("Defaults",20,60,94,tab==4,()->switchTab(4));tab("My islands",122,60,94,tab==0,()->switchTab(0));tab("From replay",224,60,108,tab==1,()->switchTab(1));tab("Select blocks",340,60,112,tab==2,()->switchTab(2));tab("Import",460,60,72,tab==3,()->switchTab(3));
         button("Focus: "+(IslandReplacement.focus()?"ON":"OFF"),540,60,90,IslandReplacement::toggleFocus);
         button("Files",638,60,82,()->run(()->{message=BridgeFileActions.open(IslandLibrary.folder(kind()));}));button("Refresh",728,60,112,this::refresh);
@@ -59,7 +61,7 @@ public final class IslandScreen extends BridgeScreen {
             button(names.get(file),36,y,tab==4?360:264,32,true,selected==i,()->selected=index);
             if(tab!=4)button("Delete",310,y,86,32,true,false,()->deleting=file);
         }
-        button("Previous",36,414,94,24,page>0,false,()->{page--;selected=page*6;});button("Next",142,414,94,24,(page+1)*6<files.size(),false,()->{page++;selected=page*6;});label((page+1)+" / "+Math.max(1,(files.size()+5)/6),264,423);
+        button("Previous",36,414,94,24,page>0,false,()->{page--;selected=page*6;});button("Next",142,414,94,24,(page+1)*6<files.size(),false,()->{page++;selected=page*6;});label((page+1)+" / "+Math.max(1,(files.size()+5)/6),300,123);if(tab!=3)button("Random island: "+(AttemptRandomizer.islands()?"ON":"OFF"),248,414,148,24,true,AttemptRandomizer.islands(),()->run(this::randomIsland));
         if(files.isEmpty()){text("CREATE YOUR FIRST ISLAND",448,131,TEXT);label("Open From replay and copy both islands,",448,168);label("then position the preview in the world.",448,189);return;}
         try{
             IslandTemplate island=current();text("SELECTED ISLAND",448,124,MUTED);clipped(island.name,448,144,372,TEXT);
@@ -67,7 +69,8 @@ public final class IslandScreen extends BridgeScreen {
             label(island.width+" x "+island.height+" x "+island.depth+" blocks  /  "+island.blocks.size()+" copied",448,347);
             if(tab==3){button("Import island",448,374,372,32,true,true,()->run(()->{Path imported=IslandLibrary.importFile(files.get(selected));selectSaved(imported);message="Imported. Click Place to preview it.";}));}
             else{
-                button("Place island",448,374,372,32,true,true,()->run(this::place));
+                button("Apply automatically",448,374,248,32,true,true,()->run(this::place));
+                button("Preview / Adjust",708,374,112,32,true,false,()->run(()->{IslandOverlay.beginAutoPreview(current());IslandOverlay.libraryFile(files.get(selected));open(new IslandPlacementScreen(this));}));
                 button(tab==4?"Save a copy":"Rename",448,418,90,24,true,false,()->{
                     if(tab==4)run(()->{Path copy=IslandLibrary.save(current(),"saved");selectSaved(copy);message="Copy saved in My islands. You can rename it or save a preset after placement.";});
                     else{renaming=files.get(selected);renameText=island.name;}

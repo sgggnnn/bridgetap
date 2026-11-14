@@ -35,7 +35,7 @@ public final class ReplayFolderScreen extends BridgeScreen {
     @Override protected void paint(){
         RunHistory history=BridgeTracker.history();if(catalogVersion!=history.catalogVersion())refresh();long now=System.currentTimeMillis();if(now>=nextIndex){nextIndex=now+500;List<RunHistory.Run> visible=rows.subList(Math.min(page*9,rows.size()),Math.min(page*9+18,rows.size()));history.indexModes(visible);if(mode!=ServerMode.Filter.ALL&&!all.isEmpty()){indexCursor=Math.min(indexCursor,all.size()-1);history.indexModes(all.subList(indexCursor,Math.min(indexCursor+16,all.size())));indexCursor=(indexCursor+16)%all.size();}int ready=0;for(RunHistory.Run run:all)if(run.modeReady())ready++;if(ready!=indexedModes){indexedModes=ready;ReplayStorage.organize(history,all);filter();}folders=new ArrayList<>(library.folders().keySet());if(folderVersion!=library.revision()){folderVersion=library.revision();filter();}}
 
-        header("Replay files","Folders, recordings and details");button("Back",752,15,88,this::back);
+        header("Replay files","Folders, recordings and details");button("Join Discord",610,15,130,()->message=CommunityLinks.discord());button("Back",752,15,88,this::back);
         button("+ New folder",20,60,154,()->{modal="create";name="";});
         button("Rename folder",186,60,146,26,!folder.isEmpty()&&!folder.equals(ReplayFolders.UNFILED)&&!folder.equals(ReplayFolders.SAVED),false,()->{modal="folder";name=library.label(folder);});
         button("Delete folder",344,60,146,26,!folder.isEmpty()&&!folder.equals(ReplayFolders.UNFILED)&&!folder.equals(ReplayFolders.SAVED),false,()->modal="delete");

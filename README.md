@@ -16,12 +16,14 @@ A **Minecraft 1.8.9** client mod for analyzing your bridges: jump coordinates, r
 
 **1.8.1** adds persistent statistics and minute-level charts, Anniversary islands, and fixes for 12-tick turns, McPlay modes, replay visibility and startup update prompts. See the [1.8.1 release notes](docs/releases/v1.8.1.md).
 
+**1.8.2** adds replay bookmarks, automatic jump markers, optional live keystrokes, technique colors and one-click island fitting. Random appearances now change after completed attempts; Auto reapply only restores a missing island. It also improves replay chat/sky support, video presentation, confirmed bridge starts and appearance performance. See the [1.8.2 release notes](docs/releases/v1.8.2.md).
+
 ## Installation
 
-1. Open [release 1.8.1](https://github.com/sgggnnn/bridgetap/releases/tag/v1.8.1).
+1. Open [release 1.8.2](https://github.com/sgggnnn/bridgetap/releases/tag/v1.8.2).
 2. Download the file matching your setup:
-   - **Forge 1.8.9**: `BridgeTap-1.8.1-Forge-1.8.9.jar`.
-   - **OneClient / Ornithe Fabric 1.8.9**: `BridgeTap-1.8.1-OneClient.jar`, for an environment using Ornithe mappings.
+   - **Forge 1.8.9**: `BridgeTap-1.8.2-Forge-1.8.9.jar`.
+   - **OneClient / Ornithe Fabric 1.8.9**: `BridgeTap-1.8.2-OneClient.jar`, for an environment using Ornithe mappings.
 3. Place the JAR in your instance's `mods` folder, replacing the previous BridgeTap version.
 4. Launch Minecraft with **Java 8+** and your chosen loader. Native OneClient/OneConfig integration requires **Java 21+**.
 5. For Windows clips/audio, extract the optional tools pack from the release into the game directory containing `mods`, then enable the buffer. See the [tools installation instructions](docs/releases/v1.7.0.md#downloads-and-upgrade).
@@ -39,7 +41,7 @@ Download JARs from the **GitHub release assets**. The “Source code” archives
 - **Per-tick analysis**: held, pressed, and released inputs, clicks, CPS, velocity, and ghost coordinates.
 - **Visual HUD layout editor**: drag overlays into place, resize with the lower-right handle, snap to guides, and save independent positions and scales.
 - **Opening detection**: 3-tick 1.0 Flat, plus opening-only 5b Late and 6b Late using jump timing, axial distance, height, and placement evidence.
-- **Recorded input overlay**: directional arrows, jump bar, LMB, and RMB during replays, including short clicks and paused ticks.
+- **Recorded input overlay**: directional arrows, jump bar, LMB, and RMB during replays, plus an independent option outside replays, including short clicks and paused ticks.
 - **Free camera and POV**: fly around the bridge, inspect the white hitbox, or follow the recorded player's view.
 - **Sharing**: export and import self-contained `.btreplay` files.
 - **Bridge measurements**: the gap between platform edges and their height difference, when the recording contains the required data.

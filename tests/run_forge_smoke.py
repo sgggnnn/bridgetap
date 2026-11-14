@@ -25,7 +25,7 @@ classes=work/'classes';classes.mkdir(parents=True)
 game=work/'game';(game/'mods').mkdir(parents=True)
 shutil.copyfile(args.mod,game/'mods/BridgeTap.jar')
 subprocess.run([args.javac,'--release','8','-proc:none','-cp',args.classpath,'-d',str(classes),*map(str,(root/'tests/forge').glob('*.java'))],check=True)
-subprocess.run([args.javac,'--release','8','-proc:none','-cp',str(root/'build/forge/minecraft-srg.jar')+os.pathsep+args.classpath,'-d',str(classes),str(root/'tests/compat/hud/CountingFontRenderer.java'),str(root/'tests/compat/audio/RecordingSoundHandler.java'),str(root/'tests/compat/cera/ConnectedTextures.java'),str(root/'tests/compat/cera/CtmRenderContext.java')],check=True)
+subprocess.run([args.javac,'--release','8','-proc:none','-cp',str(root/'build/forge/minecraft-srg.jar')+os.pathsep+args.classpath,'-d',str(classes),str(root/'tests/compat/hud/CountingFontRenderer.java'),str(root/'tests/compat/island/IslandFixtureWorld.java'),str(root/'tests/compat/audio/RecordingSoundHandler.java'),str(root/'tests/compat/cera/ConnectedTextures.java'),str(root/'tests/compat/cera/CtmRenderContext.java')],check=True)
 if args.argentum_fixture:
     subprocess.run([args.javac,'--release','8','-proc:none','-cp',str(root/'build/forge/minecraft-srg.jar')+os.pathsep+args.classpath,'-d',str(classes),str(root/'tests/compat/argentum/ChunkRenderContext.java'),str(root/'tests/compat/blur/BlurRenderer.java')],check=True)
 output=subprocess.run([args.java,'-Dmixin.debug.verbose=true','-cp',args.classpath+os.pathsep+str(classes),'net.minecraft.launchwrapper.Launch','--tweakClass','bridgetap.smoke.ForgeSmokeTweaker','--gameDir',str(game),'--version','1.8.9'],cwd=game,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)

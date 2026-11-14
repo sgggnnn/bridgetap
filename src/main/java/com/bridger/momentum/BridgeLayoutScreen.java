@@ -35,10 +35,10 @@ public final class BridgeLayoutScreen extends BridgeScreen {
     }
     private void inspector(){
         panel(0,0,224,440);region(0,0,224,440,()->{});text("HUD LAYOUT",16,16,TEXT);
-        String[] names={"Bridge coordinates","Replay information","Recorded inputs"};
+        String[] names={"Bridge coordinates","Replay information","Keystrokes"};
         for(int i=0;i<3;i++){final int index=i;button(names[i],16,43+i*30,192,24,true,selected==i,()->{selected=index;dragging=false;});}
-        boolean enabled=selected==0?BridgeConfig.enabled:selected==1?BridgeConfig.showReplayInfo:BridgeConfig.showReplayInputs;
-        toggle("Visible",enabled,16,142,192,()->{if(selected==0)BridgeConfig.enabled=!BridgeConfig.enabled;else if(selected==1)BridgeConfig.showReplayInfo=!BridgeConfig.showReplayInfo;else BridgeConfig.showReplayInputs=!BridgeConfig.showReplayInputs;});
+        boolean enabled=selected==0?BridgeConfig.enabled:selected==1?BridgeConfig.showReplayInfo:(ReplaySession.active()?BridgeConfig.showReplayInputs:BridgeConfig.showLiveInputs);
+        toggle("Visible",enabled,16,142,192,()->{if(selected==0)BridgeConfig.enabled=!BridgeConfig.enabled;else if(selected==1)BridgeConfig.showReplayInfo=!BridgeConfig.showReplayInfo;else if(ReplaySession.active())BridgeConfig.showReplayInputs=!BridgeConfig.showReplayInputs;else BridgeConfig.showLiveInputs=!BridgeConfig.showLiveInputs;});
         stepper("Scale",String.format(Locale.US,"%.1fx",valueScale()),16,181,192,()->scaleValue(valueScale()-.1),()->scaleValue(valueScale()+.1));
         label("Position "+bounds[selected][0]+", "+bounds[selected][1],16,219);
         toggle("Snap to guides",snap,16,240,192,()->snap=!snap);
@@ -48,6 +48,7 @@ public final class BridgeLayoutScreen extends BridgeScreen {
         button("Save and return",16,393,192,26,true,true,this::back);
     }
     private List<String> lines(int type){
+        if(type==1&&!BridgeConfig.detailedReplayInfo)return Arrays.asList("Replay 1.25 / 3.85s | 1.00x | Paused","Ghost XYZ: 1.4366  66.1661  8.9902");
         if(type==1)return Arrays.asList("Bridge replay 1.25 / 3.85s | Tick 25/77 | 1.00x | Pause","Ghost XYZ: 1.4366  66.1661  8.9902","Inputs: Back Left Jump RMB","Pressed: RMB | Released: Right","Clicks L/R/M: 0/1/0 | CPS: 0/19/0","Velocity X -0.0003  Y 0.0831  Z 0.2874","Platform gap: 28.00b | Height: +4.00b","Sticks: 1 tick | Left-click player: POV");
         List<JumpEntry> entries=Arrays.asList(new JumpEntry("1.0 Flat",.504,.504,Double.NaN,3,JumpEntry.EntryType.FLAT),new JumpEntry("5b Late",.460,.460,-.044,9,JumpEntry.EntryType.TAP),new JumpEntry("Turn",.216,.216,.475,15,JumpEntry.EntryType.TURN));
         List<String> result=new ArrayList<>();

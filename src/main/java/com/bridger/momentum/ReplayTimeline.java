@@ -33,6 +33,8 @@ public final class ReplayTimeline {
  public static int eventFrameTick(ReplayData data,int tick){return data.formatVersion<5&&data.placementTags?Math.max(0,tick-1):tick;}
  public static int eventTick(ReplayData data,ReplayData.Block block){return block.placed?eventFrameTick(data,block.tick):block.tick;}
  private ReplayData.TickStats stats(int i){boolean legacy=data.formatVersion<5&&data.placementTags;ReplayData.TickStats stats=data.frames.get(Math.min(i+(legacy?1:0),data.frames.size()-1)).stats;return legacy&&i+1>=data.frames.size()&&stats!=null?stats.withoutEdges():stats;}
+ /** Keystrokes use the recorded tick, including the existing legacy phase repair. */
+ public ReplayData.TickStats inputs(){return sample().stats;}
  public ReplayData.Frame sample(){int i=Math.min((int)tick,data.frames.size()-1);ReplayData.Frame frame=data.frames.get(i);return data.formatVersion<5&&data.placementTags?frame.withStats(stats(i)):frame;}
  public ReplayData.Frame pose(){
   int i=Math.min((int)tick,data.frames.size()-1);ReplayData.Frame a=data.frames.get(i),b=data.frames.get(Math.min(i+1,data.frames.size()-1));double t=Math.min(1,tick-i);
