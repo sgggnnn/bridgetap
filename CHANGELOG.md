@@ -30,16 +30,11 @@ For Minecraft **1.8.9**, with separate Forge and OneClient / Ornithe downloads.
 - Reduce appearance-change terrain rebuilds; prepare modern textures together, cache models and register placement sounds without restarting the audio engine.
 - Recognize McPlay modes despite small decorative platform-edge variations; these distance rules remain specific to McPlay.
 
-### Optional creator island pack
-
-The release includes `BridgeTap-Creator-Islands.zip`: Jade Sanctuary, Ember Ruins, Frost Observatory, Aether Gate, Astral Reef and Willow Ruins. Each file contains departure and arrival scenery. Copy the `.btisland` files to `config/bridgetap/islands/saved`, then refresh **My islands**. The pack is separate from the seven existing bundled defaults.
-
 ### Downloads
 
 - `BridgeTap-1.9.0-Forge-1.8.9.jar` — Forge 1.8.9.
 - `BridgeTap-1.9.0-OneClient.jar` — OneClient / Ornithe Fabric 1.8.9.
 - `BridgeTap-clip-tools-windows-x64.zip` — optional Windows clip/audio tools.
-- `BridgeTap-Creator-Islands.zip` — optional island scenery.
 - `SHA256SUMS.txt` — release artifact checksums.
 
 Replace the previous JAR and keep one BridgeTap edition per instance. Existing recordings, settings and personal islands remain in their usual config folders. Native OneClient integration requires Java 21+; the core/Forge mod targets Java 8.
