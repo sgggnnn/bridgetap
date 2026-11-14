@@ -16,14 +16,14 @@ A **Minecraft 1.8.9** client mod for analyzing your bridges: jump coordinates, r
 
 **1.8.1** adds persistent statistics and minute-level charts, Anniversary islands, and fixes for 12-tick turns, McPlay modes, replay visibility and startup update prompts. See the [1.8.1 release notes](docs/releases/v1.8.1.md).
 
-**1.8.2** adds replay bookmarks, automatic jump markers, optional live keystrokes, technique colors and one-click island fitting. Random appearances now change after completed attempts; Auto reapply only restores a missing island. It also improves replay chat/sky support, video presentation, confirmed bridge starts and appearance performance. See the [1.8.2 release notes](docs/releases/v1.8.2.md).
+**1.9.0** adds replay bookmarks, automatic jump markers, optional live keystrokes, technique colors and one-click island fitting. Random appearances now change after completed attempts; Auto reapply only restores a missing island. It also improves replay chat/sky support, video presentation, confirmed bridge starts and appearance performance. See the [1.9.0 release notes](docs/releases/v1.9.0.md).
 
 ## Installation
 
-1. Open [release 1.8.2](https://github.com/sgggnnn/bridgetap/releases/tag/v1.8.2).
+1. Open [release 1.9.0](https://github.com/sgggnnn/bridgetap/releases/tag/v1.9.0).
 2. Download the file matching your setup:
-   - **Forge 1.8.9**: `BridgeTap-1.8.2-Forge-1.8.9.jar`.
-   - **OneClient / Ornithe Fabric 1.8.9**: `BridgeTap-1.8.2-OneClient.jar`, for an environment using Ornithe mappings.
+   - **Forge 1.8.9**: `BridgeTap-1.9.0-Forge-1.8.9.jar`.
+   - **OneClient / Ornithe Fabric 1.8.9**: `BridgeTap-1.9.0-OneClient.jar`, for an environment using Ornithe mappings.
 3. Place the JAR in your instance's `mods` folder, replacing the previous BridgeTap version.
 4. Launch Minecraft with **Java 8+** and your chosen loader. Native OneClient/OneConfig integration requires **Java 21+**.
 5. For Windows clips/audio, extract the optional tools pack from the release into the game directory containing `mods`, then enable the buffer. See the [tools installation instructions](docs/releases/v1.7.0.md#downloads-and-upgrade).

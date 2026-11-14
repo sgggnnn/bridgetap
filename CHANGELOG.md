@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.8.2](https://github.com/sgggnnn/bridgetap/releases/tag/v1.8.2) - Replay tools, automatic islands and HUD customization
+## [1.9.0](https://github.com/sgggnnn/bridgetap/releases/tag/v1.9.0) - Replay tools, automatic islands and HUD customization
 
 For Minecraft **1.8.9**, with separate Forge and OneClient / Ornithe downloads.
 
@@ -36,8 +36,8 @@ The release includes `BridgeTap-Creator-Islands.zip`: Jade Sanctuary, Ember Ruin
 
 ### Downloads
 
-- `BridgeTap-1.8.2-Forge-1.8.9.jar` — Forge 1.8.9.
-- `BridgeTap-1.8.2-OneClient.jar` — OneClient / Ornithe Fabric 1.8.9.
+- `BridgeTap-1.9.0-Forge-1.8.9.jar` — Forge 1.8.9.
+- `BridgeTap-1.9.0-OneClient.jar` — OneClient / Ornithe Fabric 1.8.9.
 - `BridgeTap-clip-tools-windows-x64.zip` — optional Windows clip/audio tools.
 - `BridgeTap-Creator-Islands.zip` — optional island scenery.
 - `SHA256SUMS.txt` — release artifact checksums.
