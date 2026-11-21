@@ -72,3 +72,23 @@ Local validation for this change: payload acceptance/rejection tests passed; the
 The downloaded PE was checked as Windows x64, its product metadata reads `bridgetapclient`, and the complete native BridgeTap payload was found byte-for-byte inside it. `dist/bridgetapclient-build.json` records the executable and payload SHA-256 values. `dist/bridgetapclient-windows-x64.zip` includes the executable, checksums, upstream notices and French setup instructions.
 
 Verification-only run succeeded: https://github.com/sgggnnn/bridgetap/actions/runs/44899635639. The native preference test passed in the supported debug test profile. The executable remains unsigned; no usable user code-signing certificate is installed locally.
+
+
+## Branding, native menus and mod versions
+
+Final Windows build: [44928418621](https://github.com/sgggnnn/bridgetap/actions/runs/44928418621), integration commit `8bb8d288e8b015b4f6e67f5e8c831b4f18223d75`, embedded BridgeTap `1.10.0-dev.10`. All eight Python checks, seven Rust tests, full app type checking and the release build succeeded. The executable was verified as Windows x64 with the complete expected JAR embedded. It was installed and opened locally; the new wordmark, mod icon, version controls and existing profiles were visually checked. The launcher was replaced through normal shutdown while the running Minecraft process stayed alive. Restart Minecraft to load the new native menu adapter; the current game retains its previously loaded mod.
+
+The launcher uses the `bridgetapclient` name throughout its local UI strings, runtime translation tables, wordmark, window resources and generated shortcut names. Launcher, tray and platform icons are converted from the mod's existing `assets/bridgetap/icon.png`. Upstream API identifiers, existing game folders, settings namespaces, service links and copyright notices retain compatibility.
+
+**BridgeTap** in the launcher now contains a searchable catalog of 30 tools grouped into Replays, Îles, Apparence, Enregistrement, HUD, Réglages and Aide. Choose a compatible profile, join a world with the bundled mod, and click a tool. The request opens on Minecraft's client thread; the launcher does not inject commands or modify the server. The same catalog appears as native OneConfig buttons under **Right Shift > BridgeTap**. Replay-specific tools first open a replay picker with an action button; tools that require an island begin with the island library if none is active. A world-required screen explains the prerequisite when a native entry is used from Minecraft's main menu.
+
+The launcher version controls support:
+
+- **Check updates**: find a newer stable GitHub release, verify the release asset's SHA-256, validate the native 1.8.9 manifest, and select it for the next game launch.
+- **Automatic updates**: explicitly enabled by the user, checked on game launch at most every six hours. An offline/failed check keeps the selected version; development builds are not downgraded to older stable releases.
+- **Choose a JAR**: validate and copy a native BridgeTap OneClient JAR into the launcher's version cache. Choosing a local file pins that version and disables automatic updates, including an automatic download already in flight.
+- **Bundled version**: reset to the embedded payload and disable automatic updates. Corrupt selection metadata is retained aside before resetting.
+
+The selected version applies to all compatible BridgeTap profiles. Importing or downloading a version never replaces a JAR while Minecraft is running. Installation is performed under the launch lock on the next launch, and previous profile JARs remain in the existing backup directory. Recordings, islands, accounts and the `E:\OneClient` game folder setting are preserved. A manually selected JAR is copied, so moving the original download afterwards does not break the selection.
+
+Source preparation applies `launcher.patch`, copies the overlay assets and native payload, generates the shared menu catalog/version assets, and runs `brand-launcher.py`. `generate-brand-assets.py` is only needed to regenerate the committed logo conversions (Pillow and fontTools). The CI runs visible-branding/catalog checks, full Rust type checking and core version-selection tests before producing the release executable.
