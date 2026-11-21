@@ -1,6 +1,6 @@
 """Apply the local integration to the pinned upstream source, without any git push."""
 from pathlib import Path
-import argparse,subprocess,shutil,json,zipfile,hashlib
+import argparse,subprocess,shutil,json,zipfile,hashlib,importlib.util
 ROOT=Path(__file__).resolve().parents[2]
 def validate_payload(path):
  with zipfile.ZipFile(path) as jar:
@@ -25,6 +25,9 @@ def main():
  shutil.copytree(Path(__file__).parent/'launcher',a.destination,dirs_exist_ok=True)
  assets=a.destination/'packages/oneclient_core/assets';assets.mkdir(exist_ok=True)
  shutil.copyfile(a.jar,assets/'BridgeTap-OneClient.jar')
+ (assets/'bridgetap-version.txt').write_text(version+'\n',encoding='utf-8')
+ shutil.copyfile(Path(__file__).parent/'menu-catalog.json',assets/'bridgetap-menus.json')
+ spec=importlib.util.spec_from_file_location('brand_launcher',Path(__file__).parent/'brand-launcher.py');brand=importlib.util.module_from_spec(spec);spec.loader.exec_module(brand);brand.apply(a.destination)
  (a.destination/'BRIDGETAP-BUILD.json').write_text(json.dumps({'edition':'Unofficial OneClient with BridgeTap','upstream':revision,'bridgetap_version':version,'payload_sha256':hashlib.sha256(a.jar.read_bytes()).hexdigest()},indent=2)+'\n',encoding='utf-8')
  print('Prepared local launcher at',a.destination)
 if __name__=='__main__':main()

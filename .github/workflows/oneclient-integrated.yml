@@ -41,11 +41,20 @@ jobs:
             $payload = "build/libs/BridgeTap-$version-OneClient.jar"
           }
           python integrations/oneclient/prepare-launcher.py --jar $payload --destination build/BridgeTapClient
+      - name: Validate branding and menu catalog
+        run: python tests/test_oneclient_branding.py build/BridgeTapClient
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: 'build/BridgeTapClient -> target'
           cache-on-failure: true
+          key: branded-menus-versions-v1
+      - name: Type-check launcher and version manager
+        working-directory: build/BridgeTapClient
+        run: cargo check --locked -p oneclient_app
+      - name: Test version selection and menu integration
+        working-directory: build/BridgeTapClient
+        run: cargo test --locked -p oneclient_core --lib bridgetap
       - name: Build bridgetapclient
         if: ${{ !inputs.verify_only }}
         working-directory: build/BridgeTapClient
@@ -62,6 +71,3 @@ jobs:
           name: bridgetapclient-windows-x64
           path: dist/bridgetapclient.exe
           if-no-files-found: error
-      - name: Test bundled default and opt-out persistence
-        working-directory: build/BridgeTapClient
-        run: cargo test --locked -p oneclient_core --lib bridgetap::tests

@@ -9,6 +9,7 @@ public final class DefaultIslands {
     private DefaultIslands(){}
     public static synchronized void install(Path folder)throws IOException{
         Files.createDirectories(folder);
+        moveLegacyBastion(folder);
         for(String name:FILES){
             Path target=folder.resolve(name);
             if(Files.exists(target,LinkOption.NOFOLLOW_LINKS))continue;
@@ -23,4 +24,18 @@ public final class DefaultIslands {
             }finally{Files.deleteIfExists(temp);}
         }
     }
+    /** Move only the exact previously bundled sample; preserve edited/personal files. */
+    private static void moveLegacyBastion(Path folder)throws IOException{
+        Path old=folder.resolve("Bastion.btisland");
+        if(!Files.isRegularFile(old,LinkOption.NOFOLLOW_LINKS)||Files.size(old)>32768)return;
+        byte[] original;
+        try(InputStream in=DefaultIslands.class.getResourceAsStream("/assets/bridgetap/islands/examples/Bastion.btisland")){
+            if(in==null)return;ByteArrayOutputStream bytes=new ByteArrayOutputStream();byte[] buffer=new byte[4096];int count;while((count=in.read(buffer))!=-1)bytes.write(buffer,0,count);original=bytes.toByteArray();
+        }
+        if(!java.util.Arrays.equals(original,Files.readAllBytes(old)))return;
+        Path imports=folder.resolveSibling("imports");Files.createDirectories(imports);
+        Path target=imports.resolve("Bastion.btisland");if(Files.exists(target,LinkOption.NOFOLLOW_LINKS))target=imports.resolve("Bastion-"+java.util.UUID.randomUUID()+".btisland");
+        Files.move(old,target);
+    }
+
 }

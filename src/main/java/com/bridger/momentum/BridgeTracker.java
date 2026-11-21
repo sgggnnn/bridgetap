@@ -453,7 +453,7 @@ public class BridgeTracker {
         if (delta < -0.5) delta += 1.0;
         else if (delta > 0.5) delta -= 1.0;
 
-        JumpEntry failEntry = new JumpEntry("Fail Tap/4b", tapCoord, decimal, delta, elapsed, JumpEntry.EntryType.FAIL_TAP);
+        JumpEntry failEntry = new JumpEntry(elapsed == 9 ? "Fail Tap" : "Fail 4b", tapCoord, decimal, delta, elapsed, JumpEntry.EntryType.FAIL_TAP);
         attachHorizontalSample(failEntry,sampleTick);
         entries.add(failEntry);
 

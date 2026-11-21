@@ -10,7 +10,7 @@ public final class PlacementAppearanceScreen extends BridgeScreen {
     private void randomBlock(){try{AttemptRandomizer.toggleBlocks(search);message=AttemptRandomizer.status();}catch(Exception ex){message=ex.getMessage();}}
     @Override protected void paint(){
         if(modernCount!=ModernAppearance.blocks().size()){blocks.removeIf(k->k.startsWith("modern:"));blocks.addAll(ModernAppearance.blocks());modernCount=ModernAppearance.blocks().size();Collections.sort(blocks);filter();}
-        header("Block appearance","Choose how your placed blocks look");button("Back",752,15,88,this::back);panel(20,74,470,376);panel(506,74,334,376);
+        header("Block appearance","Choose how your placed blocks look");button("Sandstone overlay",438,15,166,()->open(new SkyOverlayScreen(this,true)));button("Sky overlay",616,15,124,()->open(new SkyOverlayScreen(this)));button("Back",752,15,88,this::back);panel(20,74,470,376);panel(506,74,334,376);
         input("search",search,"Search any block...",36,92,438,64,value->{search=value;filter();});
         for(int i=page*10;i<Math.min(filtered.size(),page*10+10);i++){String key=filtered.get(i);button(key,36,134+(i-page*10)*26,438,24,true,key.equals(selected),()->selected=key);}
         button("Previous",36,413,110,24,page>0,false,()->page--);button("Next",158,413,110,24,(page+1)*10<filtered.size(),false,()->page++);label(filtered.size()+" blocks",302,421);

@@ -32,7 +32,11 @@ def nested_jars(jar,out):
                     content=z.read(entry);(out/Path(entry.filename).name).write_bytes(content);unpack(content,depth+1)
     unpack(jar.read_bytes())
 def prepare(java):
-    manifest=json_url('https://piston-meta.mojang.com/mc/game/version_manifest_v2.json');version=next(v for v in manifest['versions'] if v['id']=='1.8.9');meta=json.loads(fetch('minecraft-version.json',version['url'],version.get('sha1')).read_bytes())
+    version_file = CACHE / 'minecraft-version.json'
+    if version_file.exists():
+        meta = json.loads(version_file.read_bytes())
+    else:
+        manifest=json_url('https://piston-meta.mojang.com/mc/game/version_manifest_v2.json');version=next(v for v in manifest['versions'] if v['id']=='1.8.9');meta=json.loads(fetch('minecraft-version.json',version['url'],version.get('sha1')).read_bytes())
     client=meta['downloads']['client'];minecraft=fetch('minecraft-1.8.9-client.jar',client['url'],client['sha1']);libraries=[]
     for lib in meta['libraries']:
         artifact=lib.get('downloads',{}).get('artifact')
@@ -61,7 +65,10 @@ def main():
     for target in (fabric,forge):target.unlink(missing_ok=True)
     run(jar,'cf',fabric,'-C',work,'.','-C',ROOT/'src/main/resources','.')
     add_video(fabric,java)
-    compile_deps=CACHE/'oneconfig';nested_jars(modrinth('htWUN4sV'),compile_deps);nested_jars(modrinth('SKW1BTL3'),compile_deps)
+    compile_deps=CACHE/'oneconfig'
+    if not (compile_deps.exists() and any(compile_deps.iterdir())):
+        nested_jars(modrinth('htWUN4sV'),compile_deps)
+        nested_jars(modrinth('SKW1BTL3'),compile_deps)
     adapter=ROOT/('build/gradle-oneconfig-classes-'+uuid.uuid4().hex);adapter.mkdir(parents=True,exist_ok=True)
     run(tool(a.oneclient_java_home,'javac'),'--release','8','-encoding','UTF-8','-proc:none','-cp',os.pathsep.join((str(fabric),str(compile_deps/'*'),cp)),'-d',adapter,*sorted((ROOT/'integrations/oneclient/java').rglob('*.java')))
     run(jar,'uf',fabric,'-C',adapter,'.')

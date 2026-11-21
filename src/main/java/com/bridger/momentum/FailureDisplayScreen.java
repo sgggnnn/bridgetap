@@ -7,7 +7,7 @@ public final class FailureDisplayScreen extends BridgeScreen {
  @Override protected void paint(){header("Failed bridge display","Choose what remains visible after a failed attempt");button("Back",752,15,88,this::back);
   option("ALL","Show all failed bridge information","Keep the time, flat, taps, turn and fail samples.",88);
   option("HIDE","Hide failed bridges","Hide failed-run information from the coordinate HUD and end-of-run chat.",200);
-  option("FAIL_TAPS_ONLY","Show Fail Tap/4b only","Show only Fail Tap/4b entries, without the failed-run header or other jumps.",312);
+  option("FAIL_TAPS_ONLY","Show Fail Tap / Fail 4b only","Show only Fail Tap and Fail 4b entries, without the failed-run header or other jumps.",312);
   toggle("Auto fail analysis in chat",BridgeConfig.autoFailAnalysis,38,430,784,()->{BridgeConfig.autoFailAnalysis=!BridgeConfig.autoFailAnalysis;BridgeConfig.save();});
   footer("Successful runs are unchanged. Replays, saved details and statistics keep all samples.");
  }

@@ -60,8 +60,12 @@ public final class IslandOverlay {
     public static String failure(){return failure;}
     public static boolean enabled(){return active!=null;}
     public static IslandTemplate activeTemplate(){return active;}
+    public static void invalidateModels(){dirty=true;failure="";}
     public static IslandBox copyBounds(){if(active==null)return null;int[] b=sceneBounds();return new IslandBox(x+b[0],y+b[1],z+b[2],b[3]-b[0],b[4]-b[1],b[5]-b[2]);}
-    public static C_15815210 visibleState(int wx,int wy,int wz,C_15815210 fallback){if(active!=null){int[] local=IslandRotation.point(wx-x,wz-z,active.anchorX,active.anchorZ,-rotation);for(int group=1;group>=0;group--){Integer index=stateIndex.get(key(local[0]-(group==1?finishX:startX),wy-y-(group==1?finishY:startY),local[1]-(group==1?finishZ:startZ)));if(index!=null&&(parts.finish[index]?1:0)==group)return states[index];}}return IslandReplacement.hidden(wx,wy,wz)?C_81592558.m_64320102(0).m_52891069():fallback;}
+    private static int visibleIndex(int wx,int wy,int wz){
+        if(active!=null){int[] local=IslandRotation.point(wx-x,wz-z,active.anchorX,active.anchorZ,-rotation);for(int group=1;group>=0;group--){Integer index=stateIndex.get(key(local[0]-(group==1?finishX:startX),wy-y-(group==1?finishY:startY),local[1]-(group==1?finishZ:startZ)));if(index!=null&&(parts.finish[index]?1:0)==group)return index;}}return -1;
+    }
+    public static C_15815210 visibleState(int wx,int wy,int wz,C_15815210 fallback){int index=visibleIndex(wx,wy,wz);if(index>=0)return states[index];return IslandReplacement.hidden(wx,wy,wz)?C_81592558.m_64320102(0).m_52891069():fallback;}
     public static int rotation(){return rotation*90;}
     public static void rotate(){rotation=(rotation+1)%4;moved();}
     public static boolean hasFinish(){return parts!=null&&parts.paired;}
@@ -169,7 +173,8 @@ public final class IslandOverlay {
         if(!box.valid())throw new IllegalArgumentException("Invalid copy bounds");C_34399650 world=ReplaySession.viewWorld();if(world==null)throw new IllegalArgumentException("Join a world first");
         List<IslandTemplate.Block> result=new ArrayList<>();for(int x=0;x<box.width;x++)for(int y=0;y<box.height;y++)for(int z=0;z<box.depth;z++){
             C_32594356 pos=new C_32594356(box.x+x,box.y+y,box.z+z);boolean loaded=world.m_09893682(pos);if(!loaded&&!ReplaySession.active()&&active==null)throw new IllegalArgumentException("Selection extends beyond loaded terrain");C_15815210 state=visibleState(box.x+x,box.y+y,box.z+z,loaded?world.m_77852500(pos):C_81592558.m_64320102(0).m_52891069());C_81592558 block=state.m_41958956();if(block.m_43136364()!=3)continue;
-            result.add(new IslandTemplate.Block(x,y,z,C_81592558.f_83036452.m_55287479(block).toString(),block.m_14593609(state)));if(result.size()>IslandTemplate.MAX_BLOCKS)throw new IllegalArgumentException("Too many blocks. Make the selection smaller.");
+            int index=visibleIndex(box.x+x,box.y+y,box.z+z);IslandTemplate.Block source=index<0?null:active.blocks.get(index);
+            result.add(new IslandTemplate.Block(x,y,z,source==null?C_81592558.f_83036452.m_55287479(block).toString():source.key,source==null?block.m_14593609(state):source.meta));if(result.size()>IslandTemplate.MAX_BLOCKS)throw new IllegalArgumentException("Too many blocks. Make the selection smaller.");
         }return new IslandTemplate(name,box.width,box.height,box.depth,box.x,box.y,box.z,result);
     }
     public static IslandTemplate fromReplay(String name,ReplayData replay,boolean finish){
@@ -189,9 +194,14 @@ public final class IslandOverlay {
         if(!BridgeConfig.modEnabled)throw new IllegalArgumentException("Enable BridgeTap in OneClient first");
         connectedTextures=new IslandConnectedTextures();connectedDirty=false;
         Minecraft mc=Minecraft.m_20213497();C_57778754 viewer=ReplaySession.viewer();if(viewer==null)throw new IllegalArgumentException("Join a world before placing scenery");
+        List<String> modern=new ArrayList<>();for(IslandTemplate.Block b:template.blocks)if(IslandMaterials.modern(b.key))modern.add(b.key);
+        try{ModernAppearance.prepareIsland(modern);}catch(java.io.IOException ex){throw new IllegalArgumentException(ex.getMessage(),ex);}
         C_15815210[] resolved=new C_15815210[template.blocks.size()];
         for(int i=0;i<resolved.length;i++){
             IslandTemplate.Block b=template.blocks.get(i);C_81592558 block=C_81592558.m_58693857(b.key);
+            // A native state supplies neighbour queries only; modern models are
+            // drawn separately and never inserted into the server's registry.
+            if(IslandMaterials.modern(b.key)){resolved[i]=C_81592558.m_64320102(1).m_52891069();continue;}
             if(block==null||block.m_43136364()!=3||!b.key.equals(C_81592558.f_83036452.m_55287479(block).toString()))throw new IllegalArgumentException("Missing or unsupported block: "+b.key);
             resolved[i]=block.m_28027445(b.meta);
         }
@@ -231,16 +241,18 @@ public final class IslandOverlay {
             IslandBlockView connectedView=connectedTextures.enabled()&&(meshes[0]==null||hasFinish()&&meshes[1]==null)?new IslandBlockView(active,states,parts,x,y,z,startX,startY,startZ,finishX,finishY,finishZ):null;
             for(int group=0;group<(hasFinish()?2:1);group++){
             if(meshes[group]==null){
-                Set<Integer> opaque=new HashSet<>();for(int i=0;i<states.length;i++)if((parts.finish[i]?1:0)==group&&states[i].m_41958956().m_57757663()){IslandTemplate.Block b=active.blocks.get(i);opaque.add(key(b.x,b.y,b.z));}
+                Set<Integer> opaque=new HashSet<>();for(int i=0;i<states.length;i++)if((parts.finish[i]?1:0)==group&&!IslandMaterials.modern(active.blocks.get(i).key)&&states[i].m_41958956().m_57757663()){IslandTemplate.Block b=active.blocks.get(i);opaque.add(key(b.x,b.y,b.z));}
                 builtModel=mc.m_01427411().m_35215294().m_50076884(states[0]);
                 buffer.m_90389466(GL11.GL_QUADS,C_90362304.f_51724203);
                 try{for(int i=0;i<states.length;i++){
                     if((parts.finish[i]?1:0)!=group)continue;
-                    IslandTemplate.Block b=active.blocks.get(i);C_41102159 model=mc.m_01427411().m_35215294().m_50076884(states[i]);
-                    int tint=states[i].m_41958956().m_51470331(states[i]);
-                    C_32594356 texturePos=connectedView==null?null:new C_32594356(x+b.x+(group==1?finishX:startX),y+b.y+(group==1?finishY:startY),z+b.z+(group==1?finishZ:startZ));
-                    for(C_28786548 face:C_28786548.values())if(!opaque.contains(key(b.x+face.m_48689500(),b.y+face.m_29389506(),b.z+face.m_22521050())))quads(buffer,connectedView==null?model.m_14859469(face):connectedTextures.transform(connectedView,states[i],texturePos,model.m_14859469(face)),b,tint);
-                    quads(buffer,connectedView==null?model.m_89748930():connectedTextures.transform(connectedView,states[i],texturePos,model.m_89748930()),b,tint);
+                    IslandTemplate.Block b=active.blocks.get(i);boolean modernBlock=IslandMaterials.modern(b.key);C_41102159 model=modernBlock?ModernAppearance.islandModel(b.key):mc.m_01427411().m_35215294().m_50076884(states[i]);
+                    if(model==null)throw new IllegalArgumentException("Cannot render modern island block: "+b.key);
+                    int tint=modernBlock?0xFFFFFF:states[i].m_41958956().m_51470331(states[i]);
+                    boolean ctm=connectedView!=null&&!modernBlock;
+                    C_32594356 texturePos=!ctm?null:new C_32594356(x+b.x+(group==1?finishX:startX),y+b.y+(group==1?finishY:startY),z+b.z+(group==1?finishZ:startZ));
+                    for(C_28786548 face:C_28786548.values())if(!opaque.contains(key(b.x+face.m_48689500(),b.y+face.m_29389506(),b.z+face.m_22521050())))quads(buffer,!ctm?model.m_14859469(face):connectedTextures.transform(connectedView,states[i],texturePos,model.m_14859469(face)),b,tint);
+                    quads(buffer,!ctm?model.m_89748930():connectedTextures.transform(connectedView,states[i],texturePos,model.m_89748930()),b,tint);
                 }if(buffer.m_34710145()==0)throw new IllegalStateException("No visible block faces were found");meshes[group]=buffer.m_68005141();}finally{buffer.m_21091689();}
             }
             GL11.glPushMatrix();try{GL11.glTranslated(group==1?finishX:startX,group==1?finishY:startY,group==1?finishZ:startZ);buffer.m_90389466(GL11.GL_QUADS,C_90362304.f_51724203);buffer.m_76351101(meshes[group]);tess.m_70070273();if(preview){int[] box=parts.bounds[group];GL11.glTranslated(box[0],box[1],box[2]);GL11.glPushAttrib(GL11.GL_ENABLE_BIT|GL11.GL_DEPTH_BUFFER_BIT|GL11.GL_CURRENT_BIT|GL11.GL_LINE_BIT);try{outline(box[3]-box[0],box[4]-box[1],box[5]-box[2]);}finally{GL11.glPopAttrib();}}}finally{GL11.glPopMatrix();}

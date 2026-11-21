@@ -7,6 +7,7 @@ public final class ReplayBookmarksScreen extends BridgeScreen {
  private static final java.util.concurrent.ExecutorService WORKER=java.util.concurrent.Executors.newSingleThreadExecutor(r->{Thread t=new Thread(r,"BridgeTap jump bookmarks");t.setDaemon(true);return t;});
  private java.util.concurrent.CompletableFuture<List<ReplayBookmarks.Bookmark>> jumps;private int automaticCount;
  private final C_85740840 parent;private final RunHistory.Run run;private ReplayBookmarks bookmarks;private String selected="",name="",message="";private int page;
+ @Override protected int canvasHeight(){return 620;}
  public ReplayBookmarksScreen(C_85740840 parent,RunHistory.Run run){this.parent=parent;this.run=run;try{bookmarks=new ReplayBookmarks(Paths.get("config/bridgetap/replay-bookmarks"),run.id);ReplayData active=watching()?ReplaySession.recording():run.replay;jumps=java.util.concurrent.CompletableFuture.supplyAsync(()->{try{return ReplayJumpBookmarks.detect(active!=null?active:BridgeTracker.history().replay(run));}catch(Exception ex){throw new java.util.concurrent.CompletionException(ex);}},WORKER);}catch(Exception ex){message=ex.getMessage();}}
  private boolean watching(){return run.id.equals(ReplaySession.recordingId());}
  private interface Work{void run()throws Exception;}
@@ -14,6 +15,7 @@ public final class ReplayBookmarksScreen extends BridgeScreen {
  private static String time(int tick){return String.format(Locale.US,"%.2fs / Tick %d",tick/20.0,tick);}
  private void go(ReplayBookmarks.Bookmark picked)throws Exception{if(!watching()){if(BridgeTracker.isBridging())throw new IllegalArgumentException("Finish your bridge first");ReplayData data=BridgeTracker.history().replay(run);if(data==null||!ReplaySession.start(run,data))throw new IllegalArgumentException("Join a world to watch this replay");}ReplaySession.inspectTick(picked.tick);open(null);}
  @Override protected void paint(){header("Replay bookmarks","Automatic jumps / Named moments / Exact-tick navigation");button(watching()?"Return to replay":"Back",710,15,130,this::back);
+  if(!watching())button("Watch replay",550,15,148,()->action(()->{if(BridgeTracker.isBridging())throw new IllegalArgumentException("Finish your bridge first");ReplayData recording=BridgeTracker.history().replay(run);if(recording==null||!ReplaySession.start(run,recording))throw new IllegalArgumentException("Join a world to watch this replay");ReplaySession.inspectTick(0);open(new ReplayBookmarksScreen(null,run));}));
   panel(20,74,450,364);panel(486,74,354,364);clipped(run.displayName(),36,90,420,ACCENT);
   if(bookmarks==null){footer(message);return;}if(jumps!=null&&jumps.isDone()){try{List<ReplayBookmarks.Bookmark> found=jumps.join();bookmarks.automatic(found);automaticCount=found.size();}catch(Exception ex){message="Could not read automatic jumps. Manual bookmarks remain available.";}finally{jumps=null;}}List<ReplayBookmarks.Bookmark> rows=bookmarks.list();page=Math.min(page,Math.max(0,(rows.size()-1)/8));
   if(rows.isEmpty())label("No bookmarks yet. Add one while watching this replay.",36,145);
@@ -25,6 +27,14 @@ public final class ReplayBookmarksScreen extends BridgeScreen {
   ReplayBookmarks.Bookmark picked=bookmarks.find(selected);button("Go to bookmark",504,241,318,30,picked!=null,true,()->action(()->go(picked)));
   button("Rename selected",504,289,318,28,picked!=null&&!picked.automatic,false,()->action(()->{bookmarks.rename(selected,name);message="Bookmark renamed.";}));
   button("Delete selected",504,331,318,28,picked!=null&&!picked.automatic,false,()->action(()->{bookmarks.delete(selected);selected="";name="";message="Bookmark deleted.";}));
+  panel(20,450,820,112);
+  boolean watching=watching();int tick=watching?ReplaySession.currentTick():0,last=watching?ReplaySession.lastTick():1;
+  slider("replay-scrub","Timeline",tick,0,Math.max(1,last)," ticks",36,462,788,watching,v->ReplaySession.inspectTick(v));
+  button("Set A",36,512,94,28,watching,false,()->{ReplaySession.markLoopStart();message="Loop start set at tick "+ReplaySession.currentTick();});
+  button("Set B",140,512,94,28,watching,false,()->action(()->{ReplaySession.markLoopEnd();message="Loop end set.";}));
+  button("Play A-B",244,512,116,28,watching&&ReplaySession.loopStart()>=0&&ReplaySession.loopEnd()>ReplaySession.loopStart(),true,()->action(()->{ReplaySession.playLoop();open(null);}));
+  button("Clear loop",370,512,116,28,watching&&ReplaySession.loopStart()>=0,false,()->{ReplaySession.clearLoop();message="Loop cleared.";});
+  clipped(watching&&ReplaySession.loopStart()>=0?"A: "+ReplaySession.loopStart()+" / B: "+(ReplaySession.loopEnd()<0?"Not set":ReplaySession.loopEnd())+(ReplaySession.looping()?" / Loop ON":""):"Pause, scrub, set A and B to study a passage.",500,521,320,MUTED);
   label(picked!=null&&picked.automatic?"Automatic jump marker / Read only":"Opening a bookmark pauses at that tick.",504,389);footer(message.isEmpty()?"Click Go beside any jump. In playback, use the Bookmarks book in hotbar slot 5. Esc returns to replay.":message);
  }
  @Override protected void back(){open(watching()?null:parent);}

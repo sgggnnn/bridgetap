@@ -61,6 +61,7 @@ public final class AttemptRandomizer {
  private static void randomIsland()throws IOException{
   if(islandFiles.isEmpty())islandFiles=IslandLibrary.list(kind);List<Path> choices=new ArrayList<>(islandFiles);choices.removeIf(IslandOverlay::isFrom);Collections.shuffle(choices,RANDOM);
   for(Path file:choices){IslandTemplate template;try{template=templates.get(file);if(template==null){template=IslandTemplate.read(file);templates.put(file,template);}}catch(IOException unreadable){continue;}
+   try{ModernAppearance.prepareIsland(IslandMaterials.palette(template));}catch(IOException unavailable){continue;}
    if(!IslandOverlay.applyAutomatically(template,file))throw new IOException(IslandOverlay.autoStatus());return;
   }throw new IOException("No other readable islands in this library");
  }

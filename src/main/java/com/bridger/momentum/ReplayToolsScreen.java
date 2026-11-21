@@ -1,25 +1,47 @@
 package com.bridger.momentum;
 
-/** Small grouped tool hub; replay actions remain scoped to the selected recording. */
-public final class ReplayToolsScreen extends BridgeScreen {
- private final ReplayFolderScreen parent;private final BridgeHistoryScreen history;private final RunHistory.Run run;private String message="";private ReplayFolders folders;
- public ReplayToolsScreen(ReplayFolderScreen parent,BridgeHistoryScreen history,RunHistory.Run run){this.parent=parent;this.history=history;this.run=run;try{folders=ReplayFolders.local();}catch(Exception ex){message=ex.getMessage();}}
+/** One task category at a time; general settings are separate from library tools. */
+public final class ReplayToolsScreen extends BridgeGlassScreen {
+ private final ReplayFolderScreen parent;private final BridgeHistoryScreen history;private final RunHistory.Run run;private String message="";private ReplayFolders folders;private int category;
+ private static final String[] CATEGORIES={"Share & review","Islands & overlays","Clips & statistics","Library management"};
+ private static final String[] DESCRIPTIONS={"Work with the replay selected in your library.","Create your look without changing the server world.","Record clips and track your progress.","Import, organize and manage your recordings."};
+ public ReplayToolsScreen(ReplayFolderScreen parent,BridgeHistoryScreen history,RunHistory.Run run){this.parent=parent;this.history=history;this.run=run;try{folders=ReplayFolders.local();}catch(Exception ex){message="Library settings are unavailable.";}}
  private interface Work{void run()throws Exception;}
  private void action(Work work){try{work.run();}catch(Exception ex){message=ex.getMessage();}}
- @Override protected void paint(){header("Replay tools","Choose a category / Actions for the selected replay");button("Join Discord",610,15,130,()->message=CommunityLinks.discord());button("Back",752,15,88,this::back);
-  panel(20,74,400,174);panel(440,74,400,174);panel(20,266,400,190);panel(440,266,400,190);
-  text("SELECTED REPLAY",38,93,ACCENT);clipped(run==null?"Select a recording in the library first.":run.displayName(),38,115,360,MUTED);
-  button("Export replay file",38,143,176,26,run!=null,false,()->action(()->{java.nio.file.Path file=BridgeTracker.history().exportReplay(run);message="Exported: "+file.getFileName();BridgeFileActions.open(BridgeTracker.history().exportsFolder());}));
-  button("Copy share code",226,143,176,26,run!=null,false,()->open(new ReplayShareScreen(this,run)));
-  button("Export video",38,177,176,26,run!=null,false,()->open(new ReplayVideoExportScreen(this,run)));button("Analyze fail",226,177,176,26,run!=null,false,()->action(()->open(new ReplayFailureScreen(this,run))));
-  button("Replay bookmarks",38,213,364,26,run!=null,false,()->open(new ReplayBookmarksScreen(this,run)));
-  text("ISLANDS & APPEARANCE",458,93,ACCENT);label("Decorations and client-side block visuals",458,115);
-  button("Island library",458,143,364,26,true,false,()->open(new IslandScreen(this,run)));button("Block appearance",458,177,364,26,true,false,()->open(new PlacementAppearanceScreen(this)));
-  text("RECORDINGS",38,285,ACCENT);button("Statistics",38,315,364,28,true,false,()->open(new StatisticsScreen(this)));button("Video clips & audio",38,349,364,28,true,false,()->open(new ClipScreen(this)));button("Import replay files",38,383,364,28,true,false,()->open(new BridgeImportScreen(history,parent)));button("Replay storage / auto-save",38,417,364,28,true,false,()->open(new ReplayStorageScreen(this)));
-  text("SETTINGS & ORGANIZATION",458,285,ACCENT);button("BridgeTap settings",458,315,364,28,true,false,()->open(new BridgeSettingsScreen(this)));if(folders==null){footer(message);return;}
-  button("Server folders: "+(folders.autoServers()?"ON":"OFF"),458,355,364,28,true,folders.autoServers(),()->action(()->{folders.toggleAutoServers();parent.reload();}));
-  button("Delete unprotected fails after 2 days: "+(folders.cleanupFailures()?"ON":"OFF"),458,395,364,28,true,folders.cleanupFailures(),()->action(()->{folders.toggleCleanupFailures();ReplayStorage.organize(BridgeTracker.history(),BridgeTracker.history().savedCached());parent.reload();}));
-  footer(message.isEmpty()?"Saved replays and favorites stay protected from automatic cleanup.":message);
+ @Override protected boolean flatControls(){return true;}
+ private void item(String title,String description,int row,boolean enabled,Runnable action){
+  int y=176+row*68;button(title,264,y,310,36,enabled,false,false,enabled?"":"Select a replay in the library first",action);clipped(description,600,y+12,480,MUTED);
+ }
+ @Override protected void paint(){
+  windowHeader("Tools");button("Guide",856,25,104,32,true,false,()->open(new BridgeTutorialScreen(this)));button("Back",972,25,116,32,true,false,this::back);
+  sidebar("WORKSPACE");
+  for(int i=0;i<CATEGORIES.length;i++){final int selected=i;sidebarItem(CATEGORIES[i],138+i*44,category==i,()->{category=selected;message="";});}
+  button("BridgeTap Settings",32,514,184,32,true,false,()->open(new BridgeSettingsScreen(this)));button("Join Discord",32,558,184,32,true,false,()->message=CommunityLinks.discord());
+  ui.strongText(CATEGORIES[category],264,104,TEXT,1.2f);clipped(DESCRIPTIONS[category],264,132,824,MUTED);
+  if(category==0){
+   item("Copy share code","Share a replay through a message.",0,run!=null,()->open(new ReplayShareScreen(this,run)));
+   item("Export replay file","Save a .btreplay to send to a friend.",1,run!=null,()->action(()->{java.nio.file.Path file=BridgeTracker.history().exportReplay(run);message="Exported: "+file.getFileName();BridgeFileActions.open(BridgeTracker.history().exportsFolder());}));
+   item("Export video","Render a video of this replay.",2,run!=null,()->open(new ReplayVideoExportScreen(this,run)));
+   item("Bookmarks","Jump to key moments in this replay.",3,run!=null,()->open(new ReplayBookmarksScreen(this,run)));
+   item("Analyze fail","Review the last placement of this run.",4,run!=null,()->action(()->open(new ReplayFailureScreen(this,run))));
+  }else if(category==1){
+   item("Island library","Choose, place or customize an island.",0,true,()->open(new IslandScreen(this,run)));
+   item("Block appearance","Change the blocks you see and hold.",1,true,()->open(new PlacementAppearanceScreen(this)));
+   item("Sky overlay","Extract and recolor a pack's sky.",2,true,()->open(new SkyOverlayScreen(this)));
+   item("Sandstone overlay","Extract and recolor sandstone textures.",3,true,()->open(new SkyOverlayScreen(this,true)));
+  }else if(category==2){
+   item("Video clips & audio","Set up recording, sound and microphone.",0,true,()->open(new ClipScreen(this)));
+   item("Statistics","See times, success rate and trends.",1,true,()->open(new StatisticsScreen(this)));
+  }else{
+   item("Import replay files","Add recordings shared by other players.",0,true,()->open(new BridgeImportScreen(history,parent)));
+   item("Storage & auto-save","Choose what to save and keep.",1,true,()->open(new ReplayStorageScreen(this)));
+   if(folders!=null){
+    toggle("Group replays by server",folders.autoServers(),264,340,824,()->action(()->{folders.toggleAutoServers();parent.reload();}));
+    toggle("Delete unprotected fails after 2 days",folders.cleanupFailures(),264,394,824,()->action(()->{folders.toggleCleanupFailures();ReplayStorage.organize(BridgeTracker.history(),BridgeTracker.history().savedCached());parent.reload();}));
+    label("Saved replays and favorites stay protected.",264,450);
+   }
+  }
+  windowStatus(message.isEmpty()?(category==0?(run==null?"Select a replay in the library to use these actions.":"Selected: "+run.displayName()):"Choose a category on the left / Esc: return to replays"):message);
  }
  @Override protected void back(){parent.reload();open(parent);}
 }

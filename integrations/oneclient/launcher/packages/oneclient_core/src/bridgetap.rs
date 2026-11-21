@@ -1,5 +1,7 @@
 //! BridgeTap local edition. Payload is supplied by the reproducible integration build.
 use crate::LauncherResult;
+pub mod versions;
+pub const MENU_CATALOG: &str = include_str!("../assets/bridgetap-menus.json");
 use oneclient_cluster::Cluster;
 use oneclient_common::{domain::GameLoader, paths};
 use std::path::Path;
@@ -73,11 +75,24 @@ pub async fn install(cluster: &Cluster, cwd: &Path, mods_in_cluster: bool) -> La
     let target = mods.join(FILE);
     let active = compatible(cluster) && enabled(cluster);
     if !active {
-        if target.is_file() && std::fs::read(&target)? == PAYLOAD {
-            std::fs::remove_file(target)?;
+        if target.is_file()
+            && oneclient_content::packages::read_jar_manifest(&target)
+                .await
+                .mod_id
+                .as_deref()
+                == Some("bridgetap")
+        {
+            let backup = root.join(".oneclient/bridgetap-backups");
+            std::fs::create_dir_all(&backup)?;
+            std::fs::rename(
+                &target,
+                backup.join(format!("{}-{FILE}", uuid::Uuid::new_v4())),
+            )?;
         }
         return Ok(());
     }
+    versions::maybe_auto_update().await;
+    let payload = versions::payload().await.map_err(std::io::Error::other)?;
     std::fs::create_dir_all(&mods)?;
     let mut dependency = false;
     let mut check = tokio::fs::read_dir(&mods).await?;
@@ -123,11 +138,11 @@ pub async fn install(cluster: &Cluster, cwd: &Path, mods_in_cluster: bool) -> La
             std::fs::rename(&path, destination)?;
         }
     }
-    if target.is_file() && std::fs::read(&target)? == PAYLOAD {
+    if target.is_file() && std::fs::read(&target)? == payload {
         return Ok(());
     }
     let temporary = mods.join(format!(".bridgetap-{}.part", uuid::Uuid::new_v4()));
-    std::fs::write(&temporary, PAYLOAD)?;
+    std::fs::write(&temporary, &payload)?;
     if target.exists() {
         let backup = root.join(".oneclient/bridgetap-backups");
         std::fs::create_dir_all(&backup)?;
@@ -138,4 +153,40 @@ pub async fn install(cluster: &Cluster, cwd: &Path, mods_in_cluster: bool) -> La
     }
     std::fs::rename(temporary, target)?;
     Ok(())
+}
+
+/// A small allowlisted message is consumed by the mod on its client thread.
+pub async fn open_menu(cluster: &Cluster, id: &str) -> Result<(), String> {
+    let catalog: serde_json::Value =
+        serde_json::from_str(MENU_CATALOG).map_err(|e| e.to_string())?;
+    if !catalog
+        .as_array()
+        .is_some_and(|rows| rows.iter().any(|row| row["id"].as_str() == Some(id)))
+    {
+        return Err("Menu BridgeTap inconnu.".into());
+    }
+    if !compatible(cluster) || !enabled(cluster) {
+        return Err("Active BridgeTap sur un profil 1.8.9 Ornithe.".into());
+    }
+    let root = cluster
+        .game_dir()
+        .map_err(|e| e.to_string())?
+        .join("config/bridgetap");
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis() as u64;
+    let ready = std::fs::read_to_string(root.join("client-menu.ready"))
+        .ok()
+        .and_then(|text| text.trim().parse::<u64>().ok());
+    if !ready.is_some_and(|time| now.saturating_sub(time) < 5000 && time <= now + 5000) {
+        return Err("Lance ce profil avec la nouvelle version BridgeTap et rejoins un monde, puis réessaie.".into());
+    }
+    let data = format!(
+        "menu={id}\ncreated={now}\nrequest={}\n",
+        uuid::Uuid::new_v4()
+    );
+    polyio::write_atomic(root.join("client-menu.request"), data)
+        .await
+        .map_err(|e| e.to_string())
 }

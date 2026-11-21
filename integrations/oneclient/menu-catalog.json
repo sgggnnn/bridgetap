@@ -1,0 +1,152 @@
+[
+  {
+    "id": "replays",
+    "title": "Bibliothèque des replays",
+    "category": "Replays"
+  },
+  {
+    "id": "tools",
+    "title": "Tous les outils",
+    "category": "Replays"
+  },
+  {
+    "id": "imports",
+    "title": "Importer des replays",
+    "category": "Replays"
+  },
+  {
+    "id": "replay-details",
+    "title": "Détails du replay",
+    "category": "Replays"
+  },
+  {
+    "id": "share",
+    "title": "Partager un replay",
+    "category": "Replays"
+  },
+  {
+    "id": "bookmarks",
+    "title": "Signets du replay",
+    "category": "Replays"
+  },
+  {
+    "id": "video-export",
+    "title": "Exporter un replay en vidéo",
+    "category": "Replays"
+  },
+  {
+    "id": "fail-analysis",
+    "title": "Analyser un échec",
+    "category": "Replays"
+  },
+  {
+    "id": "statistics",
+    "title": "Statistiques",
+    "category": "Replays"
+  },
+  {
+    "id": "replay-storage",
+    "title": "Stockage et sauvegarde automatique",
+    "category": "Replays"
+  },
+  {
+    "id": "islands",
+    "title": "Bibliothèque des îles",
+    "category": "Îles"
+  },
+  {
+    "id": "island-presets",
+    "title": "Presets des îles",
+    "category": "Îles"
+  },
+  {
+    "id": "island-import",
+    "title": "Importer un preset",
+    "category": "Îles"
+  },
+  {
+    "id": "island-copy",
+    "title": "Copier une île dans le monde",
+    "category": "Îles"
+  },
+  {
+    "id": "island-materials",
+    "title": "Matériaux de l’île active",
+    "category": "Îles"
+  },
+  {
+    "id": "island-placement",
+    "title": "Positionner l’île active",
+    "category": "Îles"
+  },
+  {
+    "id": "blocks",
+    "title": "Apparence des blocs et sons",
+    "category": "Apparence"
+  },
+  {
+    "id": "sky",
+    "title": "Créer un overlay de ciel",
+    "category": "Apparence"
+  },
+  {
+    "id": "sandstone",
+    "title": "Créer un overlay de sandstone",
+    "category": "Apparence"
+  },
+  {
+    "id": "theme",
+    "title": "Thème et apparence des menus",
+    "category": "Apparence"
+  },
+  {
+    "id": "clips",
+    "title": "Clips vidéo, audio et microphone",
+    "category": "Enregistrement"
+  },
+  {
+    "id": "keybinds",
+    "title": "Profils de touches",
+    "category": "Réglages"
+  },
+  {
+    "id": "failure-display",
+    "title": "Affichage des échecs",
+    "category": "HUD"
+  },
+  {
+    "id": "colors",
+    "title": "Couleurs détaillées des overlays",
+    "category": "HUD"
+  },
+  {
+    "id": "hud-editor",
+    "title": "Éditeur HUD natif",
+    "category": "HUD"
+  },
+  {
+    "id": "classic-layout",
+    "title": "Placement HUD BridgeTap",
+    "category": "HUD"
+  },
+  {
+    "id": "settings",
+    "title": "Tous les réglages BridgeTap",
+    "category": "Réglages"
+  },
+  {
+    "id": "guide",
+    "title": "Guide et tutoriels",
+    "category": "Aide"
+  },
+  {
+    "id": "updates",
+    "title": "Mises à jour du mod en jeu",
+    "category": "Aide"
+  },
+  {
+    "id": "discord",
+    "title": "Communauté Discord",
+    "category": "Aide"
+  }
+]

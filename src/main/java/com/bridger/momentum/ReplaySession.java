@@ -83,6 +83,13 @@ public final class ReplaySession {
  public static RunHistory.Run currentRun(){return current==null?null:current.run;}
  public static int currentTick(){return current==null?0:(int)Math.floor(current.timeline.tick());}
  public static void openBookmarks(){if(current!=null&&!ReplayVideoExport.active()){current.timeline.pause();Minecraft.m_20213497().m_52715402(new ReplayBookmarksScreen(null,current.run));}}
+ public static int loopStart(){return current==null?-1:current.timeline.loopStart();}
+ public static int loopEnd(){return current==null?-1:current.timeline.loopEnd();}
+ public static boolean looping(){return current!=null&&current.timeline.looping();}
+ public static void markLoopStart(){if(current!=null)current.timeline.loopStart(currentTick());}
+ public static void markLoopEnd(){if(current!=null)current.timeline.loopEnd(currentTick());}
+ public static void playLoop(){if(current!=null){current.timeline.playLoop();current.lastFrame=System.nanoTime();}}
+ public static void clearLoop(){if(current!=null)current.timeline.clearLoop();}
  public static int lastTick(){return current==null?0:current.timeline.lastTick();}
  private int videoCameraMode=-1;
  public static final class VideoState {final C_88708284[] hotbar;final double tick;final boolean playing,pov,hideGui,bobbing;final double x,y,z;final float yaw,pitch;VideoState(ReplaySession s){hotbar=java.util.Arrays.copyOf(s.camera.f_29439708.f_35249023,9);hideGui=Minecraft.m_20213497().f_58088711.f_06955029;bobbing=Minecraft.m_20213497().f_58088711.f_16743685;tick=s.timeline.tick();playing=s.timeline.playing();pov=s.followPov;x=s.camera.f_78826675;y=s.camera.f_31030949;z=s.camera.f_97691941;yaw=s.camera.f_80130373;pitch=s.camera.f_03549461;}}

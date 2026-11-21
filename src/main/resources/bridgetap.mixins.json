@@ -31,8 +31,8 @@
     "ModernBlockRenderMixin",
     "AppearanceItemMixin",
     "AppearanceRenderItemMixin",
-    "AppearanceSoundMixin"
-    ,"AppearanceCeraMixin",
+    "AppearanceSoundMixin",
+    "AppearanceCeraMixin",
     "ReplayRendererReloadMixin",
     "ReplayExportHandMixin"
   ],

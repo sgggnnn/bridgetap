@@ -66,7 +66,8 @@ public final class IslandScreen extends BridgeScreen {
         try{
             IslandTemplate island=current();text("SELECTED ISLAND",448,124,MUTED);clipped(island.name,448,144,372,TEXT);
             if(previewTemplate!=island){preview=new IslandPreview(island);previewTemplate=island;}preview.paint(ui,448,165,372,172);
-            label(island.width+" x "+island.height+" x "+island.depth+" blocks  /  "+island.blocks.size()+" copied",448,347);
+            label(island.width+" x "+island.height+" x "+island.depth+" / "+island.blocks.size()+" blocks",448,347);
+            button("Materials",708,342,112,24,true,false,()->open(new IslandMaterialsScreen(this,island)));
             if(tab==3){button("Import island",448,374,372,32,true,true,()->run(()->{Path imported=IslandLibrary.importFile(files.get(selected));selectSaved(imported);message="Imported. Click Place to preview it.";}));}
             else{
                 button("Apply automatically",448,374,248,32,true,true,()->run(this::place));

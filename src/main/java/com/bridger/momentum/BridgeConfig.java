@@ -35,7 +35,7 @@ public class BridgeConfig {
     public static String replayQuery="", replayStatus="ALL", replayAxis="ALL", replayTechnique="ALL", replayContent="ALL";
     public static String replaySource="ALL",replayMode="ALL";
     public static String replayMinTime="", replayMaxTime="";
-    public static final String[] COLOR_NAMES = {"Labels", "Coordinates", "Positive delta", "Negative delta", "Ticks", "Gain", "No Gain", "Header", "Background", "Border", "Velo", "Axis delta positive", "Axis delta negative", "Jump angle", "Zero jump delta", "1.0 Flat", "1.05 Flat", "1.1 Flat", "1.15 Flat", "1.2 Flat", "4b Flat", "Other flats", "Tap Speed", "4b Tap Speed", "Hold Speed", "4b Hold Speed", "5b Late", "6b Late", "Turn", "Fail Tap / 4b", "Head hitter", "Plates", "Other jumps"};
+    public static final String[] COLOR_NAMES = {"Labels", "Coordinates", "Positive delta", "Negative delta", "Ticks", "Gain", "No Gain", "Header", "Background", "Border", "Velo", "Axis delta positive", "Axis delta negative", "Jump angle", "Zero jump delta", "1.0 Flat", "1.05 Flat", "1.1 Flat", "1.15 Flat", "1.2 Flat", "4b Flat", "Other flats", "Tap Speed", "4b Tap Speed", "Hold Speed", "4b Hold Speed", "5b Late", "6b Late", "Turn", "Fail Tap / Fail 4b", "Head hitter", "Plates", "Other jumps"};
     public static final String[] colors = {"b", "e", "a", "c", "7", "a", "e", "b", "0", "7", "7", "a", "c", "7", "e", "b", "b", "b", "b", "b", "b", "b", "b", "b", "b", "b", "b", "b", "b", "b", "b", "b", "b"};
     public static String color(int part) { return "\u00a7" + colors[part]; }
     public static int rgb(int part) {

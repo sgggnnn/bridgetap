@@ -5,21 +5,22 @@ import java.text.SimpleDateFormat;
 import net.minecraft.unmapped.C_85740840;
 
 /** Expanded, scrollable original bridge samples, available without starting playback. */
-public final class BridgeReplayDetailsScreen extends BridgeScreen {
+public final class BridgeReplayDetailsScreen extends BridgeGlassScreen {
     private final C_85740840 parent;private final RunHistory.Run run;private int offset;private String message="";
     public BridgeReplayDetailsScreen(C_85740840 parent,RunHistory.Run run){this.parent=parent;this.run=run;BridgeTracker.history().indexModes(java.util.Collections.singletonList(run));}
     @Override protected void paint(){
-        header("Replay details","Bridge coordinates and jump breakdown");button("Back",752,15,88,this::back);button("Export video",382,15,170,()->open(new ReplayVideoExportScreen(this,run)));button("Analyze fail",564,15,176,()->{try{open(new ReplayFailureScreen(this,run));}catch(Exception ignored){}});
-        panel(20,74,820,104);clipped(run.displayName(),38,92,780,TEXT);clipped("Server: "+run.serverLabel(),38,116,780,MUTED);
-        label(String.format(Locale.US,"%.3fs / %d jumps / Axis %s",run.time,run.jumps,run.axis),38,143);label(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",Locale.US).format(new Date(run.created)),540,143);
-        clipped("Mode: "+(run.modeReady()?run.mode().label:"Detecting..."),38,160,480,ACCENT);
-        panel(20,194,820,256);text("BRIDGE COORDINATES",38,211,ACCENT);
-        if(run.details.isEmpty())label("No bridge coordinate samples were saved for this run.",38,250);
-        for(int i=0;i<10&&offset+i<run.details.size();i++)clipped(run.details.get(offset+i),38,240+i*19,770,TEXT);
-        button("Previous",38,460,102,24,offset>0,false,()->scroll(0,0,-10));button("Next",152,460,102,24,offset+10<run.details.size(),false,()->scroll(0,0,10));label((Math.min(offset+1,run.details.size()))+" - "+Math.min(offset+10,run.details.size())+" / "+run.details.size(),290,468);
-        button("Export file",462,460,158,24,true,false,()->{try{BridgeTracker.history().exportReplay(run);message=BridgeFileActions.open(BridgeTracker.history().exportsFolder());}catch(Exception ex){message="Could not export this replay file.";}});
-        button("Copy share code",632,460,208,24,true,true,()->open(new ReplayShareScreen(this,run)));
-        footer(message);
+        windowHeader("Replay details");button("Export video",700,25,160,32,true,false,()->open(new ReplayVideoExportScreen(this,run)));button("Analyze fail",872,25,140,32,true,false,()->{try{open(new ReplayFailureScreen(this,run));}catch(Exception ex){message="Could not analyze this recording.";}});button("Back",1024,25,64,32,true,false,this::back);
+        clipped(run.displayName(),32,106,640,TEXT);clipped(run.serverLabel(),32,134,640,MUTED);
+        ui.strongText(String.format(Locale.US,"%.3fs",run.time),32,168,TEXT,1.5f);
+        label(run.jumps+" jumps / Axis "+run.axis+" / "+(run.modeReady()?run.mode().label:"Detecting..."),200,174);
+        label(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",Locale.US).format(new Date(run.created)),840,134);
+        rect(32,214,1056,1,UiTheme.alpha(TEXT,.06));text("BRIDGE COORDINATES",32,232,UiTheme.alpha(TEXT,.5));
+        if(run.details.isEmpty())label("No bridge coordinate samples were saved for this run.",32,280);
+        for(int i=0;i<10&&offset+i<run.details.size();i++)clipped(run.details.get(offset+i),32,268+i*24,1056,TEXT);
+        button("Previous",32,550,106,32,offset>0,false,()->scroll(0,0,-10));button("Next",150,550,106,32,offset+10<run.details.size(),false,()->scroll(0,0,10));label(Math.min(offset+1,run.details.size())+" - "+Math.min(offset+10,run.details.size())+" / "+run.details.size(),280,560);
+        button("Export file",712,550,164,32,true,false,()->{try{BridgeTracker.history().exportReplay(run);message=BridgeFileActions.open(BridgeTracker.history().exportsFolder());}catch(Exception ex){message="Could not export this replay file.";}});
+        button("Copy share code",888,550,200,32,true,false,()->open(new ReplayShareScreen(this,run)));
+        windowStatus(message.isEmpty()?"Scroll to review jump samples / Your recording stays unchanged":message);
     }
     @Override protected void scroll(int x,int y,int direction){offset=Math.max(0,Math.min(Math.max(0,run.details.size()-10),offset+direction));}
     @Override protected void back(){open(parent);}

@@ -14,6 +14,7 @@ public final class OneClientIntegration {
     private static final float[][] sizes={{270,74},{420,118},{76,110}};
     private static final String[] TITLES={"Bridge coordinates","Replay information","Replay keystrokes"};
     public static void tick(){
+        BridgeTapMenus.pollLauncher();
         if(tried){if(registered)try{sync.invoke(configAdapter);}catch(ReflectiveOperationException ex){System.err.println("[BridgeTap] OneConfig settings sync: "+ex);}return;}tried=true;
         try{
             Class<?> wrapper=Class.forName("org.polyfrost.oneconfig.api.hud.v1.OneConfigHudWrapper");

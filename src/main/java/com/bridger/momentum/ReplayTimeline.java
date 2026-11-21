@@ -7,6 +7,7 @@ public final class ReplayTimeline {
  private final int endTick;
  private double tick,speed=1;
  private boolean playing=true;
+ private int loopStart=-1,loopEnd=-1;private boolean looping;
  public ReplayTimeline(ReplayData data){this(data,Double.NaN);}
  public ReplayTimeline(ReplayData data,double recordedSeconds){
   this.data=data;
@@ -24,7 +25,20 @@ public final class ReplayTimeline {
  public boolean finished(){return tick>=endTick;}
  public void pause(){playing=false;}
  public double speed(){return speed;}
- public void advance(double seconds){if(playing){seek(tick+Math.max(0,seconds)*20*speed);if(finished())playing=false;}}
+ public void advance(double seconds){if(playing&&Double.isFinite(seconds)){
+  double next=tick+Math.max(0,seconds)*20*speed;
+  if(looping){if(next>=loopEnd)next=loopStart+(next-loopStart)%(loopEnd-loopStart);else if(next<loopStart)next=loopStart;}
+  seek(next);if(finished()&&!looping)playing=false;
+ }}
+ public int loopStart(){return loopStart;}
+ public int loopEnd(){return loopEnd;}
+ public boolean looping(){return looping;}
+ public void loopStart(int value){loopStart=Math.max(0,Math.min(endTick,value));if(loopEnd<=loopStart){loopEnd=-1;looping=false;}}
+ public void loopEnd(int value){int end=Math.max(0,Math.min(endTick,value));if(loopStart<0||end<=loopStart)throw new IllegalArgumentException("Set A before B; choose an end tick after A.");loopEnd=end;}
+ public void looping(boolean enabled){if(enabled&&(loopStart<0||loopEnd<=loopStart))throw new IllegalArgumentException("Set A and B before enabling the loop.");looping=enabled;}
+ public void clearLoop(){loopStart=loopEnd=-1;looping=false;}
+ public void playLoop(){looping(true);seek(loopStart);playing=true;}
+
  public void seek(double tick){this.tick=Math.max(0,Math.min(endTick,tick));}
  public void toggle(){if(!playing&&finished())seek(0);playing=!playing;}
  public void restart(){tick=0;playing=true;}
