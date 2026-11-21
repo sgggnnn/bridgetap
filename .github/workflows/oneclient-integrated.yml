@@ -1,0 +1,45 @@
+name: Build bridgetapclient
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/oneclient-integrated-build]
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    env:
+      CARGO_BUILD_JOBS: '3'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Build native BridgeTap payload when no prebuilt is supplied
+        if: hashFiles('integrations/oneclient/payload/BridgeTap-OneClient.jar') == ''
+        run: ./gradlew.bat build -PoneclientJavaHome="$env:JAVA_HOME"
+      - name: Validate payload handling
+        run: python tests/test_oneclient_payload.py
+      - name: Prepare and build bridgetapclient
+        shell: pwsh
+        run: |
+          $options = @{ Destination = "$env:GITHUB_WORKSPACE/build/BridgeTapClient" }
+          if (Test-Path integrations/oneclient/payload/BridgeTap-OneClient.jar) {
+            $options.ModJar = 'integrations/oneclient/payload/BridgeTap-OneClient.jar'
+          }
+          ./scripts/build-oneclient-launcher.ps1 @options
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bridgetapclient-windows-x64
+          path: dist/bridgetapclient.exe
+          if-no-files-found: error
+      - name: Test bundled default and opt-out persistence
+        working-directory: build/BridgeTapClient
+        run: cargo test --locked -p oneclient_core --lib bridgetap::tests

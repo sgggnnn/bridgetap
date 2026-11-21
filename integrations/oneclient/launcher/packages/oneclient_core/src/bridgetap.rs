@@ -12,20 +12,55 @@ fn marker(cluster: &Cluster) -> LauncherResult<std::path::PathBuf> {
     Ok(paths::cluster_dir(&cluster.folder_name)?.join(".oneclient/bridgetap-enabled"))
 }
 pub fn enabled(cluster: &Cluster) -> bool {
-    marker(cluster).is_ok_and(|p| p.is_file())
+    compatible(cluster) && marker(cluster).is_ok_and(|p| enabled_at(&p))
+}
+fn enabled_at(marker: &Path) -> bool {
+    !marker.with_file_name("bridgetap-disabled").exists()
 }
 pub fn set_enabled(cluster: &Cluster, enabled: bool) -> LauncherResult<()> {
-    let path = marker(cluster)?;
+    if enabled && !compatible(cluster) {
+        return Err(std::io::Error::other("BridgeTap requires Minecraft 1.8.9 Ornithe").into());
+    }
+    set_enabled_at(&marker(cluster)?, enabled)?;
+    Ok(())
+}
+fn set_enabled_at(path: &Path, enabled: bool) -> std::io::Result<()> {
+    let disabled = path.with_file_name("bridgetap-disabled");
     if enabled {
-        if !compatible(cluster) {
-            return Err(std::io::Error::other("BridgeTap requires Minecraft 1.8.9 Ornithe").into());
-        }
         std::fs::create_dir_all(path.parent().unwrap())?;
         std::fs::write(path, b"BridgeTap local edition\n")?;
-    } else if path.exists() {
-        std::fs::remove_file(path)?;
+        if disabled.exists() {
+            std::fs::remove_file(disabled)?;
+        }
+    } else {
+        std::fs::create_dir_all(disabled.parent().unwrap())?;
+        std::fs::write(disabled, b"BridgeTap disabled by user\n")?;
+        if path.exists() {
+            std::fs::remove_file(path)?;
+        }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn bundled_default_and_persistent_opt_out() {
+        let directory = std::env::temp_dir().join(format!("bridgetap-{}", uuid::Uuid::new_v4()));
+        let marker = directory.join(".oneclient/bridgetap-enabled");
+        assert!(enabled_at(&marker));
+        set_enabled_at(&marker, false).unwrap();
+        assert!(!enabled_at(&marker));
+        set_enabled_at(&marker, false).unwrap();
+        assert!(!enabled_at(&marker));
+        set_enabled_at(&marker, true).unwrap();
+        assert!(enabled_at(&marker));
+        set_enabled_at(&marker, true).unwrap();
+        assert!(enabled_at(&marker));
+        std::fs::remove_dir_all(directory).unwrap();
+    }
 }
 /// Called after normal content materialization and after the launch directory lock.
 pub async fn install(cluster: &Cluster, cwd: &Path, mods_in_cluster: bool) -> LauncherResult<()> {

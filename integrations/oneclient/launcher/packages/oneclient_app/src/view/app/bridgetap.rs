@@ -12,8 +12,8 @@ impl Component for BridgeTap {
         let _ = *revision.read();
         let mut message = use_state(String::new);
         let mut body=rect().vertical().spacing(18.).padding(Gaps::new_all(40.))
-            .child(label().text("BridgeTap · Local Edition").font_size(text_size(30.)).color(colors::fg_primary()))
-            .child(label().text("Enable BridgeTap for your Minecraft 1.8.9 Fabric / Ornithe profiles. Changes apply on the next launch.").color(colors::fg_secondary()))
+            .child(label().text("bridgetapclient").font_size(text_size(30.)).color(colors::fg_primary()))
+            .child(label().text("BridgeTap is bundled and enabled by default for Minecraft 1.8.9 Ornithe profiles. Keep the OneConfig bundle enabled. Changes apply on the next launch.").color(colors::fg_secondary()))
             .child(label().text("In game: open OneConfig > BridgeTap for coordinates, detection and tools. Use the OneConfig HUD editor to move all three overlays.").color(colors::fg_secondary()))
             .child(label().text("Replays · Island library & presets · Video clips · Block appearance · Overlay colors").color(colors::fg_secondary()))
             .child(label().text(message.read().clone()).color(colors::fg_primary()));

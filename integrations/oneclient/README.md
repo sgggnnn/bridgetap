@@ -29,14 +29,14 @@ OneConfig dependencies are compile-only and are not repackaged into BridgeTap. T
 `upstream.txt` pins the upstream OneLauncher commit. `launcher.patch` contains the small upstream changes; `launcher/` contains new source modules. `prepare-launcher.py` fetches that commit, checks the patch, and supplies the locally built mod payload:
 
 ```powershell
-python integrations/oneclient/prepare-launcher.py --jar dist/BridgeTap-1.7.0-OneClient.jar --destination build/BridgeTapClient
+python integrations/oneclient/prepare-launcher.py --jar build/libs/BridgeTap-1.10.0-dev.6-OneClient.jar --destination build/BridgeTapClient
 cd build/BridgeTapClient
 cargo build --locked --release -p oneclient_app
 ```
 
 Rust 1.97+ and Windows Visual C++ Build Tools/Windows SDK are required on Windows. The executable is produced at `target/release/oneclient_app.exe`. It has **not** been built on this machine: Cargo stops because `link.exe` is missing. Rust syntax/format checks were run for the new modules, not a complete Rust type check.
 
-The customized launcher adds a **BridgeTap** navigation page with per-profile activation. Installation happens after normal content materialization, under the existing launch directory lock, and only on 1.8.9 Ornithe profiles. Enable the normal OneConfig bundle before launching. Previous BridgeTap JARs are identified by manifest ID and moved to `.oneclient/bridgetap-backups`; they are not deleted. Configurations, recordings and island libraries are preserved. Disabling stops installing the embedded payload on subsequent launches; backups are retained for manual recovery.
+The customized launcher adds a **BridgeTap** navigation page with BridgeTap enabled by default on compatible profiles and a persistent per-profile opt-out. Installation happens after normal content materialization, under the existing launch directory lock, and only on 1.8.9 Ornithe profiles. Enable the normal OneConfig bundle before launching. Previous BridgeTap JARs are identified by manifest ID and moved to `.oneclient/bridgetap-backups`; they are not deleted. Configurations, recordings and island libraries are preserved. Disabling stops installing the embedded payload on subsequent launches; backups are retained for manual recovery.
 
 The local edition has a distinct data directory, IPC endpoint, application identity and title. Upstream self-update and protocol-handler registration are disabled to keep it from replacing the fork or the official launcher. Existing OneClient accounts and profiles are not automatically copied; use the launcher's import flow.
 
@@ -57,3 +57,14 @@ The HUD's **Settings** tab adds native color pickers for individual coordinate c
 Styles are stored locally in `config/bridgetap/overlay-style.properties`. RGB formatting is applied only when drawing the HUD; server chat and saved run summaries retain Minecraft's legacy formatting. Replay telemetry and keystrokes remain replay-only during gameplay. The original replay, island and preset menus remain active.
 
 The native Style adapter was exercised with an actual OneConfig Hud instance in a headless contract test, including both directions of color/background/shadow synchronization. Visual behavior in a running game still needs user testing.
+
+
+## Preinstalled local edition (2026-11-20)
+
+The launcher embeds the native OneClient JAR and installs it automatically on the first launch of each Minecraft 1.8.9 Ornithe profile. Keep the regular OneConfig bundle enabled; other Minecraft versions/loaders are excluded. The BridgeTap page allows opting out. The choice persists in `.oneclient/bridgetap-disabled`; removing that marker or re-enabling restores the bundled default. OneConfig settings, RGB controls and three HUDs use the adapter already included in the payload.
+
+Build with `./scripts/build-oneclient-launcher.ps1 -Python <python-executable>` after `./gradlew.bat build`. The script selects the current mod version from `fabric.mod.json`. Source preparation rejects a JAR without the native adapter, records its version and SHA-256 in `BRIDGETAP-BUILD.json`, and preserves existing source destinations.
+
+The manually triggered **Build OneClient with BridgeTap** GitHub Actions workflow builds the JAR and the Windows launcher on a runner with MSVC. This workflow has been added locally; it has not been pushed or run.
+
+Local validation for this change: payload acceptance/rejection tests passed; the OneConfig three-HUD API contract passed against the embedded JAR; the pinned upstream patch applied successfully. Full launcher build was attempted and failed because `link.exe` is absent. The launcher is therefore supplied as source, not as a tested executable. Test Minecraft startup and native menus before distributing a compiled edition.
