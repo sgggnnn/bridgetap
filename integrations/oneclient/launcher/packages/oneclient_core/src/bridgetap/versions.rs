@@ -55,13 +55,30 @@ pub async fn set_auto_update(enabled: bool) -> Result<(), String> {
 }
 pub async fn restore_bundled() -> Result<(), String> {
     let _guard = CHANGE.lock().await;
-    let mut value = selection()?;
+    let mut value = match selection() {
+        Ok(value) => value,
+        Err(_) => {
+            let path = root()?.join("selection.json");
+            if path.is_file() {
+                std::fs::copy(
+                    &path,
+                    root()?.join(format!("selection-invalid-{}.json", uuid::Uuid::new_v4())),
+                )
+                .map_err(|e| e.to_string())?;
+            }
+            Selection::default()
+        }
+    };
     value.version = None;
     value.sha256 = None;
+    value.auto_update = false;
     save(&value).await
 }
 fn hash(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
+    Sha256::digest(bytes)
+        .iter()
+        .map(|byte| format!("{byte:02x}"))
+        .collect()
 }
 fn safe_hash(value: &str) -> bool {
     value.len() == 64 && value.bytes().all(|b| b.is_ascii_hexdigit())
@@ -116,7 +133,9 @@ async fn select_locked(path: &Path, value: &mut Selection) -> Result<String, Str
 }
 pub async fn select_local(path: &Path) -> Result<String, String> {
     let _guard = CHANGE.lock().await;
-    select_locked(path, &mut selection()?).await
+    let mut value = selection()?;
+    value.auto_update = false;
+    select_locked(path, &mut value).await
 }
 pub async fn payload() -> Result<Vec<u8>, String> {
     let value = selection()?;
@@ -157,6 +176,7 @@ pub fn newer(candidate: &str, current: &str) -> bool {
 async fn get(url: &str, cap: usize) -> Result<Vec<u8>, String> {
     let client = reqwest::Client::builder()
         .user_agent("bridgetapclient")
+        .connect_timeout(Duration::from_secs(8))
         .timeout(Duration::from_secs(45))
         .build()
         .map_err(|e| e.to_string())?;
@@ -325,6 +345,13 @@ pub async fn maybe_auto_update() {
 mod tests {
     use super::*;
     #[test]
+    fn sha256_matches_the_standard_vector() {
+        assert_eq!(
+            hash(b"abc"),
+            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+        );
+    }
+    #[test]
     fn versions_do_not_downgrade_development_builds() {
         assert!(!newer("1.9.0", "1.10.0-dev.10"));
         assert!(newer("1.10.0", "1.10.0-dev.10"));
@@ -375,6 +402,7 @@ mod tests {
         let origin = temp.join("download.jar");
         std::fs::write(&origin, super::super::PAYLOAD).unwrap();
         assert_eq!(select_local(&origin).await.unwrap(), BUNDLED_VERSION.trim());
+        assert!(!selection().unwrap().auto_update);
         std::fs::write(&origin, b"original download moved or replaced").unwrap();
         assert_eq!(payload().await.unwrap(), super::super::PAYLOAD);
         set_auto_update(true).await.unwrap();
@@ -391,7 +419,11 @@ mod tests {
         assert!(payload().await.is_err());
         restore_bundled().await.unwrap();
         assert!(selection().unwrap().version.is_none());
+        assert!(!selection().unwrap().auto_update);
         assert_eq!(payload().await.unwrap(), super::super::PAYLOAD);
+        std::fs::write(root().unwrap().join("selection.json"), b"invalid json").unwrap();
+        restore_bundled().await.unwrap();
+        assert!(selection().unwrap().version.is_none());
         std::fs::remove_dir_all(temp).unwrap();
     }
 }

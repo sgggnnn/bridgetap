@@ -1,4 +1,4 @@
-use crate::components::{Button, ScrollArea};
+use crate::components::{Button, ScrollArea, TextInput};
 use crate::hooks::{settled_or_loading, use_clusters};
 use crate::theme::{colors, text_size};
 use freya::prelude::*;
@@ -15,6 +15,7 @@ impl Component for BridgeTap {
         let mut busy = use_state(|| false);
         let mut available = use_state(|| None::<versions::Release>);
         let mut selected = use_state(|| 0i64);
+        let search = use_state(String::new);
         let version = versions::selection();
         let auto = version.as_ref().is_ok_and(|s| s.auto_update);
         let current = version
@@ -25,7 +26,7 @@ impl Component for BridgeTap {
             .child(label().text("BridgeTap").font_size(text_size(30.)).color(colors::fg_primary()))
             .child(label().text("Tous tes outils, une version de mod au choix et tes profils 1.8.9 Ornithe.").color(colors::fg_secondary()))
             .child(label().text(format!("Version sélectionnée : {current}")).font_size(text_size(19.)).color(colors::fg_primary()))
-            .child(label().text("Les changements de version s'appliquent au prochain lancement de Minecraft. Tes replays, îles et réglages sont conservés.").color(colors::fg_secondary()))
+            .child(label().text("La version choisie s'applique à tous les profils BridgeTap au prochain lancement de Minecraft. Tes replays, îles et réglages sont conservés.").color(colors::fg_secondary()))
             .child(rect().horizontal().spacing(10.)
                 .child(Button::new().text("Chercher une mise à jour").disabled(*busy.read()).on_press(move |_| {
                     busy.set(true);message.set("Recherche sur GitHub…".into());
@@ -43,23 +44,23 @@ impl Component for BridgeTap {
                     spawn(async move {
                         if let Some(file) = rfd::AsyncFileDialog::new().set_title("Choisir BridgeTap pour OneClient / Ornithe").add_filter("Mod BridgeTap", &["jar"]).pick_file().await {
                             match versions::select_local(file.path()).await {
-                                Ok(version) => {available.set(None);message.set(format!("BridgeTap {version} sélectionné. Redémarre Minecraft pour l'utiliser."));}
+                                Ok(version) => {available.set(None);message.set(format!("BridgeTap {version} sélectionné et figé (mises à jour auto désactivées). Redémarre Minecraft pour l'utiliser."));}
                                 Err(e) => message.set(format!("JAR refusé : {e}")),
                             }
                         }
-                        revision.set(*revision.peek()+1);busy.set(false);
+                        let next = *revision.peek()+1; revision.set(next);busy.set(false);
                     });
                 }))
                 .child(Button::new().text("Version embarquée").disabled(*busy.read()).on_press(move |_| {
                     busy.set(true);spawn(async move {
-                        message.set(match versions::restore_bundled().await {Ok(())=>"Version embarquée restaurée pour le prochain lancement.".into(),Err(e)=>e});
-                        available.set(None);revision.set(*revision.peek()+1);busy.set(false);
+                        message.set(match versions::restore_bundled().await {Ok(())=>"Version embarquée restaurée, mises à jour automatiques désactivées.".into(),Err(e)=>e});
+                        available.set(None);let next = *revision.peek()+1; revision.set(next);busy.set(false);
                     });
                 })))
             .child(Button::new().text(if auto {"Mises à jour automatiques : activées"} else {"Mises à jour automatiques : désactivées"}).disabled(*busy.read()).on_press(move |_| {
                 busy.set(true);spawn(async move {
                     message.set(match versions::set_auto_update(!auto).await {Ok(())=>"Préférence enregistrée. Recherche automatique au lancement (au plus toutes les 6 heures), sans rétrograder un build plus récent.".into(),Err(e)=>e});
-                    revision.set(*revision.peek()+1);busy.set(false);
+                    let next = *revision.peek()+1; revision.set(next);busy.set(false);
                 });
             }));
         if let Some(release) = available.read().clone() {
@@ -79,7 +80,8 @@ impl Component for BridgeTap {
                                 Err(e) => format!("Mise à jour refusée : {e}"),
                             });
                             available.set(None);
-                            revision.set(*revision.peek() + 1);
+                            let next = *revision.peek() + 1;
+                            revision.set(next);
                             busy.set(false);
                         });
                     }),
@@ -109,7 +111,7 @@ impl Component for BridgeTap {
                 .child(label().text(cluster.name.clone()).color(colors::fg_primary()))
                 .child(Button::new().text(if active {"Désactiver BridgeTap"} else {"Activer BridgeTap"}).on_press(move |_| {
                     message.set(match bridgetap::set_enabled(&copy,!active) {Ok(())=>"Préférence enregistrée pour le prochain lancement du profil.".into(),Err(e)=>e.to_string()});
-                    revision.set(*revision.peek()+1);
+                    let next = *revision.peek()+1; revision.set(next);
                 }))
                 .child(Button::new().text("Menus de ce profil").on_press(move |_| selected.set(id))));
         }
@@ -122,8 +124,23 @@ impl Component for BridgeTap {
                 .child(label().text("Rejoins un monde dans ce profil, puis choisis un menu. En jeu, retrouve les mêmes catégories dans Maj droite > BridgeTap. Les outils d'un replay commencent par un sélecteur d'enregistrement.").color(colors::fg_secondary()));
             let catalog: Vec<serde_json::Value> =
                 serde_json::from_str(bridgetap::MENU_CATALOG).unwrap_or_default();
+            body = body.child(
+                TextInput::new(search).placeholder("Rechercher un menu : replay, sky, île, HUD…"),
+            );
+            let needle = search_key(search.read().trim());
             let mut previous = String::new();
+            let mut matches = 0;
             for menu in catalog {
+                let hay = search_key(&format!(
+                    "{} {} {}",
+                    menu["title"].as_str().unwrap_or_default(),
+                    menu["category"].as_str().unwrap_or_default(),
+                    menu["id"].as_str().unwrap_or_default()
+                ));
+                if !needle.split_whitespace().all(|word| hay.contains(word)) {
+                    continue;
+                }
+                matches += 1;
                 let category = menu["category"].as_str().unwrap_or_default();
                 if category != previous {
                     previous = category.to_string();
@@ -141,6 +158,13 @@ impl Component for BridgeTap {
                     spawn(async move { message.set(match bridgetap::open_menu(&copy,&id).await {Ok(())=>"Demande envoyée. Reviens dans Minecraft pour utiliser le menu.".into(),Err(e)=>e}); });
                 }));
             }
+            if matches == 0 {
+                body = body.child(
+                    label()
+                        .text("Aucun menu correspondant. Essaie un autre mot.")
+                        .color(colors::fg_secondary()),
+                );
+            }
         } else {
             body = body.child(label().text("Crée ou importe un profil Minecraft 1.8.9 Ornithe dans Versions. Garde le bundle OneConfig activé.").color(colors::fg_secondary()));
         }
@@ -149,4 +173,19 @@ impl Component for BridgeTap {
             .height(Size::fill())
             .child(body)
     }
+}
+
+fn search_key(text: &str) -> String {
+    text.to_lowercase()
+        .chars()
+        .map(|c| match c {
+            'é' | 'è' | 'ê' | 'ë' => 'e',
+            'à' | 'â' | 'ä' => 'a',
+            'î' | 'ï' => 'i',
+            'ô' | 'ö' => 'o',
+            'ù' | 'û' | 'ü' => 'u',
+            'ç' => 'c',
+            _ => c,
+        })
+        .collect()
 }
