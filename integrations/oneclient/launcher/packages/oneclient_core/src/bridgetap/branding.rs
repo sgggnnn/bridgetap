@@ -7,8 +7,15 @@ const LOGO: &[u8] = include_bytes!("../../assets/bridgetap-wordmark.svg");
 
 fn visible(bytes: &[u8]) -> Option<Vec<u8>> {
     let text = std::str::from_utf8(bytes).ok()?;
+    // The OAuth completion page includes URLs; change only its visible HTML title.
+    if text.contains("<html") && text.contains(">OneClient<") {
+        return Some(
+            text.replace(">OneClient<", ">BridgeTapClient<")
+                .into_bytes(),
+        );
+    }
     if text.contains("://")
-        || text.contains('/')
+        || (text.contains('/') && !text.chars().any(char::is_whitespace))
         || text.contains('\\')
         || text.contains("org.polyfrost")
         || text.contains(".exe")
@@ -24,6 +31,25 @@ fn visible(bytes: &[u8]) -> Option<Vec<u8>> {
         .replace("ONECLIENT", "BridgeTapClient")
         .replace("One Client", "BridgeTapClient");
     (renamed != text).then(|| renamed.into_bytes())
+}
+
+fn translated_json(bytes: &[u8], metadata: bool) -> Result<Vec<u8>, String> {
+    let mut value: serde_json::Value = serde_json::from_slice(bytes).map_err(|e| e.to_string())?;
+    if let Some(object) = value.as_object_mut() {
+        for (key, value) in object {
+            if metadata && key != "name" && key != "description" {
+                continue;
+            }
+            if let Some(text) = value.as_str() {
+                if let Some(renamed) = visible(text.as_bytes()) {
+                    *value = serde_json::Value::String(
+                        String::from_utf8(renamed).map_err(|e| e.to_string())?,
+                    );
+                }
+            }
+        }
+    }
+    serde_json::to_vec(&value).map_err(|e| e.to_string())
 }
 
 /// Only CONSTANT_String references are remapped to NEW UTF8 entries. Shared class,
@@ -130,6 +156,11 @@ pub async fn install(mods: &Path, backup: &Path) -> LauncherResult<()> {
                 let mut bytes = zip.read(&name).await?;
                 if name.starts_with("org/polyfrost/polyplus/") && name.ends_with(".class") {
                     bytes = class_strings(&bytes).map_err(std::io::Error::other)?;
+                } else if name == "fabric.mod.json"
+                    || (name.starts_with("assets/polyplus/lang/") && name.ends_with(".json"))
+                {
+                    bytes = translated_json(&bytes, name == "fabric.mod.json")
+                        .map_err(std::io::Error::other)?;
                 } else if [
                     "assets/polyplus/brand/oneclient.svg",
                     "assets/polyplus/mainmenu/logo.svg",
@@ -253,6 +284,19 @@ mod tests {
         ] {
             assert!(visible(value.as_bytes()).is_none());
         }
+        assert_eq!(
+            visible(b"OneClient/PolyPlus note: settings").unwrap(),
+            b"BridgeTapClient/PolyPlus note: settings"
+        );
+        assert_eq!(visible(b"<html><title>OneClient</title><a href=\"oneclient://launch/test\">Continue</a></html>").unwrap(),b"<html><title>BridgeTapClient</title><a href=\"oneclient://launch/test\">Continue</a></html>");
+        let translations = translated_json(
+            br#"{"polyplus.OneClientKey":"OneClient Menu","link":"oneclient://launch/test"}"#,
+            false,
+        )
+        .unwrap();
+        let json: serde_json::Value = serde_json::from_slice(&translations).unwrap();
+        assert_eq!(json["polyplus.OneClientKey"], "BridgeTapClient Menu");
+        assert_eq!(json["link"], "oneclient://launch/test");
     }
     #[test]
     fn shared_utf8_class_reference_is_preserved() {
