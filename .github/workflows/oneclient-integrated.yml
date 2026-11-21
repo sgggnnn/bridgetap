@@ -1,6 +1,11 @@
 name: Build bridgetapclient
 on:
   workflow_dispatch:
+    inputs:
+      verify_only:
+        description: Run native integration tests without rebuilding the executable
+        type: boolean
+        default: false
   push:
     branches: [codex/oneclient-integrated-build]
 permissions:
@@ -42,18 +47,21 @@ jobs:
           workspaces: 'build/BridgeTapClient -> target'
           cache-on-failure: true
       - name: Build bridgetapclient
+        if: ${{ !inputs.verify_only }}
         working-directory: build/BridgeTapClient
         run: cargo build --locked --release -p oneclient_app
       - name: Collect executable
+        if: ${{ !inputs.verify_only }}
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force dist | Out-Null
           Copy-Item build/BridgeTapClient/target/release/oneclient_app.exe dist/bridgetapclient.exe
       - uses: actions/upload-artifact@v4
+        if: ${{ !inputs.verify_only }}
         with:
           name: bridgetapclient-windows-x64
           path: dist/bridgetapclient.exe
           if-no-files-found: error
       - name: Test bundled default and opt-out persistence
         working-directory: build/BridgeTapClient
-        run: cargo test --locked --release -p oneclient_core --lib bridgetap::tests
+        run: cargo test --locked -p oneclient_core --lib bridgetap::tests
