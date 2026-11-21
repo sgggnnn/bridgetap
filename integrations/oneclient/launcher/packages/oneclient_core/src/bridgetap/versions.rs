@@ -96,7 +96,7 @@ pub async fn validate(path: &Path) -> Result<String, String> {
     let (_, bytes) = entries
         .iter()
         .find(|(n, _)| n == "fabric.mod.json")
-        .ok_or("Choose the BridgeTap JAR for bridgetapclient / Ornithe. The Forge edition is incompatible.")?;
+        .ok_or("Choose the BridgeTap JAR for BridgeTapClient / Ornithe. The Forge edition is incompatible.")?;
     let json: serde_json::Value = serde_json::from_slice(bytes).map_err(|e| e.to_string())?;
     manifest_version(
         &json,

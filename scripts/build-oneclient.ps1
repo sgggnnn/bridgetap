@@ -4,7 +4,7 @@ param(
     [Parameter(Mandatory=$true)][string]$OneConfigJar,
     [string]$KotlinJar='',
     [string]$Python='python',
-    [string]$Output='dist/BridgeTap-1.10.0-dev.1-OneClient.jar'
+    [string]$Output='dist/BridgeTap-1.10.0-dev.10-OneClient.jar'
 )
 $ErrorActionPreference='Stop'
 $root=Split-Path -Parent $PSScriptRoot
@@ -21,6 +21,6 @@ $jarPath=if([IO.Path]::IsPathRooted($Output)){$Output}else{Join-Path $root $Outp
 $classes=Join-Path $work 'classes';New-Item -ItemType Directory -Force $classes | Out-Null
 & (Join-Path $JavaHome 'bin/javac.exe') --release 8 -encoding UTF-8 -proc:none -cp "$jarPath;$work/*;$Classpath" -d $classes @(Get-ChildItem (Join-Path $root 'integrations/oneclient/java') -Recurse -Filter '*.java' | ForEach-Object FullName)
 if($LASTEXITCODE -ne 0){throw 'OneConfig adapter compilation failed (JDK 21+ required)'}
-& (Join-Path $JavaHome 'bin/jar.exe') uf $jarPath -C $classes .
+& (Join-Path $JavaHome 'bin/jar.exe') uf $jarPath -C $classes . -C (Join-Path $root 'integrations/oneclient/resources') .
 if($LASTEXITCODE -ne 0){throw 'OneConfig adapter packaging failed'}
 Write-Output "Built OneClient integration: $jarPath"

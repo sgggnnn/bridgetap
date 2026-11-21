@@ -28,8 +28,11 @@ for path in [assets/'icons/icon-logo.svg', assets/'icons/pixel/icon-logo.svg']:
 # Keep the splash wordmark as vector outlines, using the upstream bundled font.
 font=TTFont(ROOT/'build/BridgeTapClient-preinstalled/packages/oneclient_app/assets/fonts/Poppins/Poppins-Bold.ttf')
 glyphs=font.getGlyphSet();cmap=font.getBestCmap();pen=SVGPathPen(glyphs);x=0
-for char in 'bridgetapclient':
+for char in 'BridgeTapClient':
     name=cmap[ord(char)];glyphs[name].draw(TransformPen(pen,(1,0,0,1,x,0)));x+=font['hmtx'][name][0]
 wordmark=f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {x} 1200"><g transform="translate(0,950) scale(1,-1)"><path fill="white" d="{pen.getCommands()}"/></g></svg>\n'
 (assets/'logo.svg').write_text(wordmark,encoding='utf-8')
+core_assets=ROOT/'integrations/oneclient/launcher/packages/oneclient_core/assets'
+core_assets.mkdir(parents=True,exist_ok=True)
+(core_assets/'bridgetap-wordmark.svg').write_text(wordmark,encoding='utf-8')
 print('Generated launcher icons and wordmark from the mod logo and bundled font')

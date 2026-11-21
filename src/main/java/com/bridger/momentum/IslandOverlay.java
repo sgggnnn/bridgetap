@@ -191,7 +191,7 @@ public final class IslandOverlay {
         return new IslandTemplate(name,mx-ox+1,my-oy+1,mz-oz+1,ox,oy,oz,blocks,Math.max(0,Math.min(mx-ox,(int)Math.floor(point.x)-ox)),Math.max(0,Math.min(my-oy+13,(int)Math.round(point.y)-oy)),Math.max(0,Math.min(mz-oz,(int)Math.floor(point.z)-oz)),both);
     }
     public static void show(IslandTemplate template,boolean original){
-        if(!BridgeConfig.modEnabled)throw new IllegalArgumentException("Enable BridgeTap in OneClient first");
+        if(!BridgeConfig.modEnabled)throw new IllegalArgumentException("Enable BridgeTap in BridgeTapClient first");
         connectedTextures=new IslandConnectedTextures();connectedDirty=false;
         Minecraft mc=Minecraft.m_20213497();C_57778754 viewer=ReplaySession.viewer();if(viewer==null)throw new IllegalArgumentException("Join a world before placing scenery");
         List<String> modern=new ArrayList<>();for(IslandTemplate.Block b:template.blocks)if(IslandMaterials.modern(b.key))modern.add(b.key);

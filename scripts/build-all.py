@@ -71,7 +71,7 @@ def main():
         nested_jars(modrinth('SKW1BTL3'),compile_deps)
     adapter=ROOT/('build/gradle-oneconfig-classes-'+uuid.uuid4().hex);adapter.mkdir(parents=True,exist_ok=True)
     run(tool(a.oneclient_java_home,'javac'),'--release','8','-encoding','UTF-8','-proc:none','-cp',os.pathsep.join((str(fabric),str(compile_deps/'*'),cp)),'-d',adapter,*sorted((ROOT/'integrations/oneclient/java').rglob('*.java')))
-    run(jar,'uf',fabric,'-C',adapter,'.')
+    run(jar,'uf',fabric,'-C',adapter,'.','-C',ROOT/'integrations/oneclient/resources','.')
     # Run the existing namespace conversion and standalone Forge packaging.
     run(a.python_executable,ROOT/'scripts/build-forge.py','--java-home',a.java_home,'--minecraft',minecraft,'--classpath',cp,'--output',forge)
     print('Release artifacts:',fabric,forge,sep='\n')

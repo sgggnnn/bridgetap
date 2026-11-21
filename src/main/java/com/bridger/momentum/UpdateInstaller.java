@@ -46,7 +46,7 @@ public final class UpdateInstaller {
   String local=System.getenv("LOCALAPPDATA");Path exe=local==null?null:Paths.get(local,"OneClient","oneclient_app.exe");
   if(exe!=null&&Files.isRegularFile(exe)){new ProcessBuilder(exe.toString(),"--launch",profile).start();return;}
   if(Desktop.isDesktopSupported()&&Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)){Desktop.getDesktop().browse(new URI("oneclient://launch/"+URLEncoder.encode(profile,"UTF-8").replace("+","%20")));return;}
-  throw new IOException("Open OneClient and launch "+profile);
+  throw new IOException("Open BridgeTapClient and launch "+profile);
  }
  private static void waitForGame(Plan p)throws IOException{
   boolean authenticated=false;

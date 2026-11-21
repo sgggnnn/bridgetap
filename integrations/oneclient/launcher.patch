@@ -8,7 +8,7 @@ index e2429bfc..70311115 100644
  [package.metadata.packager]
 -product-name = "OneClient"
 -identifier = "org.polyfrost.OneClient"
-+product-name = "bridgetapclient"
++product-name = "BridgeTapClient"
 +identifier = "org.bridgetap.Client"
  category = "Game"
 -publisher = "Polyfrost Inc."
@@ -43,8 +43,8 @@ index 984deef0..4fdebe92 100644
 -        res.set("ProductName", "OneClient");
 -        res.set("FileDescription", "OneClient");
 +        res.set("CompanyName", "BridgeTap (unofficial)");
-+        res.set("ProductName", "bridgetapclient");
-+        res.set("FileDescription", "bridgetapclient (unofficial)");
++        res.set("ProductName", "BridgeTapClient");
++        res.set("FileDescription", "BridgeTapClient (unofficial)");
          res.set("LegalCopyright", "© 2026 Polyfrost Inc.");
 -        res.set("OriginalFilename", "oneclient_app.exe");
 -        res.set("InternalName", "oneclient_app");
@@ -78,7 +78,7 @@ index 0bfe6067..ddf73a22 100644
 -pub const WINDOW_APP_ID: &str = "oneclient_app";
 -pub const WINDOW_TITLE: &str = "OneClient";
 +pub const WINDOW_APP_ID: &str = "bridgetap_oneclient_local";
-+pub const WINDOW_TITLE: &str = "bridgetapclient";
++pub const WINDOW_TITLE: &str = "BridgeTapClient";
  
  pub const UPDATER_PUBKEY: &str = "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDFGODk3MkMyMjg0MjFDMDUKUldRRkhFSW93bktKSHpkWjNEMXNzaDVINVpCTU8xSnhuK2RnV0dTZ2FkcFJWbG1zUkhGYTNjaUkK";
  pub const UPDATER_ENDPOINT: &str =
@@ -145,7 +145,7 @@ index 9b67b75b..d8d3a7c5 100644
              Route::Browser { .. } => t("oneclient.routes.browser"),
              Route::BrowserPackage { .. } => t("oneclient.routes.browser_package"),
              Route::Wardrobe { .. } => t("oneclient.routes.wardrobe"),
-+            Route::BridgeTap { .. } => "bridgetapclient",
++            Route::BridgeTap { .. } => "BridgeTapClient",
              Route::Stats { .. } => t("oneclient.routes.stats"),
              Route::Debug { .. } => t("oneclient.routes.debug"),
              Route::SettingsAppearance { .. } => t("oneclient.routes.settings_appearance"),

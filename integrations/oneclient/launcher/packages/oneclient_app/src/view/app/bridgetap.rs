@@ -42,7 +42,7 @@ impl Component for BridgeTap {
                 .child(Button::new().text("Choose a .jar…").disabled(*busy.read()).on_press(move |_| {
                     busy.set(true);
                     spawn(async move {
-                        if let Some(file) = rfd::AsyncFileDialog::new().set_title("Choose BridgeTap for bridgetapclient / Ornithe").add_filter("BridgeTap mod", &["jar"]).pick_file().await {
+                        if let Some(file) = rfd::AsyncFileDialog::new().set_title("Choose BridgeTap for BridgeTapClient / Ornithe").add_filter("BridgeTap mod", &["jar"]).pick_file().await {
                             match versions::select_local(file.path()).await {
                                 Ok(version) => {available.set(None);message.set(format!("BridgeTap {version} selected and pinned (automatic updates disabled). Restart Minecraft to use it."));}
                                 Err(e) => message.set(format!("JAR rejected: {e}")),

@@ -40,7 +40,7 @@ class BrandingTest(unittest.TestCase):
         self.assertIn('"user_data.db"',paths)
         translations=json.loads((SOURCE/'packages/oneclient_app/lang/en_us.json').read_text(encoding='utf-8'))
         self.assertIn('oneclient.onboarding.welcome.title',translations)
-        self.assertEqual(translations['oneclient.onboarding.welcome.title'],'Welcome to bridgetapclient')
+        self.assertEqual(translations['oneclient.onboarding.welcome.title'],'Welcome to BridgeTapClient')
 
 
 if __name__=='__main__':unittest.main()

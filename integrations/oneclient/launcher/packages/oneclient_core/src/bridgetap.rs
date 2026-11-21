@@ -1,6 +1,7 @@
 //! BridgeTap local edition. Payload is supplied by the reproducible integration build.
 use crate::LauncherResult;
 pub mod versions;
+mod branding;
 pub const MENU_CATALOG: &str = include_str!("../assets/bridgetap-menus.json");
 use oneclient_cluster::Cluster;
 use oneclient_common::{domain::GameLoader, paths};
@@ -94,6 +95,7 @@ pub async fn install(cluster: &Cluster, cwd: &Path, mods_in_cluster: bool) -> La
     versions::maybe_auto_update().await;
     let payload = versions::payload().await.map_err(std::io::Error::other)?;
     std::fs::create_dir_all(&mods)?;
+    branding::install(&mods, &root.join(".oneclient/bridgetap-branding-backups")).await?;
     let mut dependency = false;
     let mut check = tokio::fs::read_dir(&mods).await?;
     while let Some(entry) = check.next_entry().await? {
