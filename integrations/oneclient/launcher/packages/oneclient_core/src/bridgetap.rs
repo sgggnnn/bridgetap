@@ -163,10 +163,10 @@ pub async fn open_menu(cluster: &Cluster, id: &str) -> Result<(), String> {
         .as_array()
         .is_some_and(|rows| rows.iter().any(|row| row["id"].as_str() == Some(id)))
     {
-        return Err("Menu BridgeTap inconnu.".into());
+        return Err("Unknown BridgeTap menu.".into());
     }
     if !compatible(cluster) || !enabled(cluster) {
-        return Err("Active BridgeTap sur un profil 1.8.9 Ornithe.".into());
+        return Err("Enable BridgeTap on a 1.8.9 Ornithe profile.".into());
     }
     let root = cluster
         .game_dir()
@@ -180,7 +180,7 @@ pub async fn open_menu(cluster: &Cluster, id: &str) -> Result<(), String> {
         .ok()
         .and_then(|text| text.trim().parse::<u64>().ok());
     if !ready.is_some_and(|time| now.saturating_sub(time) < 5000 && time <= now + 5000) {
-        return Err("Lance ce profil avec la nouvelle version BridgeTap et rejoins un monde, puis réessaie.".into());
+        return Err("Launch this profile with the new BridgeTap version and join a world, then try again.".into());
     }
     let data = format!(
         "menu={id}\ncreated={now}\nrequest={}\n",

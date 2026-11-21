@@ -43,34 +43,34 @@ public final class OneClientConfig extends Config {
     }
     public java.util.List<org.polyfrost.oneconfig.api.config.v1.Property<?>> hudProperties(int type){return NativeHudStyles.properties(type);}
     public void bindHudStyle(int type,Object hud){NativeHudStyles.bind(type,hud);}
-    @Button(title="Bibliothèque des replays",text="Ouvrir",category="Replays") public void menuReplays(){BridgeTapMenus.open("replays");}
-    @Button(title="Tous les outils",text="Ouvrir",category="Replays") public void menuTools(){BridgeTapMenus.open("tools");}
-    @Button(title="Importer des replays",text="Ouvrir",category="Replays") public void menuImports(){BridgeTapMenus.open("imports");}
-    @Button(title="Détails du replay",text="Ouvrir",category="Replays") public void menuReplayDetails(){BridgeTapMenus.open("replay-details");}
-    @Button(title="Partager un replay",text="Ouvrir",category="Replays") public void menuShare(){BridgeTapMenus.open("share");}
-    @Button(title="Signets du replay",text="Ouvrir",category="Replays") public void menuBookmarks(){BridgeTapMenus.open("bookmarks");}
-    @Button(title="Exporter un replay en vidéo",text="Ouvrir",category="Replays") public void menuVideoExport(){BridgeTapMenus.open("video-export");}
-    @Button(title="Analyser un échec",text="Ouvrir",category="Replays") public void menuFailAnalysis(){BridgeTapMenus.open("fail-analysis");}
-    @Button(title="Statistiques",text="Ouvrir",category="Replays") public void menuStatistics(){BridgeTapMenus.open("statistics");}
-    @Button(title="Stockage et sauvegarde automatique",text="Ouvrir",category="Replays") public void menuReplayStorage(){BridgeTapMenus.open("replay-storage");}
-    @Button(title="Bibliothèque des îles",text="Ouvrir",category="Îles") public void menuIslands(){BridgeTapMenus.open("islands");}
-    @Button(title="Presets des îles",text="Ouvrir",category="Îles") public void menuIslandPresets(){BridgeTapMenus.open("island-presets");}
-    @Button(title="Importer un preset",text="Ouvrir",category="Îles") public void menuIslandImport(){BridgeTapMenus.open("island-import");}
-    @Button(title="Copier une île dans le monde",text="Ouvrir",category="Îles") public void menuIslandCopy(){BridgeTapMenus.open("island-copy");}
-    @Button(title="Matériaux de l’île active",text="Ouvrir",category="Îles") public void menuIslandMaterials(){BridgeTapMenus.open("island-materials");}
-    @Button(title="Positionner l’île active",text="Ouvrir",category="Îles") public void menuIslandPlacement(){BridgeTapMenus.open("island-placement");}
-    @Button(title="Apparence des blocs et sons",text="Ouvrir",category="Apparence") public void menuBlocks(){BridgeTapMenus.open("blocks");}
-    @Button(title="Créer un overlay de ciel",text="Ouvrir",category="Apparence") public void menuSky(){BridgeTapMenus.open("sky");}
-    @Button(title="Créer un overlay de sandstone",text="Ouvrir",category="Apparence") public void menuSandstone(){BridgeTapMenus.open("sandstone");}
-    @Button(title="Thème et apparence des menus",text="Ouvrir",category="Apparence") public void menuTheme(){BridgeTapMenus.open("theme");}
-    @Button(title="Clips vidéo, audio et microphone",text="Ouvrir",category="Enregistrement") public void menuClips(){BridgeTapMenus.open("clips");}
-    @Button(title="Profils de touches",text="Ouvrir",category="Réglages") public void menuKeybinds(){BridgeTapMenus.open("keybinds");}
-    @Button(title="Affichage des échecs",text="Ouvrir",category="HUD") public void menuFailureDisplay(){BridgeTapMenus.open("failure-display");}
-    @Button(title="Couleurs détaillées des overlays",text="Ouvrir",category="HUD") public void menuColors(){BridgeTapMenus.open("colors");}
-    @Button(title="Éditeur HUD natif",text="Ouvrir",category="HUD") public void menuHudEditor(){BridgeTapMenus.open("hud-editor");}
-    @Button(title="Placement HUD BridgeTap",text="Ouvrir",category="HUD") public void menuClassicLayout(){BridgeTapMenus.open("classic-layout");}
-    @Button(title="Tous les réglages BridgeTap",text="Ouvrir",category="Réglages") public void menuSettings(){BridgeTapMenus.open("settings");}
-    @Button(title="Guide et tutoriels",text="Ouvrir",category="Aide") public void menuGuide(){BridgeTapMenus.open("guide");}
-    @Button(title="Mises à jour du mod en jeu",text="Ouvrir",category="Aide") public void menuUpdates(){BridgeTapMenus.open("updates");}
-    @Button(title="Communauté Discord",text="Ouvrir",category="Aide") public void menuDiscord(){BridgeTapMenus.open("discord");}
+    @Button(title="Replay library",text="Open",category="Replays") public void menuReplays(){BridgeTapMenus.open("replays");}
+    @Button(title="All tools",text="Open",category="Replays") public void menuTools(){BridgeTapMenus.open("tools");}
+    @Button(title="Import replays",text="Open",category="Replays") public void menuImports(){BridgeTapMenus.open("imports");}
+    @Button(title="Replay details",text="Open",category="Replays") public void menuReplayDetails(){BridgeTapMenus.open("replay-details");}
+    @Button(title="Share a replay",text="Open",category="Replays") public void menuShare(){BridgeTapMenus.open("share");}
+    @Button(title="Replay bookmarks",text="Open",category="Replays") public void menuBookmarks(){BridgeTapMenus.open("bookmarks");}
+    @Button(title="Export replay to video",text="Open",category="Replays") public void menuVideoExport(){BridgeTapMenus.open("video-export");}
+    @Button(title="Failure analysis",text="Open",category="Replays") public void menuFailAnalysis(){BridgeTapMenus.open("fail-analysis");}
+    @Button(title="Statistics",text="Open",category="Replays") public void menuStatistics(){BridgeTapMenus.open("statistics");}
+    @Button(title="Storage and autosave",text="Open",category="Replays") public void menuReplayStorage(){BridgeTapMenus.open("replay-storage");}
+    @Button(title="Island library",text="Open",category="Islands") public void menuIslands(){BridgeTapMenus.open("islands");}
+    @Button(title="Island presets",text="Open",category="Islands") public void menuIslandPresets(){BridgeTapMenus.open("island-presets");}
+    @Button(title="Import a preset",text="Open",category="Islands") public void menuIslandImport(){BridgeTapMenus.open("island-import");}
+    @Button(title="Copy an island from the world",text="Open",category="Islands") public void menuIslandCopy(){BridgeTapMenus.open("island-copy");}
+    @Button(title="Active island materials",text="Open",category="Islands") public void menuIslandMaterials(){BridgeTapMenus.open("island-materials");}
+    @Button(title="Place the active island",text="Open",category="Islands") public void menuIslandPlacement(){BridgeTapMenus.open("island-placement");}
+    @Button(title="Block appearance and sounds",text="Open",category="Appearance") public void menuBlocks(){BridgeTapMenus.open("blocks");}
+    @Button(title="Create a sky overlay",text="Open",category="Appearance") public void menuSky(){BridgeTapMenus.open("sky");}
+    @Button(title="Create a sandstone overlay",text="Open",category="Appearance") public void menuSandstone(){BridgeTapMenus.open("sandstone");}
+    @Button(title="Menu theme and appearance",text="Open",category="Appearance") public void menuTheme(){BridgeTapMenus.open("theme");}
+    @Button(title="Video clips, audio and microphone",text="Open",category="Recording") public void menuClips(){BridgeTapMenus.open("clips");}
+    @Button(title="Keybind profiles",text="Open",category="Settings") public void menuKeybinds(){BridgeTapMenus.open("keybinds");}
+    @Button(title="Failure display",text="Open",category="HUD") public void menuFailureDisplay(){BridgeTapMenus.open("failure-display");}
+    @Button(title="Detailed overlay colors",text="Open",category="HUD") public void menuColors(){BridgeTapMenus.open("colors");}
+    @Button(title="Native HUD editor",text="Open",category="HUD") public void menuHudEditor(){BridgeTapMenus.open("hud-editor");}
+    @Button(title="BridgeTap HUD layout",text="Open",category="HUD") public void menuClassicLayout(){BridgeTapMenus.open("classic-layout");}
+    @Button(title="All BridgeTap settings",text="Open",category="Settings") public void menuSettings(){BridgeTapMenus.open("settings");}
+    @Button(title="Guide and tutorials",text="Open",category="Help") public void menuGuide(){BridgeTapMenus.open("guide");}
+    @Button(title="In-game mod updates",text="Open",category="Help") public void menuUpdates(){BridgeTapMenus.open("updates");}
+    @Button(title="Discord community",text="Open",category="Help") public void menuDiscord(){BridgeTapMenus.open("discord");}
 }

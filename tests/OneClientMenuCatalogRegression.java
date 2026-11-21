@@ -14,7 +14,7 @@ public final class OneClientMenuCatalogRegression {
             categories.add(action.category());count++;
         }
         if(count!=30)throw new AssertionError("Expected all 30 menu entry points, got "+count);
-        for(String category:new String[]{"Replays","Îles","Apparence","Enregistrement","HUD","Réglages","Aide"})
+        for(String category:new String[]{"Replays","Islands","Appearance","Recording","HUD","Settings","Help"})
             if(!categories.contains(category))throw new AssertionError("Missing native category "+category);
         System.out.println("PASS: all 30 menu actions exposed by native OneConfig annotations across seven categories");
     }

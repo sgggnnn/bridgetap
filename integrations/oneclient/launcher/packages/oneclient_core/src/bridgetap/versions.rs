@@ -86,7 +86,7 @@ fn safe_hash(value: &str) -> bool {
 
 pub async fn validate(path: &Path) -> Result<String, String> {
     if std::fs::metadata(path).map_err(|e| e.to_string())?.len() > MAX_JAR as u64 {
-        return Err("Ce JAR dépasse la limite de 128 Mo.".into());
+        return Err("This JAR exceeds the 128 MB limit.".into());
     }
     let entries = polyio::read_zip_file_entries(path, |name| {
         name == "fabric.mod.json" || name == "com/bridger/momentum/oneclient/OneClientConfig.class"
@@ -96,7 +96,7 @@ pub async fn validate(path: &Path) -> Result<String, String> {
     let (_, bytes) = entries
         .iter()
         .find(|(n, _)| n == "fabric.mod.json")
-        .ok_or("Choisis le JAR BridgeTap pour OneClient / Ornithe, pas l'édition Forge.")?;
+        .ok_or("Choose the BridgeTap JAR for bridgetapclient / Ornithe. The Forge edition is incompatible.")?;
     let json: serde_json::Value = serde_json::from_slice(bytes).map_err(|e| e.to_string())?;
     manifest_version(
         &json,
@@ -107,15 +107,13 @@ pub async fn validate(path: &Path) -> Result<String, String> {
 }
 fn manifest_version(json: &serde_json::Value, adapter: bool) -> Result<String, String> {
     if json["id"] != "bridgetap" || json["depends"]["minecraft"] != "1.8.9" || !adapter {
-        return Err(
-            "Le fichier doit être BridgeTap 1.8.9 avec l'intégration OneConfig native.".into(),
-        );
+        return Err("The file must be BridgeTap 1.8.9 with native OneConfig integration.".into());
     }
     json["version"]
         .as_str()
         .filter(|v| !v.is_empty() && v.len() <= 128 && !v.chars().any(char::is_control))
         .map(str::to_string)
-        .ok_or("Version du mod absente.".into())
+        .ok_or("Missing mod version.".into())
 }
 
 async fn select_locked(path: &Path, value: &mut Selection) -> Result<String, String> {
@@ -143,15 +141,13 @@ pub async fn payload() -> Result<Vec<u8>, String> {
         return Ok(super::PAYLOAD.to_vec());
     };
     if !safe_hash(&digest) {
-        return Err(
-            "Empreinte du mod invalide. Choisis un JAR ou restaure la version embarquée.".into(),
-        );
+        return Err("Invalid mod checksum. Choose a JAR or restore the bundled version.".into());
     }
     let bytes = tokio::fs::read(root()?.join(format!("{digest}.jar")))
         .await
         .map_err(|e| e.to_string())?;
     if hash(&bytes) != digest.to_ascii_lowercase() {
-        return Err("Le JAR sélectionné a changé : son empreinte ne correspond plus.".into());
+        return Err("The selected JAR has changed: its checksum no longer matches.".into());
     }
     Ok(bytes)
 }
@@ -188,12 +184,12 @@ async fn get(url: &str, cap: usize) -> Result<Vec<u8>, String> {
         .error_for_status()
         .map_err(|e| e.to_string())?;
     if response.content_length().is_some_and(|n| n > cap as u64) {
-        return Err("Téléchargement trop volumineux.".into());
+        return Err("Download exceeds the size limit.".into());
     }
     let mut data = Vec::new();
     while let Some(chunk) = response.chunk().await.map_err(|e| e.to_string())? {
         if data.len() + chunk.len() > cap {
-            return Err("Téléchargement trop volumineux.".into());
+            return Err("Download exceeds the size limit.".into());
         }
         data.extend_from_slice(&chunk);
     }
@@ -224,15 +220,13 @@ pub async fn check_update() -> Result<Option<Release>, String> {
     .map_err(|e| e.to_string())?;
     let version = json["tag_name"]
         .as_str()
-        .ok_or("Version GitHub absente.")?
+        .ok_or("Missing GitHub version.")?
         .trim_start_matches('v')
         .to_string();
     if !newer(&version, selection()?.current()) {
         return Ok(None);
     }
-    let assets = json["assets"]
-        .as_array()
-        .ok_or("Fichiers de release absents.")?;
+    let assets = json["assets"].as_array().ok_or("Missing release assets.")?;
     let asset = assets
         .iter()
         .find(|a| {
@@ -240,14 +234,14 @@ pub async fn check_update() -> Result<Option<Release>, String> {
                 .as_str()
                 .is_some_and(|n| n.ends_with("-OneClient.jar"))
         })
-        .ok_or("Aucune édition OneClient dans cette release.")?;
-    let name = asset["name"].as_str().ok_or("Nom du JAR absent.")?;
+        .ok_or("This release has no OneClient edition.")?;
+    let name = asset["name"].as_str().ok_or("Missing JAR filename.")?;
     let url = asset["browser_download_url"]
         .as_str()
-        .ok_or("Adresse du JAR absente.")?
+        .ok_or("Missing JAR download URL.")?
         .to_string();
     if !url.starts_with("https://github.com/sgggnnn/bridgetap/releases/download/") {
-        return Err("Source de téléchargement inattendue.".into());
+        return Err("Unexpected download source.".into());
     }
     let mut digest = asset["digest"]
         .as_str()
@@ -263,12 +257,12 @@ pub async fn check_update() -> Result<Option<Release>, String> {
                     .iter()
                     .find(|a| a["name"].as_str() == Some("SHA256SUMS.txt"))
             })
-            .ok_or("La release ne fournit pas d'empreinte SHA-256 vérifiable.")?;
+            .ok_or("This release does not provide a verifiable SHA-256 checksum.")?;
         let checksum_url = checksum_asset["browser_download_url"]
             .as_str()
-            .ok_or("Adresse de l'empreinte absente.")?;
+            .ok_or("Missing checksum URL.")?;
         if !checksum_url.starts_with("https://github.com/sgggnnn/bridgetap/releases/download/") {
-            return Err("Source d'empreinte inattendue.".into());
+            return Err("Unexpected checksum source.".into());
         }
         digest = checksum(
             &String::from_utf8(get(checksum_url, 128 * 1024).await?).map_err(|e| e.to_string())?,
@@ -297,7 +291,7 @@ async fn install_release_inner(release: &Release, automatic: bool) -> Result<Str
     }
     let bytes = get(&release.url, MAX_JAR).await?;
     if hash(&bytes) != release.sha256.to_ascii_lowercase() {
-        return Err("L'empreinte du téléchargement ne correspond pas à la release.".into());
+        return Err("The downloaded file checksum does not match the release.".into());
     }
     let _guard = CHANGE.lock().await;
     let mut current = selection()?;
@@ -313,7 +307,7 @@ async fn install_release_inner(release: &Release, automatic: bool) -> Result<Str
         .map_err(|e| e.to_string())?;
     let result = async {
         if validate(&temporary).await? != release.version {
-            return Err("La version du JAR ne correspond pas à la release.".into());
+            return Err("The JAR version does not match the release.".into());
         }
         select_locked(&temporary, &mut current).await
     }

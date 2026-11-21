@@ -51,10 +51,10 @@ public final class BridgeTapMenus {
         private final C_85740840 parent;
         WorldRequiredScreen(C_85740840 parent){this.parent=parent;}
         @Override protected void paint(){
-            header("BridgeTap","Rejoins un monde pour ouvrir les outils");
-            button("Retour",752,15,88,this::back);
-            label("Lance ton profil Minecraft puis rejoins un serveur ou un monde local.",40,144);
-            label("Rouvre ensuite BridgeTap depuis Maj droite ou depuis le launcher.",40,184);
+            header("BridgeTap","Join a world to open these tools");
+            button("Back",752,15,88,this::back);
+            label("Launch your Minecraft profile and join a server or a local world.",40,144);
+            label("Then reopen BridgeTap from Right Shift or from the launcher.",40,184);
         }
         @Override protected void back(){open(parent);}
     }

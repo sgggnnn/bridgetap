@@ -1,152 +1,152 @@
 [
   {
     "id": "replays",
-    "title": "Bibliothèque des replays",
+    "title": "Replay library",
     "category": "Replays"
   },
   {
     "id": "tools",
-    "title": "Tous les outils",
+    "title": "All tools",
     "category": "Replays"
   },
   {
     "id": "imports",
-    "title": "Importer des replays",
+    "title": "Import replays",
     "category": "Replays"
   },
   {
     "id": "replay-details",
-    "title": "Détails du replay",
+    "title": "Replay details",
     "category": "Replays"
   },
   {
     "id": "share",
-    "title": "Partager un replay",
+    "title": "Share a replay",
     "category": "Replays"
   },
   {
     "id": "bookmarks",
-    "title": "Signets du replay",
+    "title": "Replay bookmarks",
     "category": "Replays"
   },
   {
     "id": "video-export",
-    "title": "Exporter un replay en vidéo",
+    "title": "Export replay to video",
     "category": "Replays"
   },
   {
     "id": "fail-analysis",
-    "title": "Analyser un échec",
+    "title": "Failure analysis",
     "category": "Replays"
   },
   {
     "id": "statistics",
-    "title": "Statistiques",
+    "title": "Statistics",
     "category": "Replays"
   },
   {
     "id": "replay-storage",
-    "title": "Stockage et sauvegarde automatique",
+    "title": "Storage and autosave",
     "category": "Replays"
   },
   {
     "id": "islands",
-    "title": "Bibliothèque des îles",
-    "category": "Îles"
+    "title": "Island library",
+    "category": "Islands"
   },
   {
     "id": "island-presets",
-    "title": "Presets des îles",
-    "category": "Îles"
+    "title": "Island presets",
+    "category": "Islands"
   },
   {
     "id": "island-import",
-    "title": "Importer un preset",
-    "category": "Îles"
+    "title": "Import a preset",
+    "category": "Islands"
   },
   {
     "id": "island-copy",
-    "title": "Copier une île dans le monde",
-    "category": "Îles"
+    "title": "Copy an island from the world",
+    "category": "Islands"
   },
   {
     "id": "island-materials",
-    "title": "Matériaux de l’île active",
-    "category": "Îles"
+    "title": "Active island materials",
+    "category": "Islands"
   },
   {
     "id": "island-placement",
-    "title": "Positionner l’île active",
-    "category": "Îles"
+    "title": "Place the active island",
+    "category": "Islands"
   },
   {
     "id": "blocks",
-    "title": "Apparence des blocs et sons",
-    "category": "Apparence"
+    "title": "Block appearance and sounds",
+    "category": "Appearance"
   },
   {
     "id": "sky",
-    "title": "Créer un overlay de ciel",
-    "category": "Apparence"
+    "title": "Create a sky overlay",
+    "category": "Appearance"
   },
   {
     "id": "sandstone",
-    "title": "Créer un overlay de sandstone",
-    "category": "Apparence"
+    "title": "Create a sandstone overlay",
+    "category": "Appearance"
   },
   {
     "id": "theme",
-    "title": "Thème et apparence des menus",
-    "category": "Apparence"
+    "title": "Menu theme and appearance",
+    "category": "Appearance"
   },
   {
     "id": "clips",
-    "title": "Clips vidéo, audio et microphone",
-    "category": "Enregistrement"
+    "title": "Video clips, audio and microphone",
+    "category": "Recording"
   },
   {
     "id": "keybinds",
-    "title": "Profils de touches",
-    "category": "Réglages"
+    "title": "Keybind profiles",
+    "category": "Settings"
   },
   {
     "id": "failure-display",
-    "title": "Affichage des échecs",
+    "title": "Failure display",
     "category": "HUD"
   },
   {
     "id": "colors",
-    "title": "Couleurs détaillées des overlays",
+    "title": "Detailed overlay colors",
     "category": "HUD"
   },
   {
     "id": "hud-editor",
-    "title": "Éditeur HUD natif",
+    "title": "Native HUD editor",
     "category": "HUD"
   },
   {
     "id": "classic-layout",
-    "title": "Placement HUD BridgeTap",
+    "title": "BridgeTap HUD layout",
     "category": "HUD"
   },
   {
     "id": "settings",
-    "title": "Tous les réglages BridgeTap",
-    "category": "Réglages"
+    "title": "All BridgeTap settings",
+    "category": "Settings"
   },
   {
     "id": "guide",
-    "title": "Guide et tutoriels",
-    "category": "Aide"
+    "title": "Guide and tutorials",
+    "category": "Help"
   },
   {
     "id": "updates",
-    "title": "Mises à jour du mod en jeu",
-    "category": "Aide"
+    "title": "In-game mod updates",
+    "category": "Help"
   },
   {
     "id": "discord",
-    "title": "Communauté Discord",
-    "category": "Aide"
+    "title": "Discord community",
+    "category": "Help"
   }
 ]
