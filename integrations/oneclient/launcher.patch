@@ -32,23 +32,27 @@ index e2429bfc..70311115 100644
  Section "-VCRedist"
    SetRegView 64
 diff --git a/packages/oneclient_app/build.rs b/packages/oneclient_app/build.rs
-index 984deef0..01ac2b25 100644
+index 984deef0..4fdebe92 100644
 --- a/packages/oneclient_app/build.rs
 +++ b/packages/oneclient_app/build.rs
-@@ -6,8 +6,8 @@ fn main() {
+@@ -5,12 +5,12 @@ fn main() {
+         res.set_icon("icons/icon.ico");
  
          let version = env!("CARGO_PKG_VERSION");
 -        res.set("CompanyName", "Polyfrost Inc.");
-+        res.set("CompanyName", "BridgeTap (unofficial)");
 -        res.set("ProductName", "OneClient");
 -        res.set("FileDescription", "OneClient");
++        res.set("CompanyName", "BridgeTap (unofficial)");
 +        res.set("ProductName", "bridgetapclient");
 +        res.set("FileDescription", "bridgetapclient (unofficial)");
          res.set("LegalCopyright", "© 2026 Polyfrost Inc.");
 -        res.set("OriginalFilename", "oneclient_app.exe");
-+        res.set("OriginalFilename", "bridgetapclient.exe");
 -        res.set("InternalName", "oneclient_app");
++        res.set("OriginalFilename", "bridgetapclient.exe");
 +        res.set("InternalName", "bridgetapclient");
+         res.set("FileVersion", version);
+         res.set("ProductVersion", version);
+ 
 diff --git a/packages/oneclient_app/src/components/navbar/app_navbar.rs b/packages/oneclient_app/src/components/navbar/app_navbar.rs
 index f95b98cc..b6d0766e 100644
 --- a/packages/oneclient_app/src/components/navbar/app_navbar.rs

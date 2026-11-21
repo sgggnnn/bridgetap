@@ -113,7 +113,7 @@ fn manifest_version(json: &serde_json::Value, adapter: bool) -> Result<String, S
     }
     json["version"]
         .as_str()
-        .filter(|v| !v.is_empty())
+        .filter(|v| !v.is_empty() && v.len() <= 128 && !v.chars().any(char::is_control))
         .map(str::to_string)
         .ok_or("Version du mod absente.".into())
 }
@@ -282,6 +282,12 @@ pub async fn check_update() -> Result<Option<Release>, String> {
     }))
 }
 pub async fn install_release(release: &Release) -> Result<String, String> {
+    install_release_inner(release, false).await
+}
+fn can_replace(current: &Selection, candidate: &str, automatic: bool) -> bool {
+    (!automatic || current.auto_update) && newer(candidate, current.current())
+}
+async fn install_release_inner(release: &Release, automatic: bool) -> Result<String, String> {
     if !safe_hash(&release.sha256)
         || !release
             .url
@@ -295,7 +301,7 @@ pub async fn install_release(release: &Release) -> Result<String, String> {
     }
     let _guard = CHANGE.lock().await;
     let mut current = selection()?;
-    if !newer(&release.version, current.current()) {
+    if !can_replace(&current, &release.version, automatic) {
         return Ok(current.current().to_string());
     }
     let temporary = root()?.join(format!("download-{}.jar", uuid::Uuid::new_v4()));
@@ -328,7 +334,7 @@ pub async fn maybe_auto_update() {
     }
     let result = async {
         if let Some(release) = check_update().await? {
-            install_release(&release).await?;
+            install_release_inner(&release, true).await?;
         }
         let _guard = CHANGE.lock().await;
         let mut value = selection()?;
@@ -344,6 +350,21 @@ pub async fn maybe_auto_update() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn an_in_flight_automatic_update_respects_a_new_manual_pin() {
+        let mut current = Selection {
+            auto_update: true,
+            version: Some("1.8.0".into()),
+            ..Selection::default()
+        };
+        assert!(can_replace(&current, "1.9.0", true));
+        current.auto_update = false;
+        assert!(!can_replace(&current, "1.9.0", true));
+        assert!(can_replace(&current, "1.9.0", false));
+        current.version = Some("1.10.0-dev.10".into());
+        current.auto_update = true;
+        assert!(!can_replace(&current, "1.9.0", true));
+    }
     #[test]
     fn sha256_matches_the_standard_vector() {
         assert_eq!(
