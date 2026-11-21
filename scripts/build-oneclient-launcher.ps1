@@ -30,7 +30,7 @@ if($LASTEXITCODE -ne 0){throw 'Launcher source preparation failed'}
 Push-Location $Destination
 try {
     & cargo build --locked --release -p oneclient_app
-    if($LASTEXITCODE -ne 0){throw 'Launcher build failed. Use a Visual Studio Developer PowerShell with C++ build tools and Windows SDK installed.'}
+    if($LASTEXITCODE -ne 0){throw 'Launcher build failed; see Cargo diagnostics above.'}
     New-Item -ItemType Directory -Force (Join-Path $root 'dist') | Out-Null
     Copy-Item -LiteralPath 'target/release/oneclient_app.exe' -Destination (Join-Path $root 'dist/bridgetapclient.exe')
 } finally {Pop-Location}

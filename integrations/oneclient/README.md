@@ -1,6 +1,6 @@
-# BridgeTap Client — OneClient integration
+# bridgetapclient — OneClient integration
 
-This is an unofficial Polyfrost integration included with BridgeTap 1.7.0. The in-game mod is shipped; the customized launcher remains source-only.
+bridgetapclient is an unofficial OneClient edition with BridgeTap bundled and enabled by default on Minecraft 1.8.9 Ornithe profiles. The Windows x64 executable is available locally as `dist/bridgetapclient.exe` with BridgeTap 1.10.0-dev.6 embedded.
 
 ## In-game integration
 
@@ -34,7 +34,7 @@ cd build/BridgeTapClient
 cargo build --locked --release -p oneclient_app
 ```
 
-Rust 1.97+ and Windows Visual C++ Build Tools/Windows SDK are required on Windows. The executable is produced at `target/release/oneclient_app.exe`. It has **not** been built on this machine: Cargo stops because `link.exe` is missing. Rust syntax/format checks were run for the new modules, not a complete Rust type check.
+Rust 1.97+ and Windows Visual C++ Build Tools/Windows SDK are required on Windows. The upstream binary is produced at `target/release/oneclient_app.exe`; the wrapper copies it to `dist/bridgetapclient.exe`. MSVC and Windows SDK have been installed locally. Local Rust build scripts are blocked by the Windows application-control policy, so the Windows build runs on GitHub Actions.
 
 The customized launcher adds a **BridgeTap** navigation page with BridgeTap enabled by default on compatible profiles and a persistent per-profile opt-out. Installation happens after normal content materialization, under the existing launch directory lock, and only on 1.8.9 Ornithe profiles. Enable the normal OneConfig bundle before launching. Previous BridgeTap JARs are identified by manifest ID and moved to `.oneclient/bridgetap-backups`; they are not deleted. Configurations, recordings and island libraries are preserved. Disabling stops installing the embedded payload on subsequent launches; backups are retained for manual recovery.
 
@@ -44,7 +44,7 @@ The local edition has a distinct data directory, IPC endpoint, application ident
 
 The Java mod regression suite and real menu preview suite passed. Contract tests check all three HUD wrappers against the actual installed OneConfig API (positions, scale, visibility, provider IDs, bounds and resize policy). The optional settings adapter compiles against that API. The build script also extracts compile-only dependencies from the installed Fabric Language Kotlin JAR (automatically found beside OneConfig, or supplied through `-KotlinJar`).
 
-Remaining: build/type-check the full launcher once Windows build tools are available, and test native OneConfig registration, menu transitions and HUD dragging in a running Minecraft client. No claim of in-game visual verification is made.
+The full Windows launcher compiles successfully. Remaining: test native OneConfig registration, menu transitions and HUD dragging in a running Minecraft client. Windows application-control policy blocks this unsigned executable on the local PC, so no claim of local startup or in-game visual verification is made.
 
 Upstream: https://github.com/Polyfrost/OneLauncher and https://github.com/Polyfrost/OneConfig. The launcher retains upstream GPL-3.0 licensing and copyright notices. BridgeTap's adapter uses the installed OneConfig API and does not bundle OneConfig source or binaries.
 
@@ -65,6 +65,10 @@ The launcher embeds the native OneClient JAR and installs it automatically on th
 
 Build with `./scripts/build-oneclient-launcher.ps1 -Python <python-executable>` after `./gradlew.bat build`. The script selects the current mod version from `fabric.mod.json`. Source preparation rejects a JAR without the native adapter, records its version and SHA-256 in `BRIDGETAP-BUILD.json`, and preserves existing source destinations.
 
-The manually triggered **Build OneClient with BridgeTap** GitHub Actions workflow builds the JAR and the Windows launcher on a runner with MSVC. This workflow has been added locally; it has not been pushed or run.
+The **Build bridgetapclient** GitHub Actions workflow builds the Windows launcher on a runner with MSVC. A checked-in native payload can be supplied under `integrations/oneclient/payload/`; otherwise it builds the current JAR. The dedicated build branch is `codex/oneclient-integrated-build`. Executable build and upload: https://github.com/sgggnnn/bridgetap/actions/runs/44849597708. That run failed afterwards because the upstream core tests require debug assertions; the verification-only rerun uses `cargo test --locked -p oneclient_core --lib bridgetap::tests`: https://github.com/sgggnnn/bridgetap/actions/runs/44899635639.
 
-Local validation for this change: payload acceptance/rejection tests passed; the OneConfig three-HUD API contract passed against the embedded JAR; the pinned upstream patch applied successfully. Full launcher build was attempted and failed because `link.exe` is absent. The launcher is therefore supplied as source, not as a tested executable. Test Minecraft startup and native menus before distributing a compiled edition.
+Local validation for this change: payload acceptance/rejection tests passed; the OneConfig three-HUD API contract passed against the embedded JAR; the pinned upstream patch applied successfully. The local launcher build was attempted after installing MSVC, but Windows application control blocked an unsigned Rust build script. The remote Windows build is used to produce the executable. Test Minecraft startup and native menus before distributing a compiled edition.
+
+The downloaded PE was checked as Windows x64, its product metadata reads `bridgetapclient`, and the complete native BridgeTap payload was found byte-for-byte inside it. `dist/bridgetapclient-build.json` records the executable and payload SHA-256 values. `dist/bridgetapclient-windows-x64.zip` includes the executable, checksums, upstream notices and French setup instructions.
+
+Verification-only run succeeded: https://github.com/sgggnnn/bridgetap/actions/runs/44899635639. The native preference test passed in the supported debug test profile. The executable remains unsigned; no usable user code-signing certificate is installed locally.
