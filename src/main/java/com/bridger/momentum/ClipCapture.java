@@ -41,7 +41,7 @@ public final class ClipCapture {
     private static void settings(){
         try{Path file=Paths.get("config","bridgetap-clips.properties");Files.createDirectories(file.getParent());Properties p=new Properties();p.setProperty("fps",String.valueOf(fps));p.setProperty("seconds",String.valueOf(buffer.window()));p.setProperty("height",String.valueOf(maxHeight));p.setProperty("sound",String.valueOf(sound));p.setProperty("microphone",String.valueOf(microphone));try(OutputStream out=Files.newOutputStream(file)){p.store(out,"BridgeTap video buffer (recording starts OFF)");}}catch(IOException ex){message="Could not save clip preferences.";}
     }
-    public static void tick(){Minecraft mc=Minecraft.m_20213497();if(mc.f_28396371==null)return;String notice;while((notice=notices.poll())!=null)mc.f_28396371.m_83523863(new C_69136080("\u00a7b[BridgeTap] \u00a7f"+notice));}
+    public static void tick(){Minecraft mc=Minecraft.m_20213497();if(mc.f_28396371==null)return;String notice;while((notice=notices.poll())!=null)if(!ClientNotificationBridge.post(notice.startsWith("Saved:")?"success":notice.toLowerCase(java.util.Locale.ROOT).contains("failed")?"error":"info","Video clips",notice))mc.f_28396371.m_83523863(new C_69136080("\u00a7b[BridgeTap] \u00a7f"+notice));}
     private static ExecutorService worker(String name){return Executors.newSingleThreadExecutor(r->{Thread t=new Thread(r,name);t.setDaemon(true);t.setPriority(Thread.NORM_PRIORITY-1);return t;});}
     public static boolean enabled(){return enabled;}
     public static boolean sound(){return sound;}

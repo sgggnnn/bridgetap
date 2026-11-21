@@ -9,6 +9,6 @@ public final class ReplayImportFlow {
   RunHistory.previewImport(content);String target=null;
   for(Map.Entry<String,String> entry:folders.folders().entrySet())if(entry.getValue().equalsIgnoreCase("Imported")&&folders.parentOf(entry.getKey()).isEmpty()){target=entry.getKey();break;}
   if(target==null)target=folders.create("Imported");
-  RunHistory.Run run=history.importReplay(content);folders.move(run.id,target);return run;
+  RunHistory.Run run=history.importReplay(content);folders.move(run.id,target);ClientNotificationBridge.post("success","Replay imported","Replay added to Imported.");return run;
  }
 }

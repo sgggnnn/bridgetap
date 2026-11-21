@@ -84,6 +84,7 @@ public class BridgeHUD {
         OneClientIntegration.tick();
         BridgeRuntime.tick();if(!BridgeConfig.modEnabled)return;
         UpdateManager.tick(mc);
+        ClientNotificationBridge.tick();
         IslandReplacement.refreshTerrain();
         PlacementAppearance.tick();
         AttemptRandomizer.tick(mc);
