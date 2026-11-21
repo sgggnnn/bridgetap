@@ -272,7 +272,7 @@ pub async fn check_update() -> Result<Option<Release>, String> {
     Ok(Some(Release {
         version,
         url,
-        sha256: digest.ok_or("Empreinte SHA-256 absente pour ce fichier.")?,
+        sha256: digest.ok_or("Missing SHA-256 checksum for this file.")?,
     }))
 }
 pub async fn install_release(release: &Release) -> Result<String, String> {
@@ -287,7 +287,7 @@ async fn install_release_inner(release: &Release, automatic: bool) -> Result<Str
             .url
             .starts_with("https://github.com/sgggnnn/bridgetap/releases/download/")
     {
-        return Err("Release invalide.".into());
+        return Err("Invalid release.".into());
     }
     let bytes = get(&release.url, MAX_JAR).await?;
     if hash(&bytes) != release.sha256.to_ascii_lowercase() {
