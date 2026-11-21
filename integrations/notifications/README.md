@@ -6,6 +6,8 @@ The mod receives new Windows toast notifications from every application and disp
 
 There is **no companion application, executable, service, loopback server or separate runtime to install**. The JAR embeds a small JNI DLL, automatically loaded into Minecraft's JVM. Windows' notification API runs on a dedicated STA dispatcher inside the game process; polling returns to that dispatcher after asynchronous waits. Notification bodies remain in memory in bounded queues.
 
+Version **1.1.1** fixes a startup compatibility issue with OneConfig 1.9: reflecting over every notification overload attempted to resolve the absent legacy `org.jetbrains.skia.Image` type, preventing the mod's settings card from being registered. The integration now links only the exact modern notification signatures through method handles. The corrected initialization was verified in the running game: settings card registered, all four senders linked, Windows listener allowed, and a preview was queued without a renderer error.
+
 If Windows has already granted access, listening starts automatically. Otherwise use **Windows → Allow access** in the mod's settings and answer Windows' permission prompt. No code changes Windows privacy settings. Only notifications actually delivered through Windows toast notifications can be received. Existing notification history is ignored when listening starts; disabling the mod stops new reads and clears its pending Windows notifications.
 
 BridgeTap confirmations and errors use the optional `com.bridgetapclient.notifications.Notifications.post` API. The updated BridgeTap JAR adds import, clip, replay video and update hooks; BridgeTap continues to work without the notification addon.
