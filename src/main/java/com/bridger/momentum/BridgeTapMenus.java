@@ -15,8 +15,8 @@ public final class BridgeTapMenus {
     private static void show(C_85740840 screen){Minecraft.m_20213497().m_52715402(screen);}
     public static void open(String id){
         Minecraft mc=Minecraft.m_20213497();
-        if(mc.f_28396371==null)throw new IllegalStateException("Join a world before opening BridgeTap tools.");
         C_85740840 parent=mc.f_70816363;
+        if(mc.f_28396371==null){show(new WorldRequiredScreen(parent));return;}
         switch(id){
             case "replays":show(ReplayFolderScreen.home());break;
             case "tools":show(new ReplayToolsScreen(ReplayFolderScreen.home(),new BridgeHistoryScreen(),null));break;
@@ -46,6 +46,17 @@ public final class BridgeTapMenus {
             case "discord":CommunityLinks.discord();break;
             default:throw new IllegalArgumentException("Unknown BridgeTap menu: "+id);
         }
+    }
+    private static final class WorldRequiredScreen extends BridgeScreen {
+        private final C_85740840 parent;
+        WorldRequiredScreen(C_85740840 parent){this.parent=parent;}
+        @Override protected void paint(){
+            header("BridgeTap","Rejoins un monde pour ouvrir les outils");
+            button("Retour",752,15,88,this::back);
+            label("Lance ton profil Minecraft puis rejoins un serveur ou un monde local.",40,144);
+            label("Rouvre ensuite BridgeTap depuis Maj droite ou depuis le launcher.",40,184);
+        }
+        @Override protected void back(){open(parent);}
     }
     public static String openReplayTool(String id,C_85740840 parent,RunHistory.Run run){
         try{switch(id){
