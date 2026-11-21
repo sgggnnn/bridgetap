@@ -27,14 +27,28 @@ jobs:
         run: ./gradlew.bat build -PoneclientJavaHome="$env:JAVA_HOME"
       - name: Validate payload handling
         run: python tests/test_oneclient_payload.py
-      - name: Prepare and build bridgetapclient
+      - name: Prepare integrated source
         shell: pwsh
         run: |
-          $options = @{ Destination = "$env:GITHUB_WORKSPACE/build/BridgeTapClient" }
-          if (Test-Path integrations/oneclient/payload/BridgeTap-OneClient.jar) {
-            $options.ModJar = 'integrations/oneclient/payload/BridgeTap-OneClient.jar'
+          $payload = 'integrations/oneclient/payload/BridgeTap-OneClient.jar'
+          if (!(Test-Path $payload)) {
+            $version = (Get-Content src/main/resources/fabric.mod.json -Raw | ConvertFrom-Json).version
+            $payload = "build/libs/BridgeTap-$version-OneClient.jar"
           }
-          ./scripts/build-oneclient-launcher.ps1 @options
+          python integrations/oneclient/prepare-launcher.py --jar $payload --destination build/BridgeTapClient
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: 'build/BridgeTapClient -> target'
+          cache-on-failure: true
+      - name: Build bridgetapclient
+        working-directory: build/BridgeTapClient
+        run: cargo build --locked --release -p oneclient_app
+      - name: Collect executable
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Copy-Item build/BridgeTapClient/target/release/oneclient_app.exe dist/bridgetapclient.exe
       - uses: actions/upload-artifact@v4
         with:
           name: bridgetapclient-windows-x64
@@ -42,4 +56,4 @@ jobs:
           if-no-files-found: error
       - name: Test bundled default and opt-out persistence
         working-directory: build/BridgeTapClient
-        run: cargo test --locked -p oneclient_core --lib bridgetap::tests
+        run: cargo test --locked --release -p oneclient_core --lib bridgetap::tests
