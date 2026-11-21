@@ -1,0 +1,7 @@
+{
+  "required": true,
+  "package": "com.bridgetapclient.notifications.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "client": ["NotificationTickMixin"],
+  "injectors": {"defaultRequire": 1}
+}

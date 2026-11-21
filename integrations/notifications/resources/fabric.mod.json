@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "bridgetapclient_notifications",
+  "version": "1.1.0",
+  "name": "BridgeTapClient Notifications",
+  "description": "All Windows notifications directly inside Minecraft, with native OneConfig toasts. No external program required.",
+  "authors": ["sggn"],
+  "license": "GPL-3.0-only",
+  "environment": "client",
+  "icon": "assets/bridgetapclient-notifications/icon.png",
+  "mixins": ["bridgetapclient-notifications.mixins.json"],
+  "depends": {"fabricloader": ">=0.16.0", "minecraft": "1.8.9", "oneconfig": ">=1.9.0", "java": ">=21"}
+}
